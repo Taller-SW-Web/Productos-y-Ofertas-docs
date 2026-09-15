@@ -1,11 +1,11 @@
 ## Historia de usuario principal
 
 **Como** gestor comercial,
-**quiero** crear y gestionar paquetes (combos) agrupando múltiples productos
-complementarios bajo un precio único promocional,
+**quiero** crear y gestionar paquetes (combos) agrupando múltiples SKUs y productos
+complementarios bajo un precio único promocional que sea estrictamente menor a la suma individual,
 **para** incentivar las ventas, garantizando que el sistema calcule
-dinámicamente la disponibilidad del combo y descuente el stock de los productos
-individuales al momento de la venta.
+dinámicamente la disponibilidad en tiempo real, descuente el inventario inmediatamente ante la creación del pedido (`order.created`),
+y compense transaccionalmente ante cancelaciones o devoluciones.
 
 ## Criterios de aceptación
 
@@ -13,108 +13,88 @@ individuales al momento de la venta.
 | --- | --- |
 | **ID** | **Criterio** |
 | **CA-01** | Solo un gestor comercial con los permisos correspondientes (Módulo Seguridad y Usuarios) puede crear, modificar, consultar y desactivar combos. |
-| **CA-02** | El registro de un combo debe incluir obligatoriamente: nombre, descripción, precio del paquete (debe ser mayor que 0) y la selección de 2 o más productos individuales con sus respectivas cantidades. |
-| **CA-03** | El sistema debe calcular dinámicamente la disponibilidad (stock) del combo basándose en el producto individual con menor disponibilidad proporcional (stock individual / cantidad requerida para el combo). |
-| **CA-04** | Si alguno de los productos individuales que conforman el combo se queda sin stock (0 unidades), la disponibilidad del combo automáticamente debe ser 0. |
-| **CA-05** | Al confirmarse una venta, el descuento del inventario de los múltiples productos individuales que forman el combo debe ser transaccional en la base de datos (se descuentan todos correctamente o ninguno) para evitar inconsistencias de stock. |
-| **CA-06** | El sistema debe rechazar el consumo del stock si un proceso concurrente o compra paralela agota los productos individuales antes de que se confirme la transacción del combo. |
+| **CA-02** | El registro de un combo debe incluir obligatoriamente: nombre, descripción, selección de 2 o más SKUs / Variantes específicas (o productos simples sin variantes) con sus respectivas cantidades, y un precio único de paquete. |
+| **CA-03** | El sistema debe validar de manera estricta y obligatoria que el precio del paquete sea mayor a cero y estrictamente menor que la suma de los precios regulares vigentes de todos sus componentes ($precio\_combo < \sum precio\_componentes$). |
+| **CA-04** | Queda estrictamente prohibido el anidamiento: los combos únicamente pueden estar conformados por productos y SKUs individuales puros, rechazando la inclusión de otros combos. |
+| **CA-05** | El sistema debe calcular dinámicamente la disponibilidad (stock) del combo basándose en el SKU individual con menor disponibilidad proporcional ($stock\_disponible = \min \lfloor stock\_sku_i / cantidad\_requerida_i \rfloor$). |
+| **CA-06** | Si alguno de los SKUs componentes del combo se queda sin stock (0 unidades), la disponibilidad del combo automáticamente pasa a ser 0 y se marca como no disponible para compra. |
+| **CA-07** | Al emitirse el evento de creación de pedido (`order.created`) desde Ventas, el descuento del inventario de los múltiples SKUs que forman el combo debe ejecutarse de forma transaccional (ACID) en la base de datos (se descuentan todos o ninguno). |
+| **CA-08** | Si el pedido se cancela o expira la ventana de pago (`order.cancelled`), el sistema debe ejecutar una compensación automática devolviendo íntegramente el stock reservado de todos los componentes. |
+| **CA-09** | En caso de cancelación o devolución postventa (`order.returned`), la reposición de stock se gestiona de forma atómica e integral para todos los artículos que integraban el paquete. |
+| **CA-10** | Si un gestor comercial desactiva o da de baja un SKU o producto componente en el Catálogo, el combo debe inhabilitarse y ocultarse automáticamente en todos los canales de venta, emitiendo una notificación al gestor para su revisión. |
 
 ## Escenarios dado-cuando-entonces
 
 **Escenario 1: Creación exitosa de un combo**
 
-* **DADO** que el gestor comercial se encuentra en la pantalla de
-  gestión de combos,
-* **CUANDO** ingresa los datos del combo (nombre, descripción),
-  establece un precio único del paquete y selecciona 2 o más productos con
-  stock suficiente, y guarda los cambios,
-* **ENTONCES** el sistema registra el combo, lo activa para su venta
-  y vincula los productos seleccionados con las cantidades respectivas.
+* **DADO** que el gestor comercial se encuentra en la pantalla de gestión de combos,
+* **CUANDO** ingresa los datos del combo (nombre, descripción), selecciona 2 o más SKUs individuales válidos con stock y establece un precio de paquete que es estrictamente menor a la suma de los precios de los artículos seleccionados,
+* **ENTONCES** el sistema registra el combo, lo activa para su venta en los canales y vincula los SKUs con sus cantidades respectivas.
 
-**Escenario 2: Rechazar precio del combo inválido**
+**Escenario 2: Rechazar precio de combo igual o superior a la suma de componentes**
 
-* **DADO** que el gestor comercial está creando o editando un
-  combo,
-* **CUANDO** establece el precio del paquete con un valor negativo
-  o igual a cero,
-* **ENTONCES** el sistema muestra un mensaje de error, impide guardar
-  el combo y conserva los datos ingresados para su corrección.
+* **DADO** que el gestor comercial está creando o editando un combo cuyos componentes suman S/ 120,
+* **CUANDO** establece el precio del paquete en S/ 120, S/ 130 o un valor menor/igual a cero,
+* **ENTONCES** el sistema muestra un mensaje de error impidiendo guardar el combo, explicando que el precio debe representar un descuento real frente a la suma de componentes.
 
-**Escenario 3: Cálculo de disponibilidad basada en los componentes**
+**Escenario 3: Rechazar anidamiento de combos**
 
-* **DADO** que existe un combo activo compuesto por 1
-  "Camiseta" (Stock actual: 10) y 2 "Medias" (Stock
-  actual: 15),
-* **CUANDO** un canal de venta (Marketplace, Chatbot
-  o Retail) consulta la disponibilidad del combo,
-* **ENTONCES** el sistema calcula en tiempo real y responde que hay 7
-  combos disponibles (limitado por las medias: 15 / 2 = 7.5).
+* **DADO** que el gestor comercial está seleccionando los componentes para un nuevo paquete,
+* **CUANDO** intenta añadir un combo preexistente como ítem integrante,
+* **ENTONCES** el sistema bloquea la acción y muestra un mensaje indicando que no se permite el anidamiento de combos.
 
-**Escenario 4: Combo sin stock por producto agotado**
+**Escenario 4: Cálculo de disponibilidad basada en los SKUs componentes**
 
-* **DADO** que uno de los productos individuales que conforman el
-  combo se ha quedado sin stock (0 unidades),
-* **CUANDO** un canal de venta consulta la disponibilidad actual
-  del combo,
-* **ENTONCES** el sistema responde que el stock del combo es 0 y lo
-  muestra como temporalmente no disponible.
+* **DADO** que existe un combo activo compuesto por 1 "Camiseta Talla M" (SKU-CAM-M, Stock: 10) y 2 "Medias Blancas" (SKU-MED-W, Stock: 15),
+* **CUANDO** un canal de venta (Marketplace, Chatbot o Retail) consulta la disponibilidad del combo,
+* **ENTONCES** el sistema calcula en tiempo real y responde que hay 7 combos disponibles (limitado por las medias: $15 / 2 = 7.5 \rightarrow 7$).
 
-**Escenario 5: Venta exitosa y descuento de stock múltiple**
+**Escenario 5: Combo sin stock por producto agotado**
 
-* **DADO** que un combo compuesto por 1 "Raqueta"
-  (Stock: 5) y 3 "Pelotas" (Stock: 20) ha sido comprado,
-* **CUANDO** el Módulo de Ventas y Postventa confirma el consumo de
-  stock enviando la notificación de venta hacia Productos y Ofertas,
-* **ENTONCES** el sistema descuenta de forma transaccional 1 unidad a
-  la "Raqueta" (Nuevo Stock: 4) y 3 unidades a las
-  "Pelotas" (Nuevo Stock: 17).
+* **DADO** que uno de los SKUs individuales que conforman el combo se ha quedado sin stock (0 unidades),
+* **CUANDO** un canal de venta consulta la disponibilidad actual del combo,
+* **ENTONCES** el sistema responde que el stock del combo es 0 y lo muestra como temporalmente agotado.
 
-**Escenario 6: Fallo al descontar stock por venta concurrente o stock
-insuficiente**
+**Escenario 6: Descuento inmediato de stock ante creación de pedido (order.created)**
 
-* **DADO** que el stock disponible calculado de un combo es 1 y
-  un cliente intenta comprarlo,
-* **CUANDO** el sistema intenta descontar el stock, pero otro
-  proceso o venta concurrente ya consumió el inventario de los productos
-  individuales dejándolo insuficiente,
-* **ENTONCES** el sistema rechaza la operación de actualización, hace
-  un *rollback* (deshace cualquier cambio
-  parcial) y notifica al canal y a Ventas que no hay disponibilidad.
+* **DADO** que un cliente inicia la compra de un combo compuesto por 1 "Raqueta" (Stock: 5) y 3 "Pelotas" (Stock: 20),
+* **CUANDO** el módulo de Ventas emite el evento `order.created`,
+* **ENTONCES** el sistema descuenta de forma transaccional 1 unidad a la "Raqueta" (Nuevo Stock: 4) y 3 unidades a las "Pelotas" (Nuevo Stock: 17).
+
+**Escenario 7: Compensación de stock ante cancelación o pago fallido (order.cancelled)**
+
+* **DADO** que se descontó el stock de los componentes de un combo por un pedido pendiente de pago,
+* **CUANDO** el pago no se completa dentro del límite de tiempo y se recibe el evento `order.cancelled`,
+* **ENTONCES** el sistema revierte la operación y repone transaccionalmente las unidades descontadas a cada SKU individual.
+
+**Escenario 8: Desactivación automática del combo ante baja de un componente**
+
+* **DADO** un combo activo que contiene el SKU de una zapatilla en liquidación,
+* **CUANDO** el gestor desactiva ese SKU en el Catálogo,
+* **ENTONCES** el sistema deshabilita inmediatamente el combo en los canales de venta y notifica al gestor comercial para que edite o archive el paquete.
 
 ## Interacción con otros módulos
 
 |  |  |  |  |
 | --- | --- | --- | --- |
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
-| **Canal Marketplace** | Mostrar combos en catálogo, permitir agregarlos al carrito evaluando su disponibilidad real y precio. | Identificadores de combos y cantidades a consultar/validar. | Detalles del combo, precio final, productos incluidos y stock dinámico disponible. |
-| **Canal Chatbot** | Recomendar combos o responder disponibilidad por lenguaje natural. | Consulta de productos/combos y validación para el carrito conversacional. | Ofertas de combos vigentes, características de los productos incluidos y disponibilidad. |
-| **Canal Retail** | Visualización en tienda física para que el vendedor ofrezca o arme combos al cliente. | Consulta de disponibilidad al armar un pedido presencial. | Stock dinámico disponible del combo, precio unificado aplicable. |
-| **Ventas y Postventa** | Descontar de manera definitiva el stock de los productos al procesar la venta. | Identificador del combo, cantidad vendida y confirmación del pedido. | Resultado de la operación: Confirmación de descuento exitoso de los productos base o rechazo por falta de stock. |
-| **Seguridad y Usuarios** | Verificar quién puede crear o modificar combos de productos. | Identidad autenticada (token), roles y permisos. | Solicitudes de validación de identidad o permisos para acceder a la gestión comercial. |
+| **Canal Marketplace** | Mostrar combos en catálogo y permitir compra según stock dinámico. | Consultas de combos y peticiones de validación de carrito. | Detalles del combo, precio unificado, componentes y disponibilidad calculada. |
+| **Canal Chatbot / Retail** | Consulta y venta presencial o asistida por chat. | Solicitudes de cotización y disponibilidad en tiempo real. | Información comercial del combo, precio final y existencia. |
+| **Ventas y Postventa** | Coordinar reserva, confirmación, cancelación y devolución mediante eventos de dominio. | Eventos `order.created`, `order.cancelled` y `order.returned`. | Confirmación de reserva de stock de componentes o rechazo por stock insuficiente. |
+| **Seguridad y Usuarios** | Validar privilegios de gestión comercial. | Token de sesión y rol de usuario autenticado. | Solicitud de autorización para administrar combos. |
 
 ## Dependencias dentro de Productos y Ofertas
 
 |  |  |
 | --- | --- |
 | **Funcionalidad interna** | **Información necesaria** |
-| **Gestión de productos** | Identificador, nombre, estado (activo/inactivo) y stock unitario de cada producto para permitir seleccionarlos en la interfaz del combo y calcular la disponibilidad real. |
-| **Actualización de stock por consumo** | Uso del sub-módulo interno encargado de efectuar las restas de inventario para enviar las instrucciones de descuento a cada uno de los productos que componen el combo. |
-| **Gestión de precios (individuales)** | Precios base vigentes de los productos individuales. Aunque el combo tiene un precio propio, el precio base suele ser útil para mostrarle al cliente el "Ahorro" del paquete en el Frontend. |
+| **Gestión de productos y variantes** | Identificador de SKU, estado (activo/inactivo) y stock unitario de cada variante para calcular disponibilidad y procesar la inhabilitación reactiva ante baja de componentes. |
+| **Gestión de inventario (Kardex)** | Ejecución de débitos y créditos transaccionales de stock sobre las variantes componentes ante eventos de compra o compensación. |
+| **Gestión de precios (individuales)** | Precios base vigentes de las variantes para validar que el precio del paquete sea estrictamente menor a su suma acumulada. |
 
-## Reglas pendientes de acordar
+## Reglas acordadas de negocio y arquitectura
 
-* **Baja de productos individuales:** ¿Qué sucede
-  automáticamente con el estado del combo si el gestor comercial desactiva
-  (da de baja) un producto individual que lo conformaba? ¿Se oculta el combo
-  de los canales o requiere edición manual?
-* **Devoluciones:** Si un cliente anula la compra de un combo o solicita
-  devolución desde *Ventas y Postventa*, ¿la reposición de stock se
-  ingresa directamente a los productos individuales por separado o se debe
-  tratar como una transacción integral?
-* **Anidamiento:** ¿Se permitirá que un combo contenga a su vez otros
-  combos dentro de él, o la regla de negocio restringe la creación de combos
-  únicamente usando productos individuales puros?
-* **Límites de precios:** ¿El sistema debe validar que el precio del combo
-  configurado sea obligatoriamente menor a la suma de los precios regulares
-  de los productos que lo conforman para asegurar que sea realmente una
-  oferta?
+* **Baja de productos individuales:** Si un SKU componente es desactivado en el catálogo, **el combo se deshabilita y oculta automáticamente en los canales de venta** y se genera una notificación al gestor comercial para su revisión.
+* **Devoluciones:** Ante cancelaciones o devoluciones de combos desde Ventas y Postventa (`order.returned`), la reposición de existencias se procesa de forma **atómica e integral para todos sus artículos individuales** (el combo se anula y devuelve completo).
+* **Anidamiento:** **Prohibido el anidamiento**. Un paquete solo puede conformarse por artículos y variantes directas, descartando complejidades recursivas.
+* **Límites de precios:** Es una **validación obligatoria y bloqueante**: el precio configurado para el combo DEBE ser estrictamente menor que la suma de los precios regulares vigentes de los productos y variantes que lo integran ($precio\_combo < \sum precio\_componentes$).
