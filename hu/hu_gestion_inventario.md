@@ -6,7 +6,7 @@
 
 **para** mantener la información de inventario actualizada y consistente para los diferentes canales y módulos del marketplace.
 
-El stock se controla para cada variante identificada mediante un SKU, considerando características como talla, color u otras que determinen una unidad de inventario diferente.
+El stock se controla para cada variante identificada mediante un SKU, considerando características como talla, color u otras que determinen una unidad de inventario diferente. El Producto actúa únicamente como agrupador comercial y **no posee un stock independiente** distinto al stock de sus variantes.
 
 ## Criterios de aceptación
 
@@ -14,13 +14,14 @@ El stock se controla para cada variante identificada mediante un SKU, consideran
 | --- | --- |
 | **CA-01** | Cada variante de producto debe estar identificada mediante un SKU único para permitir su control individual de stock. |
 | **CA-02** | El sistema debe permitir consultar el stock disponible de una variante proporcionando su SKU. |
-| **CA-03** | La consulta de disponibilidad debe informar como mínimo el SKU, la cantidad disponible y su estado: **Disponible, Stock bajo o Agotado**. |
+| **CA-03** | La consulta de disponibilidad debe informar como mínimo el SKU, la cantidad disponible y su estado: **Disponible, Stock bajo o Agotado**, según las reglas: `stock = 0 → Agotado`, `0 < stock <= umbral_stock_bajo → Stock bajo`, `stock > umbral_stock_bajo → Disponible`. El `umbral_stock_bajo` debe ser configurable por cada variante/SKU. |
 | **CA-04** | El sistema debe permitir registrar el consumo de unidades de una variante proporcionando su SKU y la cantidad consumida. |
 | **CA-05** | Antes de actualizar el stock, el sistema debe validar que la variante exista, que la cantidad consumida sea válida y que exista stock suficiente. |
 | **CA-06** | Cuando exista stock suficiente, el sistema debe descontar la cantidad consumida y conservar el nuevo stock actualizado. |
 | **CA-07** | El sistema no debe permitir que el stock de una variante sea negativo. Si no existe stock suficiente, debe rechazar el consumo y conservar el stock actual. |
-| **CA-08** | Cuando el consumo deje el stock en cero, la variante debe quedar identificada como **Agotada**. |
+| **CA-08** | Cuando el consumo deje el stock en cero, la variante debe quedar identificada como **Agotada**. Si el consumo deja el stock en `0 < stock <= umbral_stock_bajo`, la variante debe quedar identificada como **Stock bajo**. |
 | **CA-09** | La información de stock actualizada debe estar disponible para las posteriores consultas realizadas por los canales y módulos integrados. |
+| **CA-10** | Ante consumos concurrentes sobre el mismo SKU, el sistema debe garantizar que el stock no sea negativo y que la suma de consumos aceptados no supere el stock disponible de la variante. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -72,6 +73,24 @@ El stock se controla para cada variante identificada mediante un SKU, consideran
 * **CUANDO** un canal consulta nuevamente la disponibilidad,
 * **ENTONCES** el sistema devuelve 6 unidades como stock disponible.
 
+### Escenario 9: Consumos concurrentes sobre el mismo SKU
+
+* **DADO** que la variante con SKU `NK-AM-BLK-40` tiene 5 unidades disponibles y se solicitan simultáneamente un consumo de 3 unidades (Consumo A) y un consumo de 3 unidades (Consumo B),
+* **CUANDO** ambos consumos se registran de forma concurrente sobre el mismo SKU,
+* **ENTONCES** el sistema acepta un solo consumo, rechaza el otro por falta de stock y el stock final de la variante es de 2 unidades, sin quedar nunca negativo.
+
+### Escenario 10: Estado resultante Stock bajo después de un consumo
+
+* **DADO** que la variante con SKU `NK-AM-BLK-40` tiene 6 unidades disponibles y su `umbral_stock_bajo` está configurado en 5 unidades,
+* **CUANDO** se registra el consumo de 1 unidad,
+* **ENTONCES** el sistema actualiza el stock a 5 unidades y establece el estado **Stock bajo**.
+
+### Escenario 11: Consultar una variante con stock bajo
+
+* **DADO** que existe una variante con SKU `NK-AM-BLK-41` que tiene 3 unidades disponibles y su `umbral_stock_bajo` está configurado en 5 unidades,
+* **CUANDO** un canal consulta su disponibilidad,
+* **ENTONCES** el sistema devuelve la cantidad disponible de 3 unidades y el estado **Stock bajo**.
+
 ## Interacción con otros módulos
 
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
@@ -82,22 +101,23 @@ El stock se controla para cada variante identificada mediante un SKU, consideran
 | **Ventas y Postventa** | Comunicar el consumo de unidades para actualizar el inventario. | SKU y cantidad consumida. | Resultado de la actualización y stock actualizado. |
 | **Despacho** | Comunicar el consumo de unidades que corresponda para mantener actualizado el inventario. | SKU y cantidad consumida. | Resultado de la actualización y stock actualizado. |
 
+La consulta de disponibilidad por parte de los canales **Marketplace, Retail y Chatbot** se realiza siempre referenciando una **Variante/SKU**; el canal no consulta el stock del producto como si el producto fuera la unidad de inventario.
+
 ## Dependencias dentro de Productos y Ofertas
 
 | **Funcionalidad interna** | **Información necesaria** |
 | --- | --- |
 | **Gestión de productos** | Identificador, nombre, estado y variantes del producto para identificar qué unidades deben ser controladas mediante inventario. |
+| **Gestión de variantes/SKUs** | Identificación y atributos de cada variante (SKU), base sobre la cual se controla el stock individual. |
 | **Gestión de características** | Características de las variantes, como talla, color u otras que permitan diferenciar unidades de inventario. |
 | **Gestión de precios** | Identificación de la variante y precio vigente cuando los canales necesiten relacionar la disponibilidad con la información comercial del producto. |
 
 ## Reglas pendientes de acordar
 
-* **Umbral de stock bajo:** definir el valor utilizado para determinar cuándo una variante se encuentra en estado **Stock bajo**.
+* **Valor del umbral de stock bajo:** el `umbral_stock_bajo` es configurable por cada variante/SKU; definir el valor concreto que se asignará a cada variante.
 
 * **Generación del SKU:** definir si el SKU será generado automáticamente por el sistema o registrado al crear la variante.
 
 * **Confirmación del consumo:** definir qué operación o evento de Ventas y Postventa confirma definitivamente el consumo de stock.
 
 * **Actualización desde Despacho:** definir si Despacho debe actualizar directamente el stock o si su interacción corresponde únicamente a determinados tipos de consumo.
-
-* **Consumos simultáneos:** definir cómo se manejarán consumos concurrentes de una misma variante para evitar inconsistencias en el stock.

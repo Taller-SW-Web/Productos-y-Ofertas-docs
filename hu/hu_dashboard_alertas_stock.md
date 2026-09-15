@@ -4,9 +4,11 @@
 
 **quiero** visualizar indicadores, niveles de stock y alertas sobre el estado del inventario,
 
-**para** identificar oportunamente las variantes con bajo nivel de disponibilidad, conocer las variantes agotadas y analizar cuáles presentan mayor consumo.
+**para** identificar oportunamente las variantes con bajo nivel de disponibilidad, conocer las variantes agotadas y analizar el Top 5 de productos con mayor cantidad de unidades vendidas.
 
 El dashboard permitirá visualizar información consolidada del inventario mediante indicadores y gráficos, facilitando el seguimiento del estado del stock y la identificación de situaciones que requieran atención.
+
+La unidad primaria de inventario del dashboard es la **Variante/SKU**. El Producto puede utilizarse únicamente como **agrupador comercial** cuando corresponda, sin representar una unidad de inventario independiente.
 
 ## Criterios de aceptación
 
@@ -14,11 +16,12 @@ El dashboard permitirá visualizar información consolidada del inventario media
 | --- | --- |
 | **CA-01** | El sistema debe mostrar la cantidad de variantes que se encuentran en estado **Disponible, Stock bajo y Agotado**. |
 | **CA-02** | El sistema debe mostrar indicadores que permitan conocer el estado general del inventario. |
-| **CA-03** | El sistema debe identificar las variantes cuyo stock se encuentre por debajo del umbral definido como **Stock bajo**. |
-| **CA-04** | El sistema debe mostrar alertas para las variantes que se encuentren en estado **Stock bajo** o **Agotado**. |
-| **CA-05** | El sistema debe permitir identificar las variantes con mayor cantidad de unidades consumidas durante el período analizado. |
-| **CA-06** | La información mostrada en el dashboard debe corresponder al estado actualizado del inventario y a los consumos registrados. |
+| **CA-03** | El sistema debe identificar las variantes cuyo stock se encuentre en o por debajo del `umbral_stock_bajo` configurado por variante/SKU para el estado **Stock bajo** (`0 < stock <= umbral_stock_bajo`). |
+| **CA-04** | El sistema debe mostrar alertas para las variantes que se encuentren en estado **Stock bajo** o **Agotado**, según el estado calculado de cada SKU. |
+| **CA-05** | El sistema debe mostrar el **Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado**, considerando exclusivamente unidades vendidas de ventas confirmadas (excluyendo operaciones que no representen una venta confirmada, como ajustes de inventario, mermas o reservas), agrupando las ventas de todas las variantes de un mismo producto, sumando las unidades vendidas de sus SKUs y mostrando los 5 productos con mayor cantidad total de unidades vendidas. |
+| **CA-06** | Los indicadores deben representar el estado actual del inventario y las alertas deben generarse según el estado calculado de cada SKU en ese momento. |
 | **CA-07** | Los indicadores y alertas deben actualizarse cuando existan cambios en el stock que afecten la información mostrada. |
+| **CA-08** | Después de un consumo correctamente registrado, el estado de la variante debe reflejarse correctamente en el dashboard: si pasa de **Disponible → Stock bajo**, debe verse como **Stock bajo**; si pasa de **Stock bajo → Agotado**, debe verse como **Agotado**. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -30,7 +33,7 @@ El dashboard permitirá visualizar información consolidada del inventario media
 
 ### Escenario 2: Identificar una variante con stock bajo
 
-* **DADO** que el umbral de stock bajo está definido y una variante se encuentra por debajo de dicho umbral,
+* **DADO** que el `umbral_stock_bajo` de una variante está configurado y la variante se encuentra en o por debajo de dicho umbral,
 * **CUANDO** el responsable de inventario consulta el dashboard,
 * **ENTONCES** el sistema muestra una alerta indicando que la variante presenta **Stock bajo**.
 
@@ -40,21 +43,21 @@ El dashboard permitirá visualizar información consolidada del inventario media
 * **CUANDO** el responsable de inventario consulta el dashboard,
 * **ENTONCES** el sistema muestra la variante como **Agotada** y genera la alerta correspondiente.
 
-### Escenario 4: Visualizar variantes con mayor consumo
+### Escenario 4: Visualizar el Top 5 de productos más vendidos
 
-* **DADO** que existen registros de consumo de diferentes variantes,
-* **CUANDO** el responsable de inventario consulta la sección de consumo,
-* **ENTONCES** el sistema muestra las variantes con mayor cantidad de unidades consumidas durante el período analizado.
+* **DADO** que existen ventas confirmadas registradas de diferentes variantes durante el período analizado, por ejemplo `Nike Air Max` con `SKU-001 → 20 unidades vendidas`, `SKU-002 → 15 unidades vendidas` y `SKU-003 → 10 unidades vendidas`,
+* **CUANDO** el responsable de inventario consulta la sección de productos más vendidos,
+* **ENTONCES** el sistema muestra el **Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado**, agrupando las ventas de las variantes de un mismo producto (por ejemplo, `Nike Air Max` con un total de **45** unidades vendidas) y ordenándolos de mayor a menor.
 
-### Escenario 5: Actualización de una alerta después de un consumo
+### Escenario 5: Actualización de una alerta después de un consumo (Disponible → Stock bajo)
 
-* **DADO** que una variante tiene 5 unidades disponibles y el umbral de stock bajo está establecido en 5 unidades,
+* **DADO** que una variante tiene 6 unidades disponibles y su `umbral_stock_bajo` está configurado en 5 unidades,
 * **CUANDO** se registra el consumo de 1 unidad,
-* **ENTONCES** el stock se actualiza a 4 unidades y la variante aparece como **Stock bajo** en el dashboard.
+* **ENTONCES** el stock se actualiza a 5 unidades, la variante pasa de **Disponible** a **Stock bajo** y aparece como **Stock bajo** en el dashboard.
 
-### Escenario 6: Actualización del dashboard después de agotar una variante
+### Escenario 6: Actualización del dashboard después de agotar una variante (Stock bajo → Agotado)
 
-* **DADO** que una variante tiene 1 unidad disponible,
+* **DADO** que una variante tiene 1 unidad disponible y su `umbral_stock_bajo` está configurado en 5 unidades (por lo que se encuentra en estado **Stock bajo**),
 * **CUANDO** se registra correctamente el consumo de esa unidad,
 * **ENTONCES** el dashboard actualiza la información de la variante a **Agotado** y muestra la alerta correspondiente.
 
@@ -62,26 +65,24 @@ El dashboard permitirá visualizar información consolidada del inventario media
 
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
 | --- | --- | --- | --- |
-| **Gestión de Stock** | Obtener el estado actualizado del inventario y los registros de consumo necesarios para generar indicadores y alertas. | Cantidades disponibles, estados de stock y registros de consumo. | Información analítica y alertas para el responsable de inventario. |
-| **Gestión de productos** | Identificar las variantes y productos asociados a los indicadores y alertas. | Identificadores, nombres y variantes de los productos. | Indicadores y alertas asociados a las variantes correspondientes. |
+| **Ventas y Postventa** | Proporcionar las unidades vendidas por variante/SKU correspondientes a ventas confirmadas del período analizado para calcular el Top 5 de productos más vendidos. | Unidades vendidas por variante/SKU y período analizado. | Información analítica del Top 5 para el responsable de inventario. |
 
 ## Dependencias dentro de Productos y Ofertas
 
 | **Funcionalidad interna** | **Información necesaria** |
 | --- | --- |
-| **Gestión de productos** | Identificación de productos y variantes para mostrar los indicadores y análisis de inventario. |
+| **Gestión de productos** | Identificación de productos y variantes para mostrar los indicadores y análisis de inventario, y para agrupar la información por producto como vista comercial. |
+| **Gestión de variantes/SKUs** | Identificación y atributos de cada variante/SKU analizada por los indicadores y alertas. |
 | **Gestión de características** | Características de las variantes, como talla y color, para identificar correctamente las unidades analizadas. |
-| **Gestión de stock** | Cantidades actuales, estados de disponibilidad y registros de consumo necesarios para generar los indicadores y alertas. |
+| **Gestión de inventario** | Cantidades actuales, estados de disponibilidad y registros de consumo necesarios para generar los indicadores y alertas. |
 
 ## Reglas pendientes de acordar
 
-* **Período de análisis:** definir el período utilizado para calcular los indicadores de consumo.
+* **Período de análisis:** definir el período exacto utilizado para calcular el Top 5 de productos con mayor cantidad de unidades vendidas.
 
-* **Indicadores:** definir los indicadores que serán mostrados en el dashboard final.
+* **Indicadores:** definir el detalle y la visualización final de los indicadores referidos en la especificación del dashboard (cantidad total de variantes/SKUs, cantidad total de unidades disponibles y variantes por estado).
 
-* **Top de consumo:** definir la cantidad de variantes que se mostrarán en el listado de mayor consumo, por ejemplo, **Top 5**.
-
-* **Umbral de stock bajo:** utilizar el umbral definido para determinar cuándo generar las alertas correspondientes.
+* **Valor del umbral de stock bajo:** el `umbral_stock_bajo` es configurable por cada variante/SKU; definir el valor concreto que se asignará a cada variante para determinar el estado **Stock bajo**.
 
 * **Actualización de información:** definir con qué frecuencia se actualizarán los indicadores y alertas.
 
