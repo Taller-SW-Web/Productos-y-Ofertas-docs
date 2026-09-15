@@ -1,4 +1,4 @@
-# Gestión de inventario
+# Control de Stock
 
 ## Descripción
 
