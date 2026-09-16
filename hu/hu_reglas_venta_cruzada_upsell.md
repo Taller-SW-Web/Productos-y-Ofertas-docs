@@ -2,7 +2,7 @@
 
 Proyecto: Módulo de Productos y Ofertas.  
 Responsabilidad: Persona 4 — Axel Cueva.  
-Versión corregida: 2026-09-15.
+Versión corregida: 2026-09-16.
 
 ## Funcionalidad
 
@@ -15,9 +15,9 @@ Reglas de venta cruzada: Cross-sell y Upsell — Valor agregado.
 **para** que los canales de venta presenten recomendaciones pertinentes durante la compra.
 
 **Cross-sell:** complemento del producto consultado.  
-**Upsell:** alternativa que el gestor comercial clasifica explícitamente como superior.
+**Upsell:** alternativa que el gestor comercial clasifica explícitamente como superior y justifica mediante una mejora concreta.
 
-El sistema no determina automáticamente qué producto es “superior” por precio; esa clasificación es una decisión del gestor.
+La clasificación es una decisión comercial manual: por cada alternativa Upsell, el gestor registra una justificación que mencione una característica o prestación identificable en la ficha del producto recomendado (por ejemplo, mejor amortiguación, material más resistente o funcionalidad adicional). Cuando el origen es una categoría, la mejora se justifica respecto del tipo de productos de esa categoría. El sistema comprueba que exista una justificación, pero no comprueba automáticamente su veracidad ni infiere superioridad por un precio mayor.
 
 ## Modelo de ordenamiento consolidado
 
@@ -37,13 +37,14 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 | CA-02 | Cada regla debe incluir nombre, tipo —Cross-sell o Upsell—, origen que la activa, prioridad, fecha/hora de inicio y fin, estado y al menos un producto recomendado. |
 | CA-03 | El origen puede ser un producto específico o una categoría. |
 | CA-04 | Los productos configurados deben existir y estar activos. No se permite recomendar el mismo producto de origen ni repetir un producto dentro de la misma regla. |
-| CA-05 | En una regla Upsell, la alternativa superior es definida explícitamente por el gestor comercial; no se infiere solo por mayor precio. |
+| CA-05 | En una regla UPSELL, el gestor comercial debe clasificar explícitamente cada producto recomendado como alternativa superior y registrar para cada uno una `justificacion_comercial` no vacía que describa una mejora concreta respecto del producto origen o, si el origen es una categoría, respecto del tipo de productos de esa categoría. La mejora debe referirse a una característica o prestación identificable en la ficha del recomendado. El precio mayor por sí solo no es justificación suficiente; el sistema no determina ni verifica automáticamente la superioridad. |
 | CA-06 | El gestor puede establecer el orden de los productos recomendados dentro de cada regla. |
 | CA-07 | Una regla solo participa si está activa, vigente y su condición de producto o categoría coincide con la consulta. |
 | CA-08 | La respuesta excluye productos inactivos o sin stock y elimina duplicados entre reglas. |
 | CA-09 | La respuesta identifica producto recomendado, tipo de recomendación, prioridad de regla, orden de presentación, precio vigente y disponibilidad. |
 | CA-10 | Las recomendaciones se ordenan por prioridad de regla y luego por orden de producto. |
 | CA-11 | Si no existen recomendaciones válidas, se devuelve una lista vacía. Las recomendaciones no agregan ni reemplazan productos automáticamente. |
+| CA-12 | Si falta la justificación comercial de cualquiera de los productos recomendados por una regla UPSELL, el sistema rechaza su creación o modificación e identifica cuál debe completarse. La consulta administrativa muestra la justificación por producto; su exposición en la API para canales no es obligatoria. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -55,9 +56,21 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 
 ### Escenario 2: Configurar una relación Upsell
 
-* **DADO** que existen un producto básico y otro producto que el gestor clasifica comercialmente como alternativa superior,
-* **CUANDO** registra una regla Upsell vigente que los relaciona,
-* **ENTONCES** el sistema guarda la alternativa sin reemplazar automáticamente el producto elegido por el cliente.
+* **DADO** que existen unas zapatillas básicas y otras con una tecnología de amortiguación identificable en su ficha,
+* **CUANDO** el gestor registra una regla UPSELL vigente, clasifica las segundas como alternativa superior y guarda para ellas la justificación «incorporan tecnología de amortiguación adicional»,
+* **ENTONCES** el sistema guarda la relación y su justificación para revisión administrativa, sin reemplazar automáticamente el producto elegido por el cliente.
+
+### Escenario 2A: Rechazar un Upsell sin justificación concreta
+
+* **DADO** que el gestor configura una regla UPSELL con un producto recomendado,
+* **CUANDO** intenta guardarla sin `justificacion_comercial`,
+* **ENTONCES** el sistema rechaza la operación, indica qué producto carece de justificación y conserva los datos para corregirlos.
+
+### Escenario 2B: Justificar un Upsell cuyo origen es una categoría
+
+* **DADO** que el gestor configura una regla UPSELL con origen «Zapatillas de running»,
+* **CUANDO** registra un producto recomendado y justifica una mejora concreta respecto del tipo de productos de esa categoría,
+* **ENTONCES** el sistema guarda la clasificación y la justificación asociada al recomendado, sin verificar automáticamente la superioridad frente a cada producto de la categoría.
 
 ### Escenario 3: Activar una regla por categoría
 
@@ -108,7 +121,7 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 
 | Funcionalidad | Información necesaria |
 | --- | --- |
-| Gestión de Productos — Persona 2 | Identificadores, nombres, imágenes, estado y categoría. |
+| Gestión de Productos — Persona 2 | Identificadores, nombres, imágenes, estado, categoría y ficha de producto para que el gestor pueda identificar la prestación que justifica un Upsell. |
 | Categorías y subcategorías — Persona 1 | Categorías activas para reglas por categoría. |
 | Gestión de Precios — Persona 3 | Precio vigente. |
 | Inventario — Persona 6 | Disponibilidad/stock. |
