@@ -1,170 +1,139 @@
 # Especificación: Gestión de Cupones de Descuento
 
 ## 1. Contexto
-Dentro del Módulo de Productos y Ofertas del Marketplace Multicanal, una de las funcionalidades obligatorias es la gestión de cupones de descuento.
 
-Esta capacidad permite definir códigos promocionales utilizables por los canales de venta y concentra las validaciones necesarias para determinar si un cupón puede aplicarse a una compra según su estado, vigencia y condiciones configuradas.
+La gestión de cupones permite administrar códigos que habilitan promociones previamente configuradas para aplicarse mediante código. Esta capacidad concentra las restricciones propias del cupón y el control seguro de su utilización.
 
 ## 2. Propósito
-Permitir al Gestor Comercial administrar cupones de descuento y permitir que los canales de venta validen si un cupón puede aplicarse a una compra.
 
-## 3. Alcance
+Permitir al Gestor Comercial administrar cupones y permitir a los canales validar y consumir de forma segura un código de descuento.
+
+## 3. Modelo de dominio consolidado
+
+El **Cupón** contiene:
+- código único;
+- estado;
+- referencia a una promoción de modalidad CUPÓN;
+- monto mínimo de compra opcional;
+- límite máximo de usos opcional;
+- usos consumidos;
+- datos de auditoría.
+
+La **Promoción asociada** contiene:
+- tipo de descuento;
+- valor;
+- productos elegibles;
+- fecha/hora de inicio y fin;
+- estado.
+
+Por tanto, el cupón no duplica descuento, productos elegibles ni vigencia.
+
+## 4. Alcance
+
 Incluye:
-- Registrar cupones.
-- Consultar cupones.
-- Modificar cupones.
-- Activar y desactivar cupones.
-- Validar códigos duplicados.
-- Validar fechas de vigencia.
-- Validar monto mínimo de compra.
-- Validar límites de uso cuando estén configurados.
-- Exponer la validación del cupón mediante API.
+- Registrar, consultar, modificar, activar y desactivar cupones.
+- Asociar cada cupón a una promoción de modalidad CUPÓN.
+- Validar códigos duplicados y formato.
+- Validar monto mínimo opcional.
+- Validar límite de usos.
+- Validar estado y vigencia mediante la promoción asociada.
+- Exponer validación por API sin consumir usos.
+- Consumir el uso al recibir la confirmación definitiva del pedido.
+- Garantizar idempotencia y concurrencia del consumo.
+- Consultar información operacional de uso.
 
-## 4. Requisitos
+## 5. Requisitos
 
 ### Requisito 1: Registrar cupones
-El sistema DEBE permitir al Gestor Comercial registrar un cupón indicando como mínimo código, tipo de descuento, valor, fecha de inicio, fecha de fin, estado y condiciones de uso configuradas.
 
-#### Escenario: Registro correcto de cupón
-- DADO que el Gestor Comercial proporciona un código no registrado
-- Y define fechas y valores válidos
-- CUANDO solicita registrar el cupón
-- ENTONCES el sistema crea el cupón
-- Y lo deja disponible para validación
+El sistema DEBE permitir registrar código, estado, promoción asociada, monto mínimo opcional y límite máximo de usos opcional.
 
-#### Escenario: Código duplicado
-- DADO que ya existe un cupón con un código determinado
-- CUANDO el Gestor Comercial intenta registrar otro cupón con el mismo código
-- ENTONCES el sistema rechaza el registro
-- Y comunica que el código ya se encuentra en uso
+La promoción asociada DEBE existir y estar configurada con modalidad CUPÓN.
 
-### Requisito 2: Validar vigencia del cupón
-El sistema DEBE validar que un cupón se encuentre activo y dentro de su periodo de vigencia antes de aprobar su uso.
+El código se normaliza con `trim` y conversión a mayúsculas. Solo se permiten letras A-Z, números, guion medio y guion bajo. La unicidad se evalúa sobre el valor normalizado.
 
-#### Escenario: Cupón vigente
-- DADO que existe un cupón activo
-- Y la fecha actual se encuentra entre su fecha de inicio y fecha de fin
-- CUANDO un canal solicita validar el cupón
-- ENTONCES el sistema continúa con la validación de sus demás condiciones
+### Requisito 2: Validar la promoción asociada
 
-#### Escenario: Cupón vencido
-- DADO que existe un cupón
-- Y la fecha actual es posterior a su fecha de fin
-- CUANDO un canal solicita validarlo
-- ENTONCES el sistema informa que el cupón no es válido
-- Y señala que el motivo es su vencimiento
+Para aceptar el cupón, la promoción asociada DEBE:
+- estar activa;
+- encontrarse dentro de su vigencia;
+- aplicar a los productos de la compra.
+
+El descuento, valor, productos elegibles y vigencia provienen únicamente de dicha promoción.
 
 ### Requisito 3: Validar monto mínimo
-El sistema DEBE verificar el monto mínimo de compra cuando el cupón tenga esta condición configurada.
 
-#### Escenario: Compra cumple monto mínimo
-- DADO que el cupón exige un monto mínimo
-- Y la compra alcanza o supera ese monto
-- CUANDO el sistema valida el cupón
-- ENTONCES considera cumplida la condición de monto mínimo
-
-#### Escenario: Compra no cumple monto mínimo
-- DADO que el cupón exige un monto mínimo
-- Y la compra es inferior al monto configurado
-- CUANDO el sistema valida el cupón
-- ENTONCES rechaza su aplicación
-- Y comunica que no se cumple el monto mínimo requerido
+Si el cupón tiene monto mínimo, la compra elegible debe alcanzar o superar dicho monto. El valor configurado debe ser mayor que 0.
 
 ### Requisito 4: Validar límites de uso
-El sistema DEBE verificar que un cupón no haya superado el número máximo de usos configurado.
 
-#### Escenario: Cupón con usos disponibles
-- DADO que el cupón tiene un límite máximo de usos
-- Y aún no ha alcanzado dicho límite
-- CUANDO se solicita validar el cupón
-- ENTONCES el sistema considera válida esta condición
+Si existe límite máximo:
+- debe ser un entero positivo;
+- no puede reducirse por debajo de los usos consumidos;
+- un cupón agotado no puede validarse como aplicable.
 
-#### Escenario: Cupón sin usos disponibles
-- DADO que el cupón alcanzó el número máximo de usos permitido
-- CUANDO un canal solicita validarlo
-- ENTONCES el sistema rechaza su aplicación
-- Y comunica que el límite de usos fue alcanzado
+### Requisito 5: Validar cupón por API sin consumirlo
 
-### Requisito 5: Activar y desactivar cupones
-El sistema DEBE permitir al Gestor Comercial activar o desactivar un cupón sin eliminarlo.
+La validación DEBE devolver:
+- validez;
+- motivo de rechazo, cuando corresponda;
+- promoción/beneficio asociado;
+- descuento calculado;
+- importe resultante.
 
-#### Escenario: Desactivar cupón
-- DADO que existe un cupón activo
-- CUANDO el Gestor Comercial lo desactiva
-- ENTONCES el sistema cambia su estado a inactivo
-- Y deja de aceptarlo en nuevas validaciones
+La validación, por sí sola, NO incrementa el contador de usos.
 
-#### Escenario: Intentar utilizar un cupón inactivo
-- DADO que existe un cupón dentro de su vigencia
-- Y su estado es inactivo
-- CUANDO un canal solicita validarlo
-- ENTONCES el sistema informa que el cupón no es válido
+### Requisito 6: Consumir un uso
 
-### Requisito 6: Modificar cupones
-El sistema DEBE permitir al Gestor Comercial modificar la configuración de un cupón existente.
+El uso se consume cuando Ventas y Postventa confirma definitivamente el pedido después de la aprobación del pago o del evento equivalente de confirmación en el canal.
 
-#### Escenario: Modificación válida
-- DADO que existe un cupón registrado
-- Y el Gestor Comercial ingresa nuevos datos válidos
-- CUANDO guarda los cambios
-- ENTONCES el sistema actualiza el cupón
+Solo se consume si el cupón fue el beneficio finalmente seleccionado.
 
-#### Escenario: Modificación inválida
-- DADO que existe un cupón registrado
-- Y se ingresan fechas o valores inválidos
-- CUANDO se intenta guardar la modificación
-- ENTONCES el sistema rechaza los cambios
-- Y conserva la última configuración válida
+### Requisito 7: Garantizar idempotencia
 
-### Requisito 7: Validar cupón por API
-El sistema DEBE exponer mediante API la validación de cupones para ser consumida por los canales de venta.
+La combinación `pedido_id + cupon_id` debe ser única para el registro de consumo. Reintentos o mensajes duplicados de la misma confirmación no incrementan el contador.
 
-#### Escenario: Cupón válido
-- DADO que el código existe
-- Y está activo y vigente
-- Y la compra cumple sus condiciones
-- CUANDO un canal solicita validarlo
-- ENTONCES el sistema informa que el cupón es válido
-- Y devuelve el beneficio correspondiente
+### Requisito 8: Garantizar concurrencia
 
-#### Escenario: Cupón inexistente
-- DADO que un canal envía un código que no existe
-- CUANDO solicita validarlo
-- ENTONCES el sistema informa que el cupón no es válido
-- Y señala que el código no fue encontrado
+Si varios pedidos compiten por los últimos usos, el sistema debe asegurar atómicamente que el contador nunca supere el límite máximo.
 
-### Requisito 8: Consultar cupones
-El sistema DEBE permitir al Gestor Comercial consultar los cupones registrados junto con su estado y periodo de vigencia.
+### Requisito 9: Resolver convivencia con promoción automática
 
-#### Escenario: Consulta con cupones existentes
-- DADO que existen cupones registrados
-- CUANDO el Gestor Comercial accede a la consulta
-- ENTONCES el sistema muestra los cupones disponibles
-- Y muestra su estado y fechas de vigencia
+Un cupón válido y una promoción automática no se acumulan.
 
-#### Escenario: Consulta sin cupones
-- DADO que no existen cupones registrados
-- CUANDO el Gestor Comercial realiza la consulta
-- ENTONCES el sistema muestra una lista vacía
-- Y no genera un error
+Se aplica únicamente el beneficio que produzca el menor importe resultante. En empate se prioriza el cupón.
 
-## 5. Requisitos no funcionales
-- Rendimiento: La validación de un cupón debe responder en un tiempo adecuado para no retrasar perceptiblemente el proceso de compra.
-- Seguridad: Solo usuarios autenticados y autorizados como Gestor Comercial pueden crear, modificar, activar o desactivar cupones.
-- Auditoría: El sistema debe conservar información de creación y última modificación de cada cupón.
-- Consistencia: La evaluación de fechas debe utilizar una referencia temporal consistente en el backend.
-- Integración: La validación de cupones debe exponerse mediante API sin acceso directo de otros módulos a la base de datos.
+### Requisito 10: Anulación posterior
 
-## 6. Fuera de alcance
-- Gestión de ofertas y promociones — se especifica como capacidad independiente.
-- Gestión de reglas de venta cruzada y upselling — se especifica como capacidad independiente.
-- Procesamiento del pago — corresponde al canal o módulo responsable de ventas.
-- Gestión de productos y precios base — corresponde a otras funcionalidades del Módulo de Productos y Ofertas.
-- Reembolsos y devoluciones — corresponden al Módulo de Ventas y Postventa.
+En el alcance inicial, una anulación posterior del pedido NO repone automáticamente el uso del cupón.
+
+### Requisito 11: Consultar cupones
+
+La consulta administrativa DEBE mostrar:
+- código;
+- promoción asociada;
+- estado;
+- monto mínimo;
+- límite máximo;
+- usos consumidos;
+- usos disponibles, cuando exista límite.
+
+## 6. Requisitos no funcionales
+
+- Rendimiento: la validación no debe retrasar perceptiblemente la compra.
+- Seguridad: solo Gestor Comercial autorizado administra cupones.
+- Auditoría: conservar creación y última modificación.
+- Consistencia: usar referencia temporal consistente.
+- Concurrencia: consumo atómico y seguro ante solicitudes simultáneas.
+- Integración: API y eventos sin acceso directo de otros módulos a la base de datos.
+
+## 7. Fuera de alcance
+
+- Definir el descuento, productos elegibles y vigencia: corresponde a Gestión de Promociones.
+- Procesamiento del pago.
+- Reembolsos y devoluciones.
+- Reposición automática del uso por anulación.
 
 ## Criterio de completitud
-La capacidad se considera correctamente implementada cuando:
-- Todos los requisitos están implementados.
-- Todos los escenarios definidos se cumplen.
-- Los requisitos no funcionales aplicables se cumplen.
-- No se han incorporado funcionalidades fuera del alcance.
+
+La capacidad se considera correctamente implementada cuando todos los requisitos anteriores se cumplen.

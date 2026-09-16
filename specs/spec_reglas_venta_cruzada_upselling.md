@@ -1,149 +1,124 @@
 # Especificación: Reglas de Venta Cruzada y Upselling
 
 ## 1. Contexto
-Como valor agregado del Módulo de Productos y Ofertas, se propone incorporar reglas de venta cruzada y upselling para recomendar productos relacionados a los clientes a través de los distintos canales de venta.
 
-La capacidad se basa en reglas configuradas manualmente por el Gestor Comercial. Por ejemplo, al consultar unas zapatillas, el sistema puede sugerir medias deportivas como venta cruzada o una alternativa superior como upselling.
+La capacidad permite configurar manualmente reglas de Cross-sell y Upsell para exponer recomendaciones a Marketplace, Chatbot y Retail.
 
 ## 2. Propósito
-Permitir al Gestor Comercial configurar relaciones entre productos y permitir que los canales de venta consulten recomendaciones de cross-sell y upselling mediante API.
+
+Permitir al Gestor Comercial definir recomendaciones basadas en producto o categoría, ordenarlas de forma determinista y exponer únicamente alternativas vigentes y disponibles.
 
 ## 3. Alcance
+
 Incluye:
-- Registrar reglas de cross-sell.
-- Registrar reglas de upselling.
-- Asociar un producto origen con uno o más productos recomendados.
-- Definir prioridad de recomendaciones.
+- Registrar reglas Cross-sell y Upsell.
+- Definir origen por producto o por categoría.
+- Asociar uno o más productos recomendados.
+- Definir prioridad de la regla.
+- Definir orden de los productos dentro de la regla.
+- Definir periodo de vigencia.
 - Activar y desactivar reglas.
-- Validar vigencia de reglas.
+- Validar existencia y estado activo de productos.
+- Filtrar por stock.
+- Deduplicar recomendaciones.
+- Devolver precio vigente y disponibilidad.
 - Consultar recomendaciones mediante API.
-- Ordenar recomendaciones según prioridad configurada.
 
-## 4. Requisitos
+## 4. Modelo de prioridad y orden
 
-### Requisito 1: Registrar reglas de cross-sell
-El sistema DEBE permitir al Gestor Comercial relacionar un producto origen con uno o más productos complementarios.
+Cada regla posee `prioridad`, donde `1` representa la mayor prioridad.
 
-#### Escenario: Registro válido de cross-sell
-- DADO que existen un producto origen y un producto recomendado diferentes
-- CUANDO el Gestor Comercial registra una regla de tipo CROSS_SELL
-- ENTONCES el sistema almacena la relación
-- Y la deja disponible para futuras consultas
+Cada producto relacionado dentro de una regla posee `orden`.
 
-#### Escenario: Producto recomendado igual al producto origen
-- DADO que el Gestor Comercial selecciona el mismo producto como origen y recomendado
-- CUANDO intenta registrar la regla
-- ENTONCES el sistema rechaza el registro
-- Y comunica que un producto no puede recomendarse a sí mismo
+La salida se ordena primero por `prioridad` ascendente y luego por `orden` ascendente.
 
-### Requisito 2: Registrar reglas de upselling
-El sistema DEBE permitir al Gestor Comercial relacionar un producto origen con otro producto sugerido como alternativa superior.
+Si el mismo producto recomendado aparece por múltiples reglas, se conserva una sola aparición: la primera según el orden anterior.
 
-#### Escenario: Registro válido de upselling
-- DADO que existen un producto origen y un producto recomendado diferentes
-- CUANDO el Gestor Comercial registra una regla de tipo UPSELL
-- ENTONCES el sistema almacena la relación
-- Y la deja disponible para futuras consultas
+## 5. Requisitos
 
-#### Escenario: Producto inexistente
-- DADO que se intenta configurar una regla con un producto inexistente
-- CUANDO el sistema valida la relación
-- ENTONCES rechaza el registro
-- Y comunica que el producto indicado no es válido
+### Requisito 1: Registrar reglas de Cross-sell
 
-### Requisito 3: Definir prioridad de recomendaciones
-El sistema DEBE permitir asignar una prioridad a las reglas configuradas.
+El sistema DEBE permitir relacionar un origen —producto o categoría— con uno o más productos complementarios.
 
-#### Escenario: Varias recomendaciones válidas
-- DADO que existen varias reglas activas y vigentes para un mismo producto
-- Y cada regla posee una prioridad
-- CUANDO un canal solicita recomendaciones
-- ENTONCES el sistema devuelve los productos ordenados según la prioridad definida
+### Requisito 2: Registrar reglas de Upsell
 
-#### Escenario: Prioridad inválida
-- DADO que el Gestor Comercial intenta registrar una regla con una prioridad inválida
-- CUANDO solicita guardar la regla
-- ENTONCES el sistema rechaza la configuración
-- Y solicita un valor de prioridad válido
+El sistema DEBE permitir relacionar un origen con uno o más productos que el Gestor Comercial haya clasificado explícitamente como alternativas superiores.
 
-### Requisito 4: Activar y desactivar reglas
-El sistema DEBE permitir al Gestor Comercial activar o desactivar una regla sin eliminarla.
+El sistema NO infiere que un producto es superior únicamente porque su precio sea mayor.
 
-#### Escenario: Desactivar una regla
-- DADO que existe una regla activa
-- CUANDO el Gestor Comercial la desactiva
-- ENTONCES el sistema cambia su estado a inactivo
-- Y deja de considerarla en futuras recomendaciones
+### Requisito 3: Validar productos
 
-#### Escenario: Regla inactiva dentro de vigencia
-- DADO que una regla se encuentra dentro de su periodo de vigencia
-- Y su estado es inactivo
-- CUANDO un canal consulta recomendaciones
-- ENTONCES el sistema no devuelve dicha regla
+Todos los productos configurados como origen específico o recomendados DEBEN existir y estar activos.
 
-### Requisito 5: Validar vigencia de reglas
-El sistema DEBE considerar el periodo de vigencia de cada regla antes de exponerla como recomendación.
+No se permite recomendar el mismo producto de origen ni repetir un producto dentro de una misma regla.
 
-#### Escenario: Regla activa y vigente
-- DADO que una regla está activa
-- Y la fecha actual se encuentra dentro de su periodo de vigencia
-- CUANDO un canal consulta recomendaciones para el producto origen
-- ENTONCES el sistema incluye el producto relacionado
+### Requisito 4: Definir prioridad y orden
 
-#### Escenario: Regla vencida
-- DADO que una regla tiene una fecha de fin anterior a la fecha actual
-- CUANDO un canal consulta recomendaciones
-- ENTONCES el sistema no incluye esa regla
+Cada regla DEBE tener una prioridad válida.
 
-### Requisito 6: Consultar recomendaciones por API
-El sistema DEBE exponer mediante API las recomendaciones configuradas para ser consumidas por los canales de venta.
+Cada producto recomendado DEBE tener un orden de presentación dentro de la regla.
 
-#### Escenario: Producto con recomendaciones
-- DADO que un producto tiene reglas activas y vigentes
-- CUANDO un canal solicita sus recomendaciones
-- ENTONCES el sistema devuelve los productos recomendados
-- Y devuelve el tipo de recomendación
-- Y devuelve la prioridad correspondiente
+### Requisito 5: Validar vigencia y estado
 
-#### Escenario: Producto sin recomendaciones
-- DADO que un producto no posee reglas activas y vigentes
-- CUANDO un canal solicita sus recomendaciones
-- ENTONCES el sistema responde con una lista vacía
-- Y no genera un error
+Cada regla DEBE incluir fecha/hora de inicio y fin, con inicio anterior al fin, además de estado ACTIVA o INACTIVA.
 
-### Requisito 7: Consultar reglas configuradas
-El sistema DEBE permitir al Gestor Comercial consultar las reglas de cross-sell y upselling registradas.
+Solo las reglas activas y vigentes participan en las consultas.
 
-#### Escenario: Consulta con reglas existentes
-- DADO que existen reglas registradas
-- CUANDO el Gestor Comercial accede a la consulta
-- ENTONCES el sistema muestra las reglas
-- Y muestra su tipo, prioridad, estado y vigencia
+### Requisito 6: Evaluar reglas por producto o categoría
 
-#### Escenario: Consulta sin reglas
-- DADO que no existen reglas registradas
-- CUANDO el Gestor Comercial realiza la consulta
-- ENTONCES el sistema muestra una lista vacía
-- Y no genera un error
+Una regla puede activarse:
+- por coincidencia con un producto origen específico; o
+- porque el producto consultado pertenece a la categoría configurada como origen.
 
-## 5. Requisitos no funcionales
-- Rendimiento: La consulta de recomendaciones debe responder en un tiempo adecuado para no afectar perceptiblemente la interacción del cliente.
-- Seguridad: Solo usuarios autenticados y autorizados como Gestor Comercial pueden crear, modificar, activar o desactivar reglas.
-- Auditoría: El sistema debe conservar información de creación y última modificación de cada regla.
-- Integración: Las recomendaciones deben exponerse mediante API para los canales de venta.
-- Escalabilidad: La estructura de reglas debe permitir incorporar nuevas relaciones entre productos sin modificar la lógica de los canales consumidores.
+### Requisito 7: Filtrar disponibilidad
 
-## 6. Fuera de alcance
-- Recomendaciones mediante inteligencia artificial o aprendizaje automático — esta capacidad se limita a reglas configuradas manualmente.
-- Recomendaciones basadas en historial de navegación o compras — no forman parte del alcance inicial.
-- Gestión de promociones — se especifica como capacidad independiente.
-- Gestión de cupones — se especifica como capacidad independiente.
-- Gestión de productos y stock — corresponde a otras funcionalidades del Módulo de Productos y Ofertas.
-- Modificación de datos pertenecientes a otros módulos — la integración se realiza mediante APIs.
+Antes de devolver recomendaciones, el sistema DEBE excluir productos:
+- inactivos;
+- inexistentes;
+- sin stock disponible.
+
+### Requisito 8: Deduplicar
+
+Si varias reglas producen el mismo producto recomendado, la salida DEBE contenerlo una sola vez, conservando la primera aparición de acuerdo con prioridad y orden.
+
+### Requisito 9: Consultar recomendaciones por API
+
+La respuesta DEBE incluir como mínimo:
+- identificador del producto recomendado;
+- tipo CROSS_SELL o UPSELL;
+- prioridad de la regla;
+- orden de presentación;
+- precio vigente;
+- disponibilidad.
+
+Si no existen resultados válidos, se devuelve una lista vacía.
+
+### Requisito 10: Consultar reglas configuradas
+
+La consulta administrativa DEBE mostrar como mínimo:
+- nombre;
+- tipo;
+- origen;
+- prioridad;
+- estado;
+- fecha/hora de inicio y fin;
+- productos recomendados y su orden.
+
+## 6. Requisitos no funcionales
+
+- Rendimiento: respuesta adecuada para interacción en tiempo real.
+- Seguridad: solo Gestor Comercial autorizado administra reglas.
+- Auditoría: registrar creación y última modificación.
+- Integración: recomendaciones expuestas por API.
+- Escalabilidad: permitir incorporar nuevas reglas sin modificar la lógica de los canales consumidores.
+
+## 7. Fuera de alcance
+
+- Inteligencia artificial o machine learning.
+- Historial de navegación o compras.
+- Determinar automáticamente si una alternativa es “superior”.
+- Agregar o reemplazar automáticamente productos en una compra.
 
 ## Criterio de completitud
-La capacidad se considera correctamente implementada cuando:
-- Todos los requisitos están implementados.
-- Todos los escenarios definidos se cumplen.
-- Los requisitos no funcionales aplicables se cumplen.
-- No se han incorporado funcionalidades fuera del alcance.
+
+La capacidad se considera correctamente implementada cuando todos los requisitos anteriores se cumplen.
