@@ -1,4 +1,4 @@
-# Historia de Usuario: Gestión de Precios Individuales y Masivos
+# Historia de Usuario: Gestión de Precios (Individuales y Masivos)
 
 ---
 
@@ -7,10 +7,8 @@
 | Parámetro | Detalle |
 | :--- | :--- |
 | **Rol (Como)** | Gestor Comercial |
-| **Acción (Quiero)** | Actualizar y programar precios de forma individual y mediante procesamiento por lotes (archivo masivo), manteniendo un registro histórico inmutable y auditable de cada cambio |
-| **Beneficio (Para)** | Garantizar que los canales de venta consulten precios exactos y vigentes, asegurando trazabilidad ante fluctuaciones comerciales y minimizando errores operativos en el catálogo deportivo |
-
-> **Nota:** La fijación de precios contempla un valor base mayor a cero en moneda oficial (PEN), manejo de fechas de vigencia programada y un mecanismo de auditoría transaccional para evitar inconsistencias en compras concurrentes.
+| **Acción (Quiero)** | Actualizar el precio regular y el precio de oferta de productos del catálogo de forma individual o mediante la carga masiva de archivos estructurados (.csv / .xlsx) |
+| **Beneficio (Para)** | Mantener calibrados los precios base y ofertas directas de los artículos deportivos en todos los canales de venta, previniendo márgenes negativos, precios erróneos y pérdidas comerciales |
 
 ---
 
@@ -18,47 +16,47 @@
 
 | ID | Criterio |
 | :---: | :--- |
-| **CA-01** | **Seguridad y Permisos:** Solo un gestor comercial autenticado y con permisos explícitos de administración de precios puede consultar historiales, actualizar importes individuales o subir lotes de actualización. Cualquier petición no autorizada debe ser rechazada con código HTTP `401` o `403`. |
-| **CA-02** | **Actualización Individual:** Debe permitir registrar el nuevo precio de un producto indicando: identificador de producto, nuevo precio regular, fecha/hora de inicio de vigencia (opcional: fecha fin) y motivo del cambio. El precio debe ser un número positivo mayor a 0 (dos decimales). |
-| **CA-03** | **Procesamiento por Lotes (Masivo):** El sistema debe permitir la carga de archivos estructurados (CSV/Excel) con columnas mínimas: `SKU / product_id`, `precio_nuevo`, `fecha_vigencia_desde`, `motivo`. El procesamiento debe ejecutarse en segundo plano (asíncrono) para no bloquear la interfaz ante archivos extensos. |
-| **CA-04** | **Validación y Resiliencia del Lote:** Durante la carga masiva, el sistema debe validar formato, existencia de los productos y valores positivos fila por fila. Debe generarse un reporte consolidado con: total procesados, total exitosos, total fallidos y detalle del motivo de error por fila (ej. "SKU inexistente", "Precio menor o igual a 0"). |
-| **CA-05** | **Auditoría e Inmutabilidad:** Todo cambio de precio (individual o por lote) debe registrarse en una tabla/colección de auditoría histórica que almacene: `producto_id`, `precio_anterior`, `precio_nuevo`, `usuario_id`, `fecha_hora_modificacion`, `tipo_operacion` (Individual / Lote), `archivo_origen_id` (si aplica) e `ip_origen`. Este registro es de solo lectura (no editable ni eliminable). |
-| **CA-06** | **Consulta de Precio Vigente:** El motor debe exponer un endpoint/interfaz para consultar el precio oficial de un producto a una fecha/hora dada. Si no existe un precio programado a futuro, rige el último precio consolidado en vigencia. |
-| **CA-07** | **Atomicidad y Concurrencia:** La actualización individual debe operar bajo transacciones aisladas para impedir condiciones de carrera. En operaciones masivas, cada fila válida se procesa como una unidad transaccional independiente o con opción de rollback completo según el modo de carga seleccionado. |
+| **CA-01** | **Seguridad y Permisos:** Solo usuarios autenticados mediante token JWT con rol `GESTOR_COMERCIAL` o `ADMIN_CATALOGO` pueden consultar o modificar precios. Peticiones sin autorización deben ser rechazadas con código HTTP `401 Unauthorized` o `403 Forbidden`. |
+| **CA-02** | **Modelo de Precios y Reglas de Negocio:** Cada producto gestiona `precio_regular` y opcionalmente `precio_oferta`. El sistema debe validar que: (a) el `precio_regular` sea un valor numérico estrictamente mayor a 0.00, y (b) si se define `precio_oferta`, este debe ser estrictamente mayor a 0.00 y menor al `precio_regular` (`precio_oferta < precio_regular`). |
+| **CA-03** | **Actualización Individual:** Debe permitir modificar el `precio_regular` y/o `precio_oferta` indicando el SKU del producto. Ante datos válidos, persiste los cambios, actualiza la fecha de modificación, responde en un tiempo menor a 300 ms con código HTTP `200 OK` y emite un evento asíncrono hacia el componente de auditoría y canales dependientes. |
+| **CA-04** | **Rechazo por Datos Inválidos (Individual):** Si el precio regular es negativo/cero o el precio de oferta es mayor o igual al regular, el sistema rechaza la operación con HTTP `400 Bad Request`, conserva intactos los valores en base de datos y detalla el motivo del rechazo. |
+| **CA-05** | **Carga y Procesamiento Masivo:** Permite subir archivos estructurados (CSV o XLSX) con columnas obligatorias `sku` y `precio_regular`, y columna opcional `precio_oferta`. El archivo debe validarse por tamaño y MIME type. Archivos de hasta 5,000 registros deben procesarse en segundo plano en menos de 10 segundos. |
+| **CA-06** | **Resiliencia y Reporte del Lote:** Durante el procesamiento masivo, el sistema valida fila por fila. Aplica los cambios en las filas válidas (o descarta el lote según la política de transacción configurada) y genera un reporte descargable con el resumen de la carga y el detalle de errores por número de fila y SKU (ej. "Fila 12: SKU no encontrado", "Fila 45: Precio de oferta mayor o igual al regular"). |
+| **CA-07** | **Delimitación frente a Promociones:** El precio regular y el precio de oferta constituyen los precios base/lista del catálogo. Las promociones por campaña, cupones y combos aplicados por el módulo comercial calculan descuentos netos sobre estos precios sin sobrescribir la configuración maestra del producto. |
 
 ---
 
 ## 3. Escenarios (Dado - Cuando - Entonces / Gherkin)
 
-### Escenario 1: Actualizar precio individual exitosamente
-* **Dado** que el gestor comercial cuenta con permisos y el producto con SKU `DEP-101` existe en el catálogo,
-* **Cuando** ingresa un nuevo precio de S/ 149.90 con vigencia inmediata y motivo "Ajuste de temporada",
-* **Entonces** el sistema actualiza el precio vigente del producto, genera el registro de auditoría correspondiente con el precio previo y el usuario responsable, y confirma la actualización.
+### Escenario 1: Actualización exitosa de precio individual
+* **Dado** que el gestor comercial autenticado con rol `GESTOR_COMERCIAL` visualiza el producto con SKU `NK-DEP-001` con precio regular de S/ 120.00,
+* **Cuando** ingresa un nuevo precio regular de S/ 150.00 y confirma la acción,
+* **Entonces** el sistema persiste el nuevo precio de S/ 150.00, actualiza la fecha de modificación, emite el evento de auditoría correspondiente y retorna HTTP 200 con el mensaje "Precio actualizado exitosamente".
 
-### Escenario 2: Rechazar precio individual inválido
-* **Dado** que el gestor comercial intenta modificar el precio de un producto,
-* **Cuando** introduce un monto menor o igual a 0 (ej. S/ -15.00) o un valor no numérico,
-* **Entonces** el sistema bloquea la transacción, no altera el precio actual y emite una alerta indicando que el precio debe ser un valor decimal estrictamente positivo.
+### Escenario 2: Rechazo de precio regular negativo o cero
+* **Dado** que el gestor comercial edita el precio de un producto,
+* **Cuando** ingresa un valor menor o igual a 0.00 (ej. S/ -15.00 o S/ 0.00) en el precio regular e intenta guardar,
+* **Entonces** el sistema rechaza la solicitud con HTTP 400 Bad Request, mantiene intactos los valores previos en la base de datos y muestra el mensaje: "El precio regular debe ser un valor numérico estrictamente mayor a 0".
 
-### Escenario 3: Carga masiva procesada de manera asíncrona
-* **Dado** que el gestor comercial sube un archivo CSV con 500 cambios de precio de zapatillas deportivas,
-* **Cuando** el sistema recibe y valida la estructura del archivo,
-* **Entonces** responde con un identificador de tarea (`job_id`) en estado "En proceso", ejecuta la validación/actualización por lotes en segundo plano y notifica cuando la tarea finaliza.
+### Escenario 3: Rechazo de precio de oferta superior o igual al regular
+* **Dado** que un producto tiene un precio regular de S/ 80.00,
+* **Cuando** el gestor comercial intenta registrar un precio de oferta de S/ 95.00,
+* **Entonces** el sistema bloquea la persistencia, retorna HTTP 400 y notifica: "El precio de oferta no puede ser mayor o igual al precio regular".
 
-### Escenario 4: Carga masiva con errores parciales
-* **Dado** que el archivo masivo contiene 100 filas, donde 95 tienen datos correctos y 5 contienen SKUs inexistentes o precios negativos,
-* **Cuando** finaliza el procesamiento del lote,
-* **Entonces** el sistema aplica las 95 actualizaciones válidas, registra en auditoría dichos cambios y genera un archivo descargable con el reporte de inconsistencias de las 5 filas erróneas para su corrección.
+### Escenario 4: Procesamiento masivo de archivo válido
+* **Dado** que el gestor comercial carga un archivo `precios_campana.csv` con 250 filas válidas con cabeceras `sku`, `precio_regular` y `precio_oferta`,
+* **Cuando** confirma la ejecución de la carga masiva,
+* **Entonces** el microservicio procesa el lote en segundo plano, impacta los precios en el catálogo, emite los eventos de auditoría y retorna un consolidado indicando "250 productos actualizados con éxito, 0 errores".
 
-### Escenario 5: Consulta de auditoría histórica
-* **Dado** que un gestor comercial o auditor necesita verificar la trazabilidad de un producto de alta rotación,
-* **Cuando** consulta el historial de precios del producto `DEP-200`,
-* **Entonces** el sistema retorna la línea de tiempo completa en orden cronológico inverso, detallando fechas, precios anteriores, nuevos valores, usuario responsable y tipo de ajuste.
+### Escenario 5: Carga masiva con filas erróneas y generación de reporte
+* **Dado** que el archivo masivo cargado contiene 100 filas, de las cuales 3 tienen SKUs no existentes y 2 tienen precios no válidos o incongruentes,
+* **Cuando** se ejecuta el procesamiento masivo,
+* **Entonces** el sistema actualiza las 95 filas correctas, omite las 5 erróneas y genera un reporte detallado descargable especificando el número de fila, el SKU y la causa del fallo.
 
-### Escenario 6: Rechazo de acceso por falta de permisos (Seguridad)
-* **Dado** que un usuario sin rol de administrador comercial (ej. un vendedor de tienda física o cliente) intenta emitir un payload a la API de actualización de precios,
-* **Cuando** la solicitud llega al microservicio,
-* **Entonces** el sistema valida el token JWT, deniega el acceso con error HTTP `403 Forbidden` y registra el intento no autorizado en los logs de seguridad.
+### Escenario 6: Rechazo por perfil no autorizado
+* **Dado** que un usuario autenticado sin rol comercial o de administración de catálogo intenta enviar un payload al endpoint de modificación de precios,
+* **Cuando** la petición alcanza el microservicio,
+* **Entonces** el sistema deniega el acceso con código HTTP 403 Forbidden y no procesa ningún cambio.
 
 ---
 
@@ -66,32 +64,30 @@
 
 | Módulo | Necesidad de Interacción | Información que Recibe | Información que Entrega |
 | :--- | :--- | :--- | :--- |
-| **Canal Marketplace (Cliente)** | Consultar el precio unitario base de los artículos en catálogo y checkout. | Identificadores de productos solicitados (`product_id` / `sku`). | Precio vigente oficial, moneda y fecha de corte. |
-| **Canal Retail (Vendedor)** | Obtener el precio oficial para la generación de pedidos y cotizaciones en tienda física. | `product_id` consultados desde la interfaz de venta asistida. | Precio unitario oficial vigente. |
-| **Canal Chatbot (Cliente)** | Responder consultas de precio de productos deportivos en lenguaje natural. | SKU o identificador del producto consultado. | Precio unitario vigente. |
-| **Ventas y Postventa** | Validar que el importe total del pedido corresponda a los precios reales al momento de la compra. | Identificador de pedido, detalle de ítems y timestamp de la orden. | Validación de consistencia de precios unitarios históricos. *(Evita manipulación de precios desde el cliente)*. |
-| **Seguridad y Usuarios** | Validar identidad, token JWT y roles autorizados para operar el motor de precios. | Token de autenticación, rol del usuario e identificador de cuenta. | Confirmación de autorización o rechazo de acceso. |
+| **Canal Marketplace (Cliente)** | Consultar el precio regular y de oferta vigente para catálogo, detalle de producto y carrito. | Identificadores de productos (`sku` / `product_id`). | `precio_regular`, `precio_oferta` (si aplica), moneda oficial (PEN) y estado del precio. |
+| **Canal Retail (Vendedor)** | Obtener precios vigentes para la venta asistida y emisión de boleta en tienda física. | Identificadores de productos (`sku`). | `precio_regular` y `precio_oferta` vigentes de cada artículo. |
+| **Canal Chatbot (Cliente)** | Responder dudas de precios y ofertas de productos en lenguaje natural. | Término de búsqueda o SKU del producto. | Precios vigentes de venta. |
+| **Ventas y Postventa** | Validar la veracidad del precio al momento de liquidar y confirmar un pedido. | Identificador del pedido, SKUs, precios cobrados y timestamp. | Confirmación de validez de los precios unitarios de catálogo vigentes al momento de la orden. |
+| **Seguridad y Usuarios** | Autenticación de identidad y validación de roles de gestión comercial. | Token JWT con claims de usuario y roles asignados. | Respuesta de validación de credenciales / acceso. |
+| **Historial de Auditoría** | Registrar cada cambio efectivo de precios de manera desacoplada. | Evento con SKU, precios regular/oferta anterior y nuevo, usuario ID, email, IP y timestamp. | Confirmación de evento recibido. |
 
 ---
 
 ## 5. Dependencias del Dominio (Productos y Ofertas)
 
-*Coordinaciones internas con las demás responsabilidades dentro del mismo módulo:*
-
 * **Gestión de productos:**
-  * *Datos requeridos:* Identificador único (`product_id`), SKU y estado del producto (Activo/Inactivo).
-  * *Propósito:* Validar la existencia operativa del producto antes de asociar o actualizar un precio.
-* **Gestión de ofertas, promociones y cupones (Historia compañera):**
-  * *Datos requeridos:* Notificación de actualización de precio base.
-  * *Propósito:* Servir como punto de partida (precio lista) sobre el cual se calcula el porcentaje o monto de descuento de una oferta o cupón. *(Regla: una promoción nunca sobrescribe el precio base en la tabla maestra, calcula un precio neto resultante)*.
-* **Gestión de paquetes / combos:**
-  * *Datos requeridos:* Precio unitario de los productos componentes.
-  * *Propósito:* Validar que el precio de un combo deportivo guarde coherencia con la suma de los precios individuales.
+  * *Datos requeridos:* Existencia operativa del `sku` o `product_id` y estado del artículo (Activo/Inactivo).
+  * *Propósito:* Garantizar que no se fijen precios a artículos inexistentes o eliminados.
+* **Gestión de ofertas, promociones y cupones:**
+  * *Datos requeridos:* `precio_regular` y `precio_oferta` actualizados.
+  * *Propósito:* Tomar el precio vigente como base sobre la cual se calculan descuentos adicionales de campañas, 2x1 o cupones de porcentaje.
+* **Gestión de combos y paquetes:**
+  * *Datos requeridos:* Precios vigentes de los artículos individuales.
+  * *Propósito:* Validar consistencia comercial del precio final del paquete deportivo respecto a sus partes.
 
 ---
 
 ## 6. Reglas de Negocio Pendientes de Definición
 
-- [ ] **Política de colisión temporal en programación masiva:** Definir si una nueva carga masiva programada sobrescribe una vigencia futura ya calendarizada para el mismo producto o si debe alertar duplicidad.
-- [ ] **Estrategia transaccional del lote (Todo o Nada vs. Parcial):** Confirmar con el negocio si la carga masiva debe permitir actualización parcial (se guardan las filas correctas y se rechazan las erróneas) o si un solo error en el archivo debe forzar un `rollback` de todo el lote.
-- [ ] **Margen de variación y alertas de seguridad:** Establecer si debe existir un porcentaje de variación máximo permitido por cambio (ej. no reducir un precio más del 80% o subir más del 300% de golpe) que requiera una doble aprobación de un supervisor para evitar errores humanos de tipeo en el archivo masivo.
+- [ ] **Política por defecto ante lote con errores:** Ratificar si el entorno de producción operará de manera predeterminada en modo *parcial* (aplicar válidas y rechazar inválidas) o en modo *estricto/atómico* (descartar todo el archivo ante un solo error).
+- [ ] **Margen de variación porcentual de advertencia:** Definir si variaciones abruptas de precio (ej. reducciones mayores al 70%) deben requerir una doble confirmación en interfaz antes de persistirse para mitigar errores de digitación.
