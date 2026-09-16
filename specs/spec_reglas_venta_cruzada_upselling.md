@@ -12,6 +12,7 @@ Permitir al Gestor Comercial definir recomendaciones basadas en producto o categ
 
 Incluye:
 - Registrar reglas Cross-sell y Upsell.
+- Registrar una justificación comercial por cada producto recomendado como Upsell.
 - Definir origen por producto o por categoría.
 - Asociar uno o más productos recomendados.
 - Definir prioridad de la regla.
@@ -42,9 +43,13 @@ El sistema DEBE permitir relacionar un origen —producto o categoría— con un
 
 ### Requisito 2: Registrar reglas de Upsell
 
-El sistema DEBE permitir relacionar un origen con uno o más productos que el Gestor Comercial haya clasificado explícitamente como alternativas superiores.
+El sistema DEBE permitir relacionar un origen (producto o categoría) con uno o más productos clasificados expresamente por el Gestor Comercial como alternativas superiores.
 
-El sistema NO infiere que un producto es superior únicamente porque su precio sea mayor.
+**Criterio de negocio acordado para esta funcionalidad:** la superioridad es una **clasificación comercial manual y justificada**, no el resultado de una comparación automática. Por cada producto recomendado en una regla UPSELL, el gestor DEBE registrar una `justificacion_comercial` que identifique una mejora concreta frente al producto origen o, si el origen es una categoría, frente al tipo de productos comprendidos por ella (por ejemplo, mayor amortiguación, material de mayor resistencia o una funcionalidad adicional). La justificación DEBE referirse a una característica o prestación identificable en la ficha del producto recomendado, de modo que pueda revisarse administrativamente.
+
+El sistema DEBE exigir que la justificación no esté vacía al crear o modificar la regla; el gestor es responsable de la pertinencia y veracidad de la clasificación. El sistema NO verifica automáticamente si la mejora declarada es verdadera, NO calcula una puntuación de superioridad y NO considera el precio más alto, por sí solo, como justificación suficiente. No se exige una diferencia de precio, ni que origen y recomendado pertenezcan a la misma categoría.
+
+Si una regla UPSELL utiliza origen por categoría, el gestor DEBE justificar la mejora respecto del tipo de productos de esa categoría; la plataforma no comprueba individualmente la superioridad respecto de cada producto que coincida con ella. La `justificacion_comercial` se conserva asociada a cada producto recomendado para consulta y revisión administrativa; no es obligatorio exponerla en la API consumida por los canales.
 
 ### Requisito 3: Validar productos
 
@@ -102,7 +107,8 @@ La consulta administrativa DEBE mostrar como mínimo:
 - prioridad;
 - estado;
 - fecha/hora de inicio y fin;
-- productos recomendados y su orden.
+- productos recomendados y su orden;
+- justificación comercial de cada producto recomendado cuando la regla sea UPSELL.
 
 ## 6. Requisitos no funcionales
 
@@ -116,7 +122,7 @@ La consulta administrativa DEBE mostrar como mínimo:
 
 - Inteligencia artificial o machine learning.
 - Historial de navegación o compras.
-- Determinar automáticamente si una alternativa es “superior”.
+- Determinar o verificar automáticamente si una alternativa es “superior”.
 - Agregar o reemplazar automáticamente productos en una compra.
 
 ## Criterio de completitud
