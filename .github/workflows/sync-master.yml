@@ -1,0 +1,54 @@
+name: Sincronizar ramas con master
+
+on:
+  push:
+    branches:
+      - master
+
+  # Permite ejecutarlo manualmente desde GitHub Actions
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Actualizar ${{ matrix.branch }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - castilla
+          - poma
+          - lopez
+          - cueva
+          - taco
+          - vera
+
+    # Evita dos sincronizaciones simultáneas sobre la misma rama
+    concurrency:
+      group: sync-master-${{ matrix.branch }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.branch }}
+          fetch-depth: 0
+
+      - name: Configurar usuario de Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Incorporar master
+        run: |
+          git fetch origin master
+          git merge --no-edit origin/master
+
+      - name: Enviar cambios
+        run: |
+          git push origin HEAD:${{ matrix.branch }}
