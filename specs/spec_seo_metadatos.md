@@ -8,9 +8,11 @@ Permitir al gestor comercial configurar el slug (con control de duplicados y red
 
 ## 3. Alcance
 - Generación automática y edición manual de slug.
+- Normalización automática del slug al crear la categoría.
 - Historial de slugs (Redirección 301).
 - Política única de duplicados.
 - Límites de caracteres estrictos recomendados: 70 y 160.
+- Endpoint público de metadatos SEO por slug activo.
 
 ## 4. Requisitos
 
@@ -32,5 +34,11 @@ Si el gestor modifica el slug de una categoría ya existente e indexada, el sist
 - CUANDO el canal Marketplace recibe una petición a "running-antiguo"
 - ENTONCES el sistema devuelve una redirección 301 indicando la nueva ruta "running-nuevo"
 
+### Requisito 4: Generación de slug normalizado
+Al crear una categoría, el sistema DEBE generar automáticamente un slug normalizado (minúsculas, sin tildes ni espacios) a partir del nombre de la categoría.
+
+### Requisito 5: Endpoint público de metadatos SEO
+El sistema DEBE exponer un endpoint público que retorne los metadatos SEO (título y descripción) de una categoría por su slug activo.
+
 ## 5. Criterio de completitud
-La capacidad cumple si los límites (70/160) se validan, las redirecciones 301 operan correctamente, y la política de duplicidad (Autogenerar sufijo en creación VS Error en edición) se respeta.
+La capacidad cumple si los límites (70/160) se validan, las redirecciones 301 operan correctamente, la política de duplicidad (Autogenerar sufijo en creación VS Error en edición) se respeta, y el endpoint público retorna los metadatos SEO por slug activo.
