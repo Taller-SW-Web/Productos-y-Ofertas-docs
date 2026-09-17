@@ -1,75 +1,46 @@
 **Como** **gestor comercial**,
 
-**quiero** definir las características (atributos) de los productos y sus valores posibles
+**quiero** administrar características, asociarlas a categorías y gestionar marcas
 
-**para** contar con un catálogo consistente de atributos como color, talla o material, que sirva de base para clasificar productos y construir sus variantes.
+**para** contar con un catálogo de atributos estandarizado.
 
 ## Criterios de aceptación
 
 | **ID** | **Criterio** |
 | --- | --- |
-| **CA-01** | El sistema debe permitir crear una característica indicando nombre y tipo de dato (texto, número o lista de opciones). |
-| **CA-02** | Si el tipo de dato es "número", el sistema debe exigir una unidad de medida (ej. kg, cm). |
-| **CA-03** | El sistema debe permitir actualizar el nombre o unidad de medida de una característica existente. |
-| **CA-04** | El sistema debe permitir desactivar una característica, impidiendo la desactivación si tiene asociaciones activas con alguna categoría. |
-| **CA-05** | Para características de tipo "lista", el sistema debe permitir agregar, editar, eliminar/desactivar y ordenar sus valores posibles. |
-| **CA-06** | El sistema no debe permitir valores duplicados dentro de una misma característica. |
-| **CA-07** | El sistema debe exponer una consulta de la característica junto con sus valores activos, ordenados, para su uso por el módulo de Catálogo Core. |
+| **CA-01** | El sistema debe limitar los valores de tipo `TEXTO` a 100 caracteres máximo. |
+| **CA-02** | Para tipo `NUMERO`, se exige unidad de medida y validación estricta de formato numérico. |
+| **CA-03** | El sistema debe limitar a un máximo de 50 valores activos por característica tipo `LISTA`. |
+| **CA-04** | Al renombrar un valor de característica en uso, este debe actualizarse por ID (afectando visualmente a productos existentes sin romper data). |
+| **CA-05 (Marcas)** | El sistema debe tener un CRUD completo de Marcas: crear, consultar, actualizar y activar/desactivar. |
+| **CA-06 (Marcas)** | Al crear o editar una Marca, se debe validar unicidad exacta para evitar marcas duplicadas. |
+| **CA-07 (Asociación)** | Las características asignadas a una categoría padre se heredan automáticamente a sus subcategorías. |
+| **CA-08 (Asociación)** | Existe un límite máximo de 20 características que pueden asociarse a una misma categoría. |
+| **CA-09 (Asociación)** | Si una característica asociada cambia de opcional a obligatoria, los productos preexistentes mantendrán su estado válido hasta que el producto vuelva a ser editado. |
 
 ## Escenarios dado-cuando-entonces
 
-**Escenario 1: Creación exitosa de una característica de tipo lista**
+**Escenario 1: Límite de características por categoría**
+* **DADO** que la categoría "Zapatillas" ya tiene 20 características asociadas,
+* **CUANDO** el gestor intenta asociar una nueva característica,
+* **ENTONCES** el sistema rechaza la asociación por límite excedido.
 
-* **DADO** que el gestor comercial está autenticado,
-* **CUANDO** crea la característica "Color" con tipo de dato "LISTA",
-* **ENTONCES** el sistema registra la característica con estado ACTIVO y queda disponible para agregarle valores.
+**Escenario 2: Herencia a subcategorías**
+* **DADO** que "Talla" se asocia al padre "Calzado",
+* **CUANDO** se crea un producto en la subcategoría "Zapatillas",
+* **ENTONCES** el sistema exige/muestra "Talla" por herencia.
 
-**Escenario 2: Intento de crear una característica numérica sin unidad de medida**
+**Escenario 3: Cambio de Opcional a Obligatoria**
+* **DADO** que "Color" pasa a ser requerida en una categoría,
+* **CUANDO** se consulta un producto viejo sin color,
+* **ENTONCES** se muestra normal, pero al intentar actualizar sus datos el sistema bloqueará el guardado hasta que se asigne el color.
 
-* **DADO** que el gestor comercial crea una característica "Peso" con tipo de dato "NUMERO",
-* **CUANDO** no indica una unidad de medida,
-* **ENTONCES** el sistema rechaza la operación e indica que las características numéricas deben especificar una unidad de medida.
+**Escenario 4: Módulo Marcas - Duplicidad**
+* **DADO** que existe la marca "Nike",
+* **CUANDO** se intenta crear "NIKE" o "nike",
+* **ENTONCES** el sistema rechaza por duplicidad.
 
-**Escenario 3: Agregar valores a una característica de tipo lista**
-
-* **DADO** que existe la característica "Talla" con tipo de dato "LISTA" y sin valores registrados,
-* **CUANDO** el gestor comercial agrega los valores "S", "M", "L" y "XL" en ese orden,
-* **ENTONCES** el sistema los registra asociados a "Talla" y los devuelve en el orden definido al consultarlos.
-
-**Escenario 4: Intento de agregar un valor duplicado a la misma característica**
-
-* **DADO** que la característica "Color" ya tiene registrado el valor "Rojo",
-* **CUANDO** el gestor comercial intenta agregar nuevamente el valor "Rojo" a la misma característica,
-* **ENTONCES** el sistema rechaza la operación indicando que el valor ya existe para esa característica.
-
-**Escenario 5: Intento de desactivar una característica con asociaciones activas**
-
-* **DADO** que la característica "Talla" está asociada actualmente a la categoría activa "Zapatillas",
-* **CUANDO** el gestor comercial intenta desactivarla,
-* **ENTONCES** el sistema rechaza la operación e indica que primero debe eliminarse su asociación con las categorías activas.
-
-**Escenario 6: Consulta exitosa de una característica tipo lista con sus valores**
-
-* **DADO** que la característica "Color" tiene los valores "Rojo", "Azul" y "Negro" activos,
-* **CUANDO** el módulo de Catálogo Core consulta la característica "Color",
-* **ENTONCES** el sistema retorna la característica junto con sus tres valores activos, ordenados según su campo de orden.
-
-## Interacción con otros módulos
-
-| **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
-| --- | --- | --- | --- |
-| **Seguridad y Usuarios** | Verificar que quien crea, edita o desactiva características tenga el rol de gestor comercial. | Identidad del usuario, token de sesión, roles y permisos. | Solicitudes de validación de permisos para las operaciones de escritura. |
-| **Catálogo Core (Productos)** | Consultar características y sus valores al construir variantes/SKUs de un producto (ej. talla y color). | (No hay interacción directa; solo consume el resultado). | Listado de características activas con sus valores disponibles, vía API. |
-
-## Dependencias dentro de Productos y Ofertas
-
-| **Funcionalidad interna** | **Información necesaria** |
-| --- | --- |
-| **Asociación entre categorías y características** | Identificador de la característica, para vincularla a las categorías donde sea aplicable. |
-| **Carga y Exportación Masiva (Excel/CSV)** | Nombres/identificadores de características y valores declarados en el archivo, para validar su existencia antes de vincularlos a un producto. |
-
-## Reglas pendientes de acordar
-
-* **Máximo de valores por característica:** ¿existe un límite de valores permitidos por característica (ej. tallas numéricas extensas de calzado)?
-* **Edición de un valor en uso:** si un valor de característica (ej. "Rojo") ya está siendo usado por productos existentes, ¿se permite renombrarlo o solo desactivarlo y crear uno nuevo?
-* **Tipo de dato "texto" y "número":** ¿requieren alguna validación adicional de formato (ej. rango numérico permitido) o solo se registran como libres?
+## Reglas resueltas (antes pendientes)
+* **Límites de características:** Formalizados a 50 (lista) y 100 chars (texto). Renombre opera por ID.
+* **Módulo de Marcas:** Se incluye su CRUD oficial con validación de unicidad y baja lógica.
+* **Asociación y Herencia:** Herencia activa, máximo 20 por categoría, los productos legacy no se rompen masivamente al cambiar la obligatoriedad.

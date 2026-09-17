@@ -2,75 +2,40 @@
 
 **quiero** crear, organizar y mantener las categorías y subcategorías del catálogo
 
-**para** que los clientes y canales de venta puedan navegar y filtrar los productos correctamente, y otros módulos puedan clasificarlos de forma consistente.
+**para** que los clientes y canales de venta puedan navegar y filtrar los productos correctamente.
 
 ## Criterios de aceptación
 
 | **ID** | **Criterio** |
 | --- | --- |
-| **CA-01** | El sistema debe permitir crear una categoría con nombre y descripción, indicando opcionalmente una categoría padre para formar una subcategoría. |
-| **CA-02** | El sistema debe generar automáticamente un slug único para cada categoría creada. |
-| **CA-03** | El sistema no debe permitir que una categoría se asigne como su propia categoría padre (evitar referencias circulares). |
-| **CA-04** | El sistema debe permitir actualizar nombre, descripción, orden e imagen de una categoría existente, sin afectar los productos ya asociados a ella. |
-| **CA-05** | El sistema debe permitir desactivar (baja lógica) una categoría, impidiendo la desactivación si tiene subcategorías activas asociadas. |
-| **CA-06** | El sistema debe exponer una consulta del árbol jerárquico completo de categorías (padre con sus hijos). |
-| **CA-07** | El sistema debe exponer un endpoint de solo lectura con las categorías activas, para ser consumido por otros módulos y canales de venta. |
+| **CA-01** | El sistema debe permitir crear una categoría con nombre y descripción, indicando opcionalmente una categoría padre. El nombre NO necesita ser único. |
+| **CA-02** | La jerarquía se limita a un máximo de 2 niveles: categoría raíz y subcategoría. |
+| **CA-03** | El sistema no debe permitir que una categoría se asigne como su propia categoría padre (referencia circular). |
+| **CA-04** | El sistema debe incluir explícitamente el campo `categoria_padre_id` entre los campos editables al actualizar (junto con nombre, descripción, orden e imagen), sin afectar productos ya asociados. |
+| **CA-05** | Al cambiar el `categoria_padre_id`, el sistema debe validar que el nuevo padre esté activo y que no se superen los 2 niveles de jerarquía. |
+| **CA-06** | El sistema debe permitir desactivar (baja lógica) una categoría, validando mediante llamada síncrona que no existan productos activos asociados. |
+| **CA-07** | El sistema debe permitir reactivar una categoría previamente desactivada, exigiendo que su categoría padre (si la tuviese) esté en estado activo. |
+| **CA-08** | El sistema NUNCA debe eliminar físicamente una categoría; toda baja es lógica. |
+| **CA-09** | El sistema debe exponer el árbol jerárquico completo para canales externos. |
 
 ## Escenarios dado-cuando-entonces
 
-**Escenario 1: Creación exitosa de una categoría raíz**
+**Escenario 1: Actualización del campo `categoria_padre_id`**
+* **DADO** que existe una subcategoría "Accesorios" y una categoría raíz "Fútbol",
+* **CUANDO** el gestor actualiza la subcategoría asignando el `categoria_padre_id` de "Fútbol",
+* **ENTONCES** el sistema cambia su ubicación en el árbol respetando el máximo de 2 niveles.
 
-* **DADO** que el gestor comercial está autenticado y no indica categoría padre,
-* **CUANDO** envía nombre "Zapatillas" y descripción válida,
-* **ENTONCES** el sistema crea la categoría con estado ACTIVO, genera el slug "zapatillas" y la registra sin categoría padre.
+**Escenario 2: Reactivación de categoría con padre inactivo**
+* **DADO** que la categoría "Running" (hija) y "Zapatillas" (padre) están inactivas,
+* **CUANDO** el gestor solicita reactivar "Running",
+* **ENTONCES** el sistema arroja un error requiriendo reactivar primero la categoría padre.
 
-**Escenario 2: Creación exitosa de una subcategoría**
+**Escenario 3: Baja lógica y productos**
+* **DADO** que una categoría tiene al menos un producto activo,
+* **CUANDO** se intenta desactivar,
+* **ENTONCES** se bloquea la acción para no dejar productos huérfanos en canales de venta.
 
-* **DADO** que existe la categoría activa "Zapatillas" con id 10,
-* **CUANDO** el gestor comercial crea la categoría "Running" indicando categoria\_padre\_id = 10,
-* **ENTONCES** el sistema registra "Running" como subcategoría de "Zapatillas" y esta aparece anidada al consultar el árbol jerárquico.
-
-**Escenario 3: Intento de asignar una categoría como padre de sí misma**
-
-* **DADO** que existe la categoría "Zapatillas" con id 10,
-* **CUANDO** el gestor comercial intenta actualizar la categoría 10 indicando categoria\_padre\_id = 10,
-* **ENTONCES** el sistema rechaza la operación e informa que una categoría no puede ser su propia categoría padre.
-
-**Escenario 4: Intento de crear una categoría con nombre duplicado**
-
-* **DADO** que ya existe una categoría activa con el nombre "Zapatillas",
-* **CUANDO** el gestor comercial intenta crear otra categoría con el mismo nombre,
-* **ENTONCES** el sistema rechaza la operación y devuelve un mensaje indicando que el nombre (o el slug generado) ya existe.
-
-**Escenario 5: Desactivación exitosa de una categoría sin subcategorías**
-
-* **DADO** que la categoría "Running" con id 15 no tiene subcategorías activas,
-* **CUANDO** el gestor comercial solicita desactivarla,
-* **ENTONCES** el sistema cambia su estado a INACTIVO y deja de mostrarla en las consultas de navegación de los canales.
-
-**Escenario 6: Intento de desactivar una categoría con subcategorías activas**
-
-* **DADO** que la categoría "Zapatillas" con id 10 tiene la subcategoría activa "Running",
-* **CUANDO** el gestor comercial solicita desactivar la categoría "Zapatillas",
-* **ENTONCES** el sistema rechaza la operación e indica que primero deben desactivarse sus subcategorías.
-
-## Interacción con otros módulos
-
-| **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
-| --- | --- | --- | --- |
-| **Seguridad y Usuarios** | Verificar que quien crea, edita o desactiva categorías tenga el rol de gestor comercial. | Identidad del usuario, token de sesión, roles y permisos. | Solicitudes de validación de permisos para las operaciones de escritura. |
-| **Catálogo Core (Productos)** | Consultar categorías activas y su jerarquía al momento de clasificar un producto. | (No hay interacción directa; solo consume el resultado). | Listado de categorías activas, con id, nombre y jerarquía, vía API. |
-| **Canales de venta (Marketplace, Chatbot, Retail)** | Mostrar el árbol de categorías para navegación y filtros de búsqueda. | (No hay interacción directa; solo consume el resultado). | Árbol jerárquico de categorías activas para renderizar menús y filtros. |
-
-## Dependencias dentro de Productos y Ofertas
-
-| **Funcionalidad interna** | **Información necesaria** |
-| --- | --- |
-| **Asociación entre categorías y características** | Identificador de la categoría, para vincularle las características aplicables. |
-| **Gestión de SEO y metadatos** | Identificador y nombre de la categoría, sobre los cuales se configuran el slug y los metadatos SEO. |
-
-## Reglas pendientes de acordar
-
-* **Niveles de jerarquía:** ¿la estructura se limita a un solo nivel (categoría → subcategoría) o debe soportar múltiples niveles anidados?
-* **Categorías con productos asociados:** si una categoría tiene productos activos vinculados, ¿se debe impedir su desactivación (igual que con las subcategorías) o se permite y los productos quedan huérfanos temporalmente?
-* **Eliminación física:** ¿en algún caso se permitirá eliminar físicamente una categoría (ej. creada por error, sin uso), o siempre será baja lógica?
+## Reglas resueltas (formalizadas)
+* **Categoría padre editable:** Se confirma que `categoria_padre_id` se mantiene como campo editable en CA-04.
+* **Reactivación:** Alineado completamente con la especificación (Escenario 2).
+* **Reglas abiertas:** Se definió oficialmente 2 niveles máximos, validación síncrona bloqueante con Catálogo Core para productos, y prohibición absoluta de eliminación física.
