@@ -4,11 +4,12 @@
 En un marketplace multicanal de artículos deportivos (que abastece canales web, chatbot y ventas retail en tienda física), los precios de los productos fluctúan constantemente por campañas comerciales, tipo de cambio, liquidaciones de temporada deportiva o acuerdos con proveedores. El gestor comercial requiere una interfaz y mecanismos backend confiables para actualizar precios tanto de manera puntual (producto por producto) como en lote mediante archivos tabulares (CSV/Excel) para cientos de SKUs, garantizando consistencia, trazabilidad temporal y prevención de errores operativos que deriven en pérdidas económicas o infracciones de protección al consumidor.
 
 ## 2. Propósito
-Permitir al gestor comercial actualizar, programar y calibrar los precios base y precios de oferta de productos individuales o catálogos masivos de forma ágil, validada, con soporte de vigencias temporales, consulta histórica y prevención de errores tipográficos o márgenes negativos.
+Permitir al gestor comercial actualizar, programar y calibrar los precios base y precios de oferta de productos/SKUs individuales o catálogos masivos de forma ágil, validada, con soporte de vigencias temporales, consulta histórica y prevención de errores tipográficos o márgenes negativos.
 
 ## 3. Alcance
 Incluye:
-- Consulta y actualización manual del precio regular y precio de oferta de un producto individual, exigiendo un motivo mandatorio del cambio.
+- Consulta y actualización manual del precio regular y precio de oferta, exigiendo motivo obligatorio.
+- Modelo jerárquico: el producto define precio base; un SKU de variante puede definir un override específico. Si no existe override, hereda el precio vigente del producto. Para un producto simple, su `sku_base` es el SKU vendible y usa el precio del producto.
 - Validación de rangos comerciales permitidos (precios estrictamente mayores a cero y precio de oferta menor al precio regular).
 - Programación de precios futuros con fecha y hora de inicio de vigencia (`valid_from`).
 - Consulta de precios en un punto específico en el tiempo (*as-of query*) mediante parámetro temporal.
@@ -40,6 +41,16 @@ El sistema DEBE permitir al gestor comercial autenticado modificar el precio reg
 - DADO que un producto tiene un precio regular de S/ 80.00
 - CUANDO el gestor comercial intenta registrar un precio de oferta de S/ 95.00
 - ENTONCES el sistema bloquea la persistencia y retorna un error de validación indicando "El precio de oferta no puede ser mayor o igual al precio regular".
+
+
+### Requisito 1.1: Resolver precio efectivo por SKU
+El sistema DEBE poder resolver el precio efectivo de cualquier SKU vendible.
+
+- Producto simple: usa el precio del producto asociado a su `sku_base`.
+- Variante con override: usa el precio específico del SKU.
+- Variante sin override: hereda el precio vigente del producto padre.
+
+Las promociones, cupones y combos consumen este precio efectivo sin sobrescribir la configuración maestra.
 
 ### Requisito 2: Programación de precios futuros
 El sistema DEBE permitir la programación de cambios de precio con fecha/hora de entrada en vigencia posterior a la actual, activándolos automáticamente sin intervención manual.
