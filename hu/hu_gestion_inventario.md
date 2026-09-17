@@ -6,13 +6,13 @@
 
 **para** mantener la información de inventario actualizada y consistente para los diferentes canales y módulos del marketplace.
 
-El stock se controla para cada variante identificada mediante un SKU, considerando características como talla, color u otras que determinen una unidad de inventario diferente. El Producto actúa únicamente como agrupador comercial y **no posee un stock independiente** distinto al stock de sus variantes.
+El stock se controla por **SKU vendible**. Un producto simple (`tiene_variantes = false`) utiliza su `sku_base` como SKU vendible y posee un único registro de inventario. En un producto con variantes (`tiene_variantes = true`), cada variante posee su propio SKU y el producto padre actúa únicamente como agrupador comercial, sin stock independiente.
 
 ## Criterios de aceptación
 
 | **ID** | **Criterio** |
 | --- | --- |
-| **CA-01** | Cada variante de producto debe estar identificada mediante un SKU único para permitir su control individual de stock. |
+| **CA-01** | Cada unidad vendible debe tener un SKU único: el `sku_base` para un producto simple o el SKU autogenerado para una variante. |
 | **CA-02** | El sistema debe permitir consultar el stock disponible de una variante proporcionando su SKU. |
 | **CA-03** | La consulta de disponibilidad debe informar como mínimo el SKU, la cantidad disponible y su estado: **Disponible, Stock bajo o Agotado**, según las reglas: `stock = 0 → Agotado`, `0 < stock <= umbral_stock_bajo → Stock bajo`, `stock > umbral_stock_bajo → Disponible`. El `umbral_stock_bajo` debe ser configurable por cada variante/SKU. |
 | **CA-04** | El sistema debe permitir registrar el consumo de unidades de una variante proporcionando su SKU y la cantidad consumida. |
@@ -22,7 +22,8 @@ El stock se controla para cada variante identificada mediante un SKU, consideran
 | **CA-08** | Cuando el consumo deje el stock en cero, la variante debe quedar identificada como **Agotada**. Si el consumo deja el stock en `0 < stock <= umbral_stock_bajo`, la variante debe quedar identificada como **Stock bajo**. |
 | **CA-09** | La información de stock actualizada debe estar disponible para las posteriores consultas realizadas por los canales y módulos integrados. |
 | **CA-10** | Ante consumos concurrentes sobre el mismo SKU, el sistema debe garantizar que el stock no sea negativo y que la suma de consumos aceptados no supere el stock disponible de la variante. Para ello, el descuento se ejecuta como una **actualización condicional sobre el stock disponible** y emplea el **mismo control de concurrencia optimista** definido para las operaciones masivas de inventario, sin bloquear otros consumos. |
-| **CA-11** | El consumo de stock debe aplicarse únicamente cuando exista una **venta confirmada** por parte del módulo de **Ventas y Postventa**. El módulo de **Despacho** no genera consumo por sí mismo y únicamente entrega unidades correspondientes a ventas ya confirmadas. |
+| **CA-11** | El consumo definitivo de stock se aplica únicamente al recibir `order.confirmed` desde Ventas y Postventa. `order.created` no reserva ni descuenta stock. Despacho no genera consumos adicionales. |
+| **CA-12** | Si una venta confirmada se cancela antes del despacho, `order.cancelled` compensa el stock. Si ya fue entregada, solo `order.returned` tras devolución aceptada repone unidades. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -113,8 +114,10 @@ La consulta de disponibilidad por parte de los canales **Marketplace, Retail y C
 | **Gestión de características** | Características de las variantes, como talla, color u otras que permitan diferenciar unidades de inventario. |
 | **Gestión de precios** | Identificación de la variante y precio vigente cuando los canales necesiten relacionar la disponibilidad con la información comercial del producto. |
 
-## Reglas pendientes de acordar
+## Reglas consolidadas
 
-* **Valor del umbral de stock bajo:** el `umbral_stock_bajo` es configurable por cada variante/SKU; definir el valor concreto que se asignará a cada variante.
+* El `umbral_stock_bajo` se configura individualmente por SKU; no existe un valor global obligatorio.
+* `order.created` no afecta stock; el consumo definitivo ocurre con `order.confirmed`.
+* La generación del SKU corresponde a Gestión de Variantes/Productos según el tipo de producto.
 
 > Nota: la generación del SKU la define la funcionalidad de **Gestión de variantes/SKUs** (generación automática desde `sku_base` y atributos identificadores); la confirmación del consumo y la interacción con Despacho ya quedaron resueltas en **CA-11** y en la tabla de interacción.

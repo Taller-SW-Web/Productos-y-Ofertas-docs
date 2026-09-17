@@ -10,10 +10,14 @@ La gestión del inventario se realizará de manera integrada con los demás comp
 
 ## Unidad de inventario
 
-En este módulo la unidad de inventario es la **Variante/SKU**, no el Producto.
+En este módulo la unidad de inventario es el **SKU vendible**. Todo elemento que pueda venderse tiene exactamente una identidad SKU para Inventario:
 
-* **Inventario → Variante/SKU:** el stock se controla de forma independiente para cada variante (combinación concreta de atributos como talla y color).
-* **Producto → agrupador comercial:** el producto agrupa comercialmente a sus variantes, pero **no tiene un stock independiente** distinto al stock de sus variantes.
+* producto simple (`tiene_variantes = false`) → usa su `sku_base` como SKU vendible;
+* producto con variantes (`tiene_variantes = true`) → cada variante posee su SKU autogenerado y el producto padre no tiene stock propio.
+
+* **Inventario → SKU vendible:** el stock se controla de forma independiente por SKU.
+* **Producto simple:** su `sku_base` funciona como SKU vendible y tiene un único registro de inventario.
+* **Producto con variantes:** el producto es agrupador comercial y no posee stock propio; el inventario reside en los SKUs de sus variantes.
 
 ```text
 Producto: Nike Air Max
@@ -23,7 +27,7 @@ Producto: Nike Air Max
 └── SKU-003 → Blanco / Talla 40 → stock 8
 ```
 
-Por lo tanto, toda consulta, registro o actualización de stock se realiza siempre referenciando una **Variante/SKU**.
+Por lo tanto, toda consulta, registro o actualización de stock se realiza siempre referenciando un **SKU vendible**, sea el `sku_base` de un producto simple o el SKU de una variante.
 
 ---
 
@@ -167,9 +171,12 @@ La **actualización por consumo** permitirá reflejar las unidades utilizadas en
 
 **Delimitación de Ventas y Despacho:**
 
-* La **confirmación definitiva del consumo** corresponde a una **venta confirmada** gestionada por el módulo de **Ventas y Postventa**: sin una venta confirmada no se aplica ningún consumo sobre el inventario.
+* La **confirmación definitiva del consumo** corresponde al evento contractual **`order.confirmed`** emitido por **Ventas y Postventa** cuando la venta queda confirmada (pago aprobado o estado equivalente para un canal sin pago electrónico). Sin `order.confirmed` no se aplica consumo definitivo.
 * El módulo de **Despacho no genera consumo adicional ni modifica directamente el stock**: se limita a entregar las unidades correspondientes a ventas ya confirmadas, cuyos consumos ya fueron aplicados y validados bajo la misma regla de consumo.
-* En el alcance actual **no se contemplan reservas ni liberaciones** de stock: el consumo se aplica de forma directa sobre la venta confirmada. Si el negocio requiriera reservas en el futuro, correspondería un cambio de alcance formal.
+* En el alcance actual **no se contemplan reservas** en `order.created`: crear un pedido no descuenta ni reserva stock.
+* Si una venta confirmada es anulada **antes del despacho**, Ventas/Postventa emite `order.cancelled` y el inventario compensa el consumo.
+* Si la mercadería ya fue entregada, la reposición de stock solo ocurre ante una **devolución aceptada**, comunicada mediante `order.returned`.
+* Una anulación administrativa posterior al despacho que no implique devolución física no repone stock.
 
 Después de cada actualización de stock (por consumo o ajuste), la gestión de inventario **notificará el cambio de stock** de la variante mediante el contrato de evento `inventory.stock.changed`, que será consumido por el dashboard analítico y por otros componentes interesados para mantenerse actualizados.
 

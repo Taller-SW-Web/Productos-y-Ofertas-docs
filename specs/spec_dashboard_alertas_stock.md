@@ -10,9 +10,9 @@ El dashboard estará pensado como una pantalla de consulta rápida, donde se pue
 
 ## Unidad de inventario
 
-El dashboard utiliza como **unidad primaria de inventario la Variante/SKU**, en coherencia con la gestión de inventario:
+El dashboard utiliza como **unidad primaria de inventario el SKU vendible**, en coherencia con la gestión de inventario:
 
-* **Métrica operativa de inventario → Variante/SKU:** los indicadores de disponibilidad, stock bajo y agotamiento se expresan sobre variantes.
+* **Métrica operativa de inventario → SKU vendible:** los indicadores de disponibilidad, stock bajo y agotamiento se expresan sobre variantes.
 * **Agrupación comercial → Producto:** el producto es un agrupador comercial. Las variantes pueden presentarse individualmente o agrupadas bajo su producto en una vista comercial, sin que esto cree un stock independiente por producto.
 
 ```text
@@ -33,11 +33,11 @@ El dashboard mostrará indicadores que permitan conocer rápidamente la situaci�
 
 Entre los principales indicadores se podrán considerar:
 
-* Cantidad total de variantes/SKUs.
+* Cantidad total de SKUs vendibles.
 * Cantidad total de unidades disponibles.
-* Variantes con stock bajo.
-* Variantes agotadas.
-* Variantes disponibles.
+* SKUs con stock bajo.
+* SKUs agotados.
+* SKUs disponibles.
 
 Estos indicadores permitirán identificar rápidamente el estado general del inventario sin necesidad de revisar cada variante individualmente ni contabilizar los productos como si cada uno tuviera un único stock.
 
@@ -137,7 +137,7 @@ Total Producto = 45 unidades vendidas
 
 De esta manera, el Top 5 es **de Productos**, aunque la venta se registre originalmente sobre una Variante/SKU.
 
-El período de análisis es una regla pendiente de configuración/acuerdo y se describe como **"durante el período analizado"**.
+El período de análisis es **seleccionable por el usuario**. Por defecto se consideran los **últimos 30 días**, pudiendo solicitarse otro rango de fechas válido. El mismo rango se utiliza para obtener las ventas confirmadas y calcular el Top 5.
 
 La información necesaria para determinar los productos más vendidos deberá obtenerse mediante la integración correspondiente con los datos de las operaciones de venta.
 
