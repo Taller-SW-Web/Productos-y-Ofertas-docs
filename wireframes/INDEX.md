@@ -28,35 +28,35 @@ haya sido la rama de origen de una funcionalidad.
 
 ## Inventario
 
-Los identificadores `WF-001` y `WF-002` corresponden a los flows ya existentes.
-Los identificadores restantes quedan reservados para que cada responsable cree
-su flow sin duplicar numeración.
+Los identificadores `WF-001` y `WF-002` corresponden a los flows y prototipos
+HTML ya existentes. Los identificadores restantes quedan reservados para que cada
+responsable cree sus artefactos sin duplicar numeración.
 
 | ID | Funcionalidad | Rama | Responsable | Spec | HU | Flow | Prototipo HTML | Estado |
 |---|---|---|---|---|---|---|---|---|
-| WF-001 | Carga y exportación masiva de productos | `castilla` | Marco Renato Castilla Huanca | [Spec](../specs/spec_carga_exportacion_masiva_productos.md) | [HU](../hu/hu_carga_exportacion_masiva_productos.md) | [Flow](flows/WF-001-carga-exportacion-masiva-productos.md) | `prototypes/WF-001-carga-exportacion-masiva-productos/index.html` | Flow creado; HTML pendiente |
-| WF-002 | Gestión de combos de productos | `castilla` | Marco Renato Castilla Huanca | [Spec](../specs/spec_gestion_combos_productos.md) | [HU](../hu/hu_gestion_combos_productos.md) | [Flow](flows/WF-002-gestion-combos-productos.md) | `prototypes/WF-002-gestion-combos-productos/index.html` | Flow creado; HTML pendiente |
-| WF-003 | Gestión de productos (CRUD principal) | `poma` | Gabriel Poma Gutierrez | [Spec](../specs/spec_gestion_productos_crud.md) | [HU](../hu/hu_gestion_productos_crud.md) | `flows/WF-003-gestion-productos-crud.md` | `prototypes/WF-003-gestion-productos-crud/index.html` | Pendiente |
-| WF-004 | Gestión avanzada de variantes (SKUs) | `poma` | Gabriel Poma Gutierrez | [Spec](../specs/spec_gestion_variantes_skus.md) | [HU](../hu/hu_gestion_variantes_skus.md) | `flows/WF-004-gestion-variantes-skus.md` | `prototypes/WF-004-gestion-variantes-skus/index.html` | Pendiente |
-| WF-005 | Gestión de cupones de descuento | `cueva` | Axel Andree Cueva Alcalá | [Spec](../specs/spec_gestion_cupones_descuento.md) | [HU](../hu/hu_gestion_cupones_descuento.md) | `flows/WF-005-gestion-cupones-descuento.md` | `prototypes/WF-005-gestion-cupones-descuento/index.html` | Pendiente |
-| WF-006 | Gestión de ofertas y promociones | `cueva` | Axel Andree Cueva Alcalá | [Spec](../specs/spec_gestion_ofertas_promociones.md) | [HU](../hu/hu_gestion_ofertas_promociones.md) | `flows/WF-006-gestion-ofertas-promociones.md` | `prototypes/WF-006-gestion-ofertas-promociones/index.html` | Pendiente |
-| WF-007 | Reglas de venta cruzada y upselling | `cueva` | Axel Andree Cueva Alcalá | [Spec](../specs/spec_reglas_venta_cruzada_upselling.md) | [HU](../hu/hu_reglas_venta_cruzada_upsell.md) | `flows/WF-007-reglas-venta-cruzada-upselling.md` | `prototypes/WF-007-reglas-venta-cruzada-upselling/index.html` | Pendiente |
-| WF-008 | Gestión de categorías y subcategorías | `lopez` | Leonardo Lopez | [Spec](../specs/spec_gestion_categorias.md) | [HU](../hu/hu_gestion_categorias.md) | `flows/WF-008-gestion-categorias.md` | `prototypes/WF-008-gestion-categorias/index.html` | Pendiente |
-| WF-009 | Gestión de características y sus valores | `lopez` | Leonardo Lopez | [Spec](../specs/spec_gestion_caracteristicas.md) | [HU](../hu/hu_gestion_caracteristicas.md) | `flows/WF-009-gestion-caracteristicas.md` | `prototypes/WF-009-gestion-caracteristicas/index.html` | Pendiente |
-| WF-010 | Asociación entre categorías y características | `lopez` | Leonardo Lopez | [Spec](../specs/spec_asociacion_categoria_caracteristica.md) | [HU](../hu/hu_asociacion_categoria_caracteristica.md) | `flows/WF-010-asociacion-categoria-caracteristica.md` | `prototypes/WF-010-asociacion-categoria-caracteristica/index.html` | Pendiente |
-| WF-011 | Gestión de marcas | `lopez` | Leonardo Lopez | [Spec](../specs/spec_gestion_marcas.md) | [HU](../hu/hu_gestion_marcas.md) | `flows/WF-011-gestion-marcas.md` | `prototypes/WF-011-gestion-marcas/index.html` | Pendiente |
-| WF-012 | Gestión de SEO y metadatos | `lopez` | Leonardo Lopez | [Spec](../specs/spec_seo_metadatos.md) | [HU](../hu/hu_seo_metadatos.md) | `flows/WF-012-seo-metadatos.md` | `prototypes/WF-012-seo-metadatos/index.html` | Pendiente |
-| WF-013 | Gestión de precios individuales y masivos | `vera` | Leonardo Vera Rodríguez | [Spec](../specs/spec_gestion_precios.md) | [HU](../hu/hu_gestion_precios.md) | `flows/WF-013-gestion-precios.md` | `prototypes/WF-013-gestion-precios/index.html` | Pendiente |
-| WF-014 | Historial de auditoría de precios | `vera` | Leonardo Vera Rodríguez | [Spec](../specs/spec_auditoria_precios.md) | [HU](../hu/hu_auditoria_precios.md) | `flows/WF-014-auditoria-precios.md` | `prototypes/WF-014-auditoria-precios/index.html` | Pendiente |
-| WF-015 | Gestión de inventario (control de stock) | `taco` | Miguel Ángel Taco Zavala | [Spec](../specs/spec_gestion_inventario.md) | [HU](../hu/hu_gestion_inventario.md) | `flows/WF-015-gestion-inventario.md` | `prototypes/WF-015-gestion-inventario/index.html` | Pendiente |
-| WF-016 | Dashboard analítico y alertas de stock | `taco` | Miguel Ángel Taco Zavala | [Spec](../specs/spec_dashboard_alertas_stock.md) | [HU](../hu/hu_dashboard_alertas_stock.md) | `flows/WF-016-dashboard-alertas-stock.md` | `prototypes/WF-016-dashboard-alertas-stock/index.html` | Pendiente |
+| WF-001 | Carga y exportación masiva de productos | `castilla` | Marco Renato Castilla Huanca | [Spec](../specs/spec_carga_exportacion_masiva_productos.md) | [HU](../hu/hu_carga_exportacion_masiva_productos.md) | [Flow](flows/WF-001-carga-exportacion-masiva-productos.md) | [Prototipo](prototipos/WF-001-carga-exportacion-masiva-productos/index.html) | Completado |
+| WF-002 | Gestión de combos de productos | `castilla` | Marco Renato Castilla Huanca | [Spec](../specs/spec_gestion_combos_productos.md) | [HU](../hu/hu_gestion_combos_productos.md) | [Flow](flows/WF-002-gestion-combos-productos.md) | [Prototipo](prototipos/WF-002-gestion-combos-productos/index.html) | Completado |
+| WF-003 | Gestión de productos (CRUD principal) | `poma` | Gabriel Poma Gutierrez | [Spec](../specs/spec_gestion_productos_crud.md) | [HU](../hu/hu_gestion_productos_crud.md) | `flows/WF-003-gestion-productos-crud.md` | `prototipos/WF-003-gestion-productos-crud/index.html` | Pendiente |
+| WF-004 | Gestión avanzada de variantes (SKUs) | `poma` | Gabriel Poma Gutierrez | [Spec](../specs/spec_gestion_variantes_skus.md) | [HU](../hu/hu_gestion_variantes_skus.md) | `flows/WF-004-gestion-variantes-skus.md` | `prototipos/WF-004-gestion-variantes-skus/index.html` | Pendiente |
+| WF-005 | Gestión de cupones de descuento | `cueva` | Axel Andree Cueva Alcalá | [Spec](../specs/spec_gestion_cupones_descuento.md) | [HU](../hu/hu_gestion_cupones_descuento.md) | `flows/WF-005-gestion-cupones-descuento.md` | `prototipos/WF-005-gestion-cupones-descuento/index.html` | Pendiente |
+| WF-006 | Gestión de ofertas y promociones | `cueva` | Axel Andree Cueva Alcalá | [Spec](../specs/spec_gestion_ofertas_promociones.md) | [HU](../hu/hu_gestion_ofertas_promociones.md) | `flows/WF-006-gestion-ofertas-promociones.md` | `prototipos/WF-006-gestion-ofertas-promociones/index.html` | Pendiente |
+| WF-007 | Reglas de venta cruzada y upselling | `cueva` | Axel Andree Cueva Alcalá | [Spec](../specs/spec_reglas_venta_cruzada_upselling.md) | [HU](../hu/hu_reglas_venta_cruzada_upsell.md) | `flows/WF-007-reglas-venta-cruzada-upselling.md` | `prototipos/WF-007-reglas-venta-cruzada-upselling/index.html` | Pendiente |
+| WF-008 | Gestión de categorías y subcategorías | `lopez` | Leonardo Lopez | [Spec](../specs/spec_gestion_categorias.md) | [HU](../hu/hu_gestion_categorias.md) | `flows/WF-008-gestion-categorias.md` | `prototipos/WF-008-gestion-categorias/index.html` | Pendiente |
+| WF-009 | Gestión de características y sus valores | `lopez` | Leonardo Lopez | [Spec](../specs/spec_gestion_caracteristicas.md) | [HU](../hu/hu_gestion_caracteristicas.md) | `flows/WF-009-gestion-caracteristicas.md` | `prototipos/WF-009-gestion-caracteristicas/index.html` | Pendiente |
+| WF-010 | Asociación entre categorías y características | `lopez` | Leonardo Lopez | [Spec](../specs/spec_asociacion_categoria_caracteristica.md) | [HU](../hu/hu_asociacion_categoria_caracteristica.md) | `flows/WF-010-asociacion-categoria-caracteristica.md` | `prototipos/WF-010-asociacion-categoria-caracteristica/index.html` | Pendiente |
+| WF-011 | Gestión de marcas | `lopez` | Leonardo Lopez | [Spec](../specs/spec_gestion_marcas.md) | [HU](../hu/hu_gestion_marcas.md) | `flows/WF-011-gestion-marcas.md` | `prototipos/WF-011-gestion-marcas/index.html` | Pendiente |
+| WF-012 | Gestión de SEO y metadatos | `lopez` | Leonardo Lopez | [Spec](../specs/spec_seo_metadatos.md) | [HU](../hu/hu_seo_metadatos.md) | `flows/WF-012-seo-metadatos.md` | `prototipos/WF-012-seo-metadatos/index.html` | Pendiente |
+| WF-013 | Gestión de precios individuales y masivos | `vera` | Leonardo Vera Rodríguez | [Spec](../specs/spec_gestion_precios.md) | [HU](../hu/hu_gestion_precios.md) | `flows/WF-013-gestion-precios.md` | `prototipos/WF-013-gestion-precios/index.html` | Pendiente |
+| WF-014 | Historial de auditoría de precios | `vera` | Leonardo Vera Rodríguez | [Spec](../specs/spec_auditoria_precios.md) | [HU](../hu/hu_auditoria_precios.md) | `flows/WF-014-auditoria-precios.md` | `prototipos/WF-014-auditoria-precios/index.html` | Pendiente |
+| WF-015 | Gestión de inventario (control de stock) | `taco` | Miguel Ángel Taco Zavala | [Spec](../specs/spec_gestion_inventario.md) | [HU](../hu/hu_gestion_inventario.md) | `flows/WF-015-gestion-inventario.md` | `prototipos/WF-015-gestion-inventario/index.html` | Pendiente |
+| WF-016 | Dashboard analítico y alertas de stock | `taco` | Miguel Ángel Taco Zavala | [Spec](../specs/spec_dashboard_alertas_stock.md) | [HU](../hu/hu_dashboard_alertas_stock.md) | `flows/WF-016-dashboard-alertas-stock.md` | `prototipos/WF-016-dashboard-alertas-stock/index.html` | Pendiente |
 
 ## Evidencia resumida por rama
 
 | Rama | Evidencia principal del historial | Funcionalidades identificadas |
 |---|---|---|
 | `poma` | Commits de carga/corrección de productos y variantes SKU | WF-003, WF-004 |
-| `castilla` | Commits de carga masiva, combos y los flows `WF-001`/`WF-002` | WF-001, WF-002 |
+| `castilla` | Commits de carga masiva, combos, flows y prototipos HTML de `WF-001`/`WF-002` | WF-001, WF-002 |
 | `cueva` | Commits de corrección de cupones, promociones y venta cruzada | WF-005, WF-006, WF-007 |
 | `lopez` | Commits de taxonomía, categorías, características, marcas y SEO | WF-008, WF-009, WF-010, WF-011, WF-012 |
 | `vera` | Commits de gestión e historial de precios | WF-013, WF-014 |
@@ -65,7 +65,7 @@ su flow sin duplicar numeración.
 ## Convenciones de artefactos
 
 - Los flows Markdown se guardan en `wireframes/flows/`.
-- Los prototipos navegables se guardan en `wireframes/prototypes/`.
+- Los prototipos navegables se guardan en `wireframes/prototipos/`.
 - Cada prototipo debe tener `index.html` como punto de entrada.
 - Los prototipos HTML son estáticos, navegables y sin compilación; no forman
   parte de la implementación productiva del repositorio frontend.
