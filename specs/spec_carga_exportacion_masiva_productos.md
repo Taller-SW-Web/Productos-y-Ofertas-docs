@@ -4,14 +4,16 @@
 El gestor comercial maneja frecuentemente un volumen amplio de productos, precios y existencias en el catálogo. Modificar o ingresar cientos de registros de forma manual a través de la interfaz web resulta ineficiente. Se requiere una vía para manejar grandes volúmenes de datos usando herramientas ofimáticas estructuradas (archivos XLSX o CSV), garantizando la correcta distribución de responsabilidades entre los dominios de Catálogo, Precios (Pricing) e Inventario.
 
 ## 2. Propósito
-Proporcionar una herramienta para descargar el catálogo completo en una plantilla de Excel o CSV a nivel de SKU/variante, permitir su edición sin conexión, e importar dicho archivo para registrar o actualizar masivamente los registros en el sistema de forma asíncrona y desacoplada mediante eventos de dominio.
+Proporcionar una herramienta para descargar el catálogo completo en una plantilla de Excel o CSV a nivel de SKU vendible, permitir su edición sin conexión, e importar dicho archivo para registrar o actualizar masivamente los registros en el sistema de forma asíncrona y desacoplada mediante eventos de dominio.
 
 ## 3. Alcance
 Incluye:
-- Descarga de una plantilla vacía (Excel/CSV) con el formato predefinido de campos a nivel de SKU/Variante y código de producto base.
+- Descarga de una plantilla vacía (Excel/CSV) con el formato predefinido de campos a nivel de SKU vendible y código de producto base.
 - Exportación del catálogo actual a un archivo Excel/CSV estructurado por SKU.
 - Importación asíncrona y validación por filas para creación y actualización masiva (límite de hasta 5,000 filas o 10 MB).
-- Coordinación arquitectónica mediante un Worker/Job asíncrono que emite eventos de dominio desacoplados hacia Catálogo (`catalog.product.upserted`), Pricing (`pricing.price.changed`) e Inventario (`inventory.stock.adjusted`).
+- Coordinación arquitectónica mediante un Worker/Job asíncrono que emite comandos/eventos idempotentes hacia Catálogo, Pricing e Inventario, correlacionados por `batch_id` y `row_id`.
+- Seguimiento de estado por fila (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`) y por dominio. Una fila solo se considera exitosa cuando todos los dominios requeridos confirman su procesamiento.
+- Consistencia eventual: no se utiliza una transacción distribuida global entre bases de datos. Ante fallos transitorios se reintenta de forma idempotente; ante fallo definitivo la fila queda `FAILED` con el detalle del dominio afectado.
 - Política de actualización de campos: las celdas en blanco en filas de actualización (SKU existente) se ignoran, preservando los valores actuales en base de datos.
 - Manejo de concurrencia en stock mediante eventos de ajuste de inventario con control optimista y registro formal en Kardex.
 - Generación de resumen de resultados en pantalla y descarga de un archivo CSV con el detalle de filas fallidas y motivos de rechazo.
@@ -19,7 +21,7 @@ Incluye:
 ## 4. Requisitos
 
 ### Requisito 1: Exportación del catálogo y plantilla por SKU
-El sistema DEBE permitir la descarga del catálogo actual y de una plantilla vacía donde cada fila represente un SKU/Variante concreto vinculado a su producto base.
+El sistema DEBE permitir la descarga del catálogo actual y de una plantilla vacía donde cada fila represente un SKU vendible concreto vinculado a su producto base.
 
 #### Escenario: Exportación del catálogo completo
 - DADO que el gestor comercial se encuentra en la sección de carga masiva
@@ -37,7 +39,7 @@ El sistema DEBE procesar el archivo mediante un Worker asíncrono que valide la 
 #### Escenario: Carga masiva exitosa coordinada por eventos
 - DADO que el gestor comercial sube un archivo con hasta 5,000 filas válidas respetando la plantilla
 - CUANDO confirma la importación
-- ENTONCES el sistema encola la tarea en segundo plano sin bloquear la interfaz, valida las filas y emite los eventos `catalog.product.upserted`, `pricing.price.changed` e `inventory.stock.adjusted` para que Catálogo, Pricing e Inventario actualicen sus respectivos dominios, notificando al usuario al finalizar.
+- ENTONCES el sistema encola la tarea, asigna `batch_id`/`row_id`, emite mensajes idempotentes a los dominios requeridos y espera sus confirmaciones; solo marca una fila `COMPLETED` cuando todos los consumidores requeridos confirman su aplicación.
 
 #### Escenario: Carga masiva con errores parciales y reporte detallado
 - DADO que el gestor comercial importa un archivo donde 5 registros tienen formato de precio inválido y 10 tienen una categoría inexistente
@@ -59,7 +61,7 @@ El sistema DEBE actualizar los datos cuando el SKU ya existe, conservando los da
 
 ## 5. Requisitos no funcionales
 - Rendimiento: La importación debe soportar archivos de hasta 5,000 filas o 10 MB, ejecutándose de forma asíncrona en un Worker desacoplado sin degradar los tiempos de respuesta de la API principal ni bloquear la UI.
-- Arquitectura y Desacoplamiento (EDA): La carga masiva no debe realizar escrituras directas a tablas ajenas; debe coordinar a través de eventos de dominio específicos para cada contexto acotado.
+- Arquitectura y Desacoplamiento (EDA): la carga masiva no escribe tablas ajenas ni usa transacción distribuida global; coordina mediante mensajes idempotentes, correlación por `batch_id`/`row_id`, reintentos y confirmaciones por dominio.
 - Seguridad: Validación estricta del tipo MIME, cabeceras estructuradas (XLSX, CSV) y desinfección de celdas para prevenir inyecciones de fórmulas (CSV/Excel Formula Injection).
 - Trazabilidad: Registrar en el log de auditoría el identificador del gestor comercial, batch ID, timestamp y archivo procesado.
 

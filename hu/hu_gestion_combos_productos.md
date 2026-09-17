@@ -4,7 +4,7 @@
 **quiero** crear y gestionar paquetes (combos) agrupando múltiples SKUs y productos
 complementarios bajo un precio único promocional que sea estrictamente menor a la suma individual,
 **para** incentivar las ventas, garantizando que el sistema calcule
-dinámicamente la disponibilidad en tiempo real, descuente el inventario inmediatamente ante la creación del pedido (`order.created`),
+dinámicamente la disponibilidad en tiempo real, descuente el inventario ante la confirmación definitiva de la venta (`order.confirmed`),
 y compense transaccionalmente ante cancelaciones o devoluciones.
 
 ## Criterios de aceptación
@@ -13,13 +13,13 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 | --- | --- |
 | **ID** | **Criterio** |
 | **CA-01** | Solo un gestor comercial con los permisos correspondientes (Módulo Seguridad y Usuarios) puede crear, modificar, consultar y desactivar combos. |
-| **CA-02** | El registro de un combo debe incluir obligatoriamente: nombre, descripción, selección de 2 o más SKUs / Variantes específicas (o productos simples sin variantes) con sus respectivas cantidades, y un precio único de paquete. |
+| **CA-02** | El registro de un combo debe incluir obligatoriamente: nombre, descripción, selección de 2 o más SKUs vendibles (SKU de variante o `sku_base` de producto simple) con sus respectivas cantidades, y un precio único de paquete. |
 | **CA-03** | El sistema debe validar de manera estricta y obligatoria que el precio del paquete sea mayor a cero y estrictamente menor que la suma de los precios regulares vigentes de todos sus componentes ($precio\_combo < \sum precio\_componentes$). |
 | **CA-04** | Queda estrictamente prohibido el anidamiento: los combos únicamente pueden estar conformados por productos y SKUs individuales puros, rechazando la inclusión de otros combos. |
 | **CA-05** | El sistema debe calcular dinámicamente la disponibilidad (stock) del combo basándose en el SKU individual con menor disponibilidad proporcional ($stock\_disponible = \min \lfloor stock\_sku_i / cantidad\_requerida_i \rfloor$). |
 | **CA-06** | Si alguno de los SKUs componentes del combo se queda sin stock (0 unidades), la disponibilidad del combo automáticamente pasa a ser 0 y se marca como no disponible para compra. |
-| **CA-07** | Al emitirse el evento de creación de pedido (`order.created`) desde Ventas, el descuento del inventario de los múltiples SKUs que forman el combo debe ejecutarse de forma transaccional (ACID) en la base de datos (se descuentan todos o ninguno). |
-| **CA-08** | Si el pedido se cancela o expira la ventana de pago (`order.cancelled`), el sistema debe ejecutar una compensación automática devolviendo íntegramente el stock reservado de todos los componentes. |
+| **CA-07** | Al emitirse `order.confirmed` desde Ventas/Postventa, el descuento del inventario de los múltiples SKUs que forman el combo debe ejecutarse de forma transaccional (ACID) en la base de datos (se descuentan todos o ninguno). |
+| **CA-08** | Si una venta ya confirmada se cancela antes del despacho (`order.cancelled`), el sistema compensa íntegramente el stock consumido. Un `order.created` que nunca llega a confirmarse no requiere compensación porque no afectó stock. |
 | **CA-09** | En caso de cancelación o devolución postventa (`order.returned`), la reposición de stock se gestiona de forma atómica e integral para todos los artículos que integraban el paquete. |
 | **CA-10** | Si un gestor comercial desactiva o da de baja un SKU o producto componente en el Catálogo, el combo debe inhabilitarse y ocultarse automáticamente en todos los canales de venta, emitiendo una notificación al gestor para su revisión. |
 
@@ -55,16 +55,16 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 * **CUANDO** un canal de venta consulta la disponibilidad actual del combo,
 * **ENTONCES** el sistema responde que el stock del combo es 0 y lo muestra como temporalmente agotado.
 
-**Escenario 6: Descuento inmediato de stock ante creación de pedido (order.created)**
+**Escenario 6: Descuento de stock ante venta confirmada (`order.confirmed`)**
 
 * **DADO** que un cliente inicia la compra de un combo compuesto por 1 "Raqueta" (Stock: 5) y 3 "Pelotas" (Stock: 20),
-* **CUANDO** el módulo de Ventas emite el evento `order.created`,
+* **CUANDO** Ventas y Postventa emite `order.confirmed`,
 * **ENTONCES** el sistema descuenta de forma transaccional 1 unidad a la "Raqueta" (Nuevo Stock: 4) y 3 unidades a las "Pelotas" (Nuevo Stock: 17).
 
-**Escenario 7: Compensación de stock ante cancelación o pago fallido (order.cancelled)**
+**Escenario 7: Compensación de stock ante cancelación previa al despacho (`order.cancelled`)**
 
-* **DADO** que se descontó el stock de los componentes de un combo por un pedido pendiente de pago,
-* **CUANDO** el pago no se completa dentro del límite de tiempo y se recibe el evento `order.cancelled`,
+* **DADO** que se descontó el stock de los componentes de un combo por una venta confirmada,
+* **CUANDO** la venta se cancela antes del despacho y se recibe `order.cancelled`,
 * **ENTONCES** el sistema revierte la operación y repone transaccionalmente las unidades descontadas a cada SKU individual.
 
 **Escenario 8: Desactivación automática del combo ante baja de un componente**
@@ -80,7 +80,7 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
 | **Canal Marketplace** | Mostrar combos en catálogo y permitir compra según stock dinámico. | Consultas de combos y peticiones de validación de carrito. | Detalles del combo, precio unificado, componentes y disponibilidad calculada. |
 | **Canal Chatbot / Retail** | Consulta y venta presencial o asistida por chat. | Solicitudes de cotización y disponibilidad en tiempo real. | Información comercial del combo, precio final y existencia. |
-| **Ventas y Postventa** | Coordinar reserva, confirmación, cancelación y devolución mediante eventos de dominio. | Eventos `order.created`, `order.cancelled` y `order.returned`. | Confirmación de reserva de stock de componentes o rechazo por stock insuficiente. |
+| **Ventas y Postventa** | Coordinar confirmación, cancelación previa al despacho y devolución mediante eventos de dominio. | Eventos `order.confirmed`, `order.cancelled` y `order.returned`. | Resultado del débito o compensación de stock de componentes. |
 | **Seguridad y Usuarios** | Validar privilegios de gestión comercial. | Token de sesión y rol de usuario autenticado. | Solicitud de autorización para administrar combos. |
 
 ## Dependencias dentro de Productos y Ofertas
