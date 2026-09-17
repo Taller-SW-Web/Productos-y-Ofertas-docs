@@ -1,8 +1,6 @@
 # Especificación: Gestión Avanzada de Variantes (SKUs)
 **Versión:** v2 — corregida para eliminar discrepancias con `hu_gestion_variantes_skus.md`
 
-> **Cambios respecto a la v1:** el SKU es siempre autogenerado (se elimina la opción de recibirlo manualmente); se formaliza la aplicabilidad exclusiva a productos con `tiene_variantes = true`; se aclara que Inventario es el único dueño del stock; los atributos que forman el SKU pasan a ser inmutables.
-
 ## 1. Contexto
 
 Dentro del catálogo de productos deportivos (camisetas, zapatillas, accesorios, etc.), es común que un mismo producto base tenga múltiples versiones comerciales que se diferencian por características como talla, color u otro atributo específico del deporte o tipo de artículo. La capacidad obligatoria de CRUD de productos (`spec_gestion_productos_crud.md`) introduce el atributo `tiene_variantes` en el producto: cuando es `false`, el producto se vende con su propio `sku_base` y su propio stock (gestionado directamente por Inventario); cuando es `true`, el producto no se vende directamente y esta capacidad extiende el modelo de catálogo para representar cada combinación concreta (por ejemplo, "zapatilla X, talla 42, color negro") como una variante independiente, con su propio código de identificación e imagen, y con su stock gestionado también por Inventario, pero a nivel de variante.
@@ -13,13 +11,14 @@ Permitir que un producto con `tiene_variantes = true` tenga una o más variantes
 
 ## 3. Alcance
 
-Aplica exclusivamente a productos con `tiene_variantes = true`. Los productos simples (`tiene_variantes = false`) no utilizan esta funcionalidad; se activan y se venden directamente mediante Gestión de Productos, con su stock gestionado por Inventario a nivel de producto.
+Aplica exclusivamente a productos con `tiene_variantes = true`. Los productos simples (`tiene_variantes = false`) no utilizan esta funcionalidad; se activan mediante Gestión de Productos y su `sku_base` funciona como SKU vendible para Pricing e Inventario.
 
 Incluye:
 - Definición de los tipos de atributos que generan variantes para un producto (por ejemplo, talla, color), configurables según el tipo de producto.
 - Creación de una o más variantes (SKUs) asociadas a un producto base, cada una con su combinación única de atributos identificadores (ej. talla + color).
 - Generación automática de un código único (SKU) por variante, distinto del `sku_base` del producto y de cualquier otro SKU del catálogo. El sistema es el único que asigna este código; no se acepta ingreso manual.
 - Asociación de una imagen propia a cada variante (por ejemplo, para reflejar el color específico).
+- Posibilidad de definir un precio propio para una variante en Pricing; si no existe, hereda el precio base vigente del producto. La persistencia y vigencia del precio pertenece a Pricing.
 - Actualización de los atributos no identificadores, la imagen o el estado de una variante existente. Los atributos identificadores (los que componen el SKU) son inmutables una vez creada la variante.
 - Consulta de variantes de un producto, tanto de forma individual como listadas junto con el producto base, incluyendo su estado (la disponibilidad de stock se consulta al componente de Inventario, no se replica aquí).
 - Desactivación (baja lógica) de una variante específica, de forma independiente al estado del producto base y de las demás variantes.
@@ -86,7 +85,7 @@ El sistema DEBE permitir actualizar la imagen y los atributos **no identificador
 #### Escenario: Desactivación de una variante sin afectar el producto base ni otras variantes
 - DADO un producto con varias variantes activas
 - CUANDO el gestor comercial desactiva una de esas variantes (por ejemplo, por descontinuación de una talla)
-- ENTONCES el sistema marca únicamente esa variante como "inactiva", manteniendo el producto base y las demás variantes sin cambios en su estado ni disponibilidad
+- ENTONCES el sistema marca únicamente esa variante como "inactiva", manteniendo el producto base y las demás variantes sin cambios en su estado ni disponibilidad. Los pedidos ya confirmados conservan el snapshot de la variante vendida
 
 ### Requisito 5: Consulta de variantes por producto
 
@@ -112,7 +111,7 @@ El sistema DEBE permitir consultar todas las variantes asociadas a un producto, 
 
 ## 6. Fuera de alcance
 
-- **Gestión de precios por variante (individuales o masivos)** — corresponde a la funcionalidad de gestión de precios del módulo de Productos y Ofertas, no a esta capacidad.
+- **Persistencia y actualización de precios por variante** — corresponde a Pricing. Esta capacidad solo expone la identidad SKU necesaria para que Pricing aplique un precio específico o la herencia del precio del producto.
 - **Gestión y cálculo del stock, tanto por variante como por producto simple** — es responsabilidad exclusiva del componente de Inventario. Esta capacidad se limita a la definición y mantenimiento de la variante como entidad (atributos, imagen, código); solo notifica su creación o desactivación para que Inventario inicialice o retire el registro correspondiente.
 - **Definición de nuevos tipos de atributos genéricos de configuración de variantes distintos a talla y color** — se contempla el mecanismo, pero la parametrización avanzada de nuevos tipos de atributos para todo el catálogo se considera una evolución futura.
 - **Edición o procesamiento avanzado de imágenes (recorte, filtros, optimización automática)** — solo se contempla la carga y asociación de la imagen, no su edición dentro del sistema.
