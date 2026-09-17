@@ -212,7 +212,7 @@
     <div class="dialog-header">
       <div>
         <h2 id="selectorTitle">Añadir componentes</h2>
-        <p class="muted small">Selecciona SKU/variantes o productos simples. No se permiten combos dentro de combos.</p>
+        <p class="muted small">Selecciona SKUs vendibles directos (variantes o productos simples con SKU base). No se permiten combos dentro de combos.</p>
       </div>
       <button class="icon-button" type="button" data-close-selector aria-label="Cerrar">×</button>
     </div>
@@ -393,7 +393,7 @@
 
   function renderList(){
     const forced=state.queryState;
-    const header=`<div class="page-header"><div><h1>Gestión de combos</h1><p>Crea y administra combos formados por productos simples o SKU/variantes directos.</p></div><div class="button-row"><button class="btn btn-primary" data-action="create">Crear combo</button></div></div>`;
+    const header=`<div class="page-header"><div><h1>Gestión de combos</h1><p>Crea y administra combos formados por SKUs vendibles directos (variantes o productos simples con SKU base).</p></div><div class="button-row"><button class="btn btn-primary" data-action="create">Crear combo</button></div></div>`;
     if(state.listLoading && !forced){
       app.innerHTML=header+`<div class="skeleton" aria-label="Cargando combos"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div>`;
       setTimeout(()=>{state.listLoading=false;render();},450);
@@ -476,7 +476,7 @@
             <div class="field"><label for="comboDescription">Descripción</label><textarea id="comboDescription" aria-invalid="${descErr?'true':'false'}">${escapeHtml(state.form.description)}</textarea><div class="field-error ${descErr?'show':''}">${escapeHtml(descErr)}</div></div>
           </section>
           <section class="section">
-            <div class="section-head"><div><h2>Componentes</h2><p class="muted small">Cada componente debe ser un producto simple o SKU/variante directo.</p></div><button class="btn" type="button" data-action="add-components">Añadir componentes</button></div>
+            <div class="section-head"><div><h2>Componentes</h2><p class="muted small">Cada componente debe ser un SKU vendible directo (variante o producto simple con SKU base).</p></div><button class="btn" type="button" data-action="add-components">Añadir componentes</button></div>
             <div class="field-error ${compErr?'show':''}" style="margin-bottom:12px">${escapeHtml(compErr)}</div>
             <div class="component-table table-wrap"><table><thead><tr><th>SKU</th><th>Producto / variante</th><th>Precio regular</th><th>Stock</th><th>Cantidad</th><th>Aporte</th><th>Acción</th></tr></thead><tbody>${componentRows(v)}</tbody></table></div>
             <div class="component-mobile">${componentCards(v)}</div>
