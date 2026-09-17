@@ -40,7 +40,11 @@
 * **CUANDO** se intenta crear "NIKE" o "nike",
 * **ENTONCES** el sistema rechaza por duplicidad.
 
+## Referencias cruzadas
+* **Marcas:** El detalle completo del CRUD de Marcas se rige por su HU `hu_gestion_marcas.md` y su spec `spec_gestion_marcas.md`. Los criterios CA-05/CA-06 de este documento son un resumen de ese alcance.
+* **Asociación Categoría-Característica:** El detalle completo (herencia, obligatoriedad, límites y origen directo/heredado) se rige por su HU `hu_asociacion_categoria_caracteristica.md` y su spec `spec_asociacion_categoria_caracteristica.md`. Los criterios CA-07/CA-08/CA-09 de este documento son un resumen de ese alcance.
+
 ## Reglas resueltas (antes pendientes)
 * **Límites de características:** Formalizados a 50 (lista) y 100 chars (texto). Renombre opera por ID.
-* **Módulo de Marcas:** Se incluye su CRUD oficial con validación de unicidad y baja lógica.
-* **Asociación y Herencia:** Herencia activa, máximo 20 por categoría, los productos legacy no se rompen masivamente al cambiar la obligatoriedad.
+* **Módulo de Marcas:** Se incluye su CRUD oficial con validación de unicidad y baja lógica (detalle en `hu_gestion_marcas.md` / `spec_gestion_marcas.md`).
+* **Asociación y Herencia:** Herencia activa, máximo 20 por categoría, los productos legacy no se rompen masivamente al cambiar la obligatoriedad (detalle en `hu_asociacion_categoria_caracteristica.md` / `spec_asociacion_categoria_caracteristica.md`).
