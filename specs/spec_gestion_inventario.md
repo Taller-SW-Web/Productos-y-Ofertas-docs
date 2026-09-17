@@ -121,6 +121,8 @@ La actualización por consumo deberá garantizar lo siguiente:
 * El consumo **no puede superar el stock disponible** de la variante.
 * **Dos consumos simultáneos no pueden consumir las mismas unidades**; cada consumo debe operar sobre unidades disponibles reales.
 * La actualización del stock debe realizarse de forma **atómica/transaccional**, sin estados intermedios que corrompan la información.
+* Para ello, el descuento se ejecutará como una **actualización condicional sobre el stock disponible**: el consumo se acepta únicamente si, al momento de aplicarse, la cantidad solicitada está cubierta por las unidades disponibles.
+* La protección de los consumos concurrentes será la misma definida para las operaciones masivas de actualización de inventario del módulo (**control de concurrencia optimista**), de modo que los consumos por venta y los ajustes masivos convivan sin inconsistencias ni bloqueos globales.
 * Si no se puede garantizar la disponibilidad de las unidades solicitadas, la operación debe **rechazarse**.
 
 ### Ejemplo
@@ -161,7 +163,15 @@ La **consulta de disponibilidad** será utilizada por los canales que necesiten 
 
 ### Integraciones externas
 
-La **actualización por consumo** permitirá reflejar las unidades utilizadas en las operaciones correspondientes. Para las operaciones que impliquen consumo de stock, se contempla la comunicación con los módulos de **Ventas y Despacho**, que son quienes originan el consumo de unidades de las variantes.
+La **actualización por consumo** permitirá reflejar las unidades utilizadas en las operaciones correspondientes. Para las operaciones que impliquen consumo de stock, se contempla la comunicación con los módulos de **Ventas y Despacho**.
+
+**Delimitación de Ventas y Despacho:**
+
+* La **confirmación definitiva del consumo** corresponde a una **venta confirmada** gestionada por el módulo de **Ventas y Postventa**: sin una venta confirmada no se aplica ningún consumo sobre el inventario.
+* El módulo de **Despacho no genera consumo adicional ni modifica directamente el stock**: se limita a entregar las unidades correspondientes a ventas ya confirmadas, cuyos consumos ya fueron aplicados y validados bajo la misma regla de consumo.
+* En el alcance actual **no se contemplan reservas ni liberaciones** de stock: el consumo se aplica de forma directa sobre la venta confirmada. Si el negocio requiriera reservas en el futuro, correspondería un cambio de alcance formal.
+
+Después de cada actualización de stock (por consumo o ajuste), la gestión de inventario **notificará el cambio de stock** de la variante mediante el contrato de evento `inventory.stock.changed`, que será consumido por el dashboard analítico y por otros componentes interesados para mantenerse actualizados.
 
 La comunicación entre módulos se realizará mediante las interfaces de integración establecidas para el proyecto, manteniendo la separación entre los diferentes componentes.
 
@@ -179,6 +189,8 @@ En términos generales, permitirá:
 * Registrar el consumo de unidades sobre una variante.
 * Actualizar la cantidad disponible después de cada consumo.
 * Evitar consumos superiores al stock existente y consumos concurrentes sobre las mismas unidades.
+* Aplicar el consumo únicamente cuando exista una venta confirmada, quedando Despacho limitado a la entrega de unidades ya vendidas.
+* Notificar los cambios de stock mediante el contrato de evento `inventory.stock.changed` para mantener actualizados el dashboard analítico y los componentes integrados.
 * Mantener sincronizada la información de disponibilidad utilizada por los diferentes canales.
 
 Con estas funcionalidades, el inventario proporcionará información actualizada sobre la disponibilidad de las variantes y permitirá reflejar correctamente los cambios producidos por su consumo.

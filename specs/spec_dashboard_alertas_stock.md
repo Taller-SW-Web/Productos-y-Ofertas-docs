@@ -76,6 +76,10 @@ Cuando no existan unidades:
 
 Estas alertas permitirán detectar variantes que podrían requerir una reposición de inventario.
 
+### Actualización de la información
+
+El dashboard se actualizará cuando la gestión de inventario notifique un **cambio de stock** de una variante mediante el contrato de evento `inventory.stock.changed`. Ante cada notificación, los indicadores y alertas se recalcularán con el saldo y el estado vigentes de cada variante. La actualización es **reactiva a los cambios del inventario**; no depende de un intervalo fijo ni de un mecanismo adicional de actualización en tiempo real.
+
 ---
 
 ## 3. Visualización de información
@@ -152,5 +156,6 @@ La funcionalidad permitirá:
 * Visualizar el Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado.
 * Agrupar la información por producto cuando se requiera una vista comercial.
 * Representar la información mediante gráficos e indicadores visuales.
+* Actualizarse de forma reactiva ante los cambios de stock notificados por la gestión de inventario mediante el contrato de evento `inventory.stock.changed`.
 
 De esta manera, el dashboard complementará la gestión del inventario proporcionando una visión rápida y comprensible de su estado actual y facilitando la identificación de situaciones que requieran atención.
