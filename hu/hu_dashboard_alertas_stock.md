@@ -20,7 +20,7 @@ La unidad primaria de inventario del dashboard es la **Variante/SKU**. El Produc
 | **CA-04** | El sistema debe mostrar alertas para las variantes que se encuentren en estado **Stock bajo** o **Agotado**, según el estado calculado de cada SKU. |
 | **CA-05** | El sistema debe mostrar el **Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado**, considerando exclusivamente unidades vendidas de ventas confirmadas (excluyendo operaciones que no representen una venta confirmada, como ajustes de inventario, mermas o reservas), agrupando las ventas de todas las variantes de un mismo producto, sumando las unidades vendidas de sus SKUs y mostrando los 5 productos con mayor cantidad total de unidades vendidas. |
 | **CA-06** | Los indicadores deben representar el estado actual del inventario y las alertas deben generarse según el estado calculado de cada SKU en ese momento. |
-| **CA-07** | Los indicadores y alertas deben actualizarse cuando existan cambios en el stock que afecten la información mostrada. |
+| **CA-07** | Los indicadores y alertas deben actualizarse cuando la gestión de inventario notifique un cambio de stock de una variante mediante el contrato de evento `inventory.stock.changed`; la actualización debe reflejar el saldo y el estado vigentes. |
 | **CA-08** | Después de un consumo correctamente registrado, el estado de la variante debe reflejarse correctamente en el dashboard: si pasa de **Disponible → Stock bajo**, debe verse como **Stock bajo**; si pasa de **Stock bajo → Agotado**, debe verse como **Agotado**. |
 
 ## Escenarios dado-cuando-entonces
@@ -61,6 +61,12 @@ La unidad primaria de inventario del dashboard es la **Variante/SKU**. El Produc
 * **CUANDO** se registra correctamente el consumo de esa unidad,
 * **ENTONCES** el dashboard actualiza la información de la variante a **Agotado** y muestra la alerta correspondiente.
 
+### Escenario 7: Actualización reactiva del dashboard ante un cambio de stock
+
+* **DADO** que la gestión de inventario modifica el stock de una variante (por ejemplo, su stock queda en o por debajo de su `umbral_stock_bajo`),
+* **CUANDO** la gestión de inventario notifica el cambio mediante el contrato de evento `inventory.stock.changed`,
+* **ENTONCES** el dashboard recalcula los indicadores y alertas con el saldo y el estado vigentes de la variante.
+
 ## Interacción con otros módulos
 
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
@@ -74,7 +80,7 @@ La unidad primaria de inventario del dashboard es la **Variante/SKU**. El Produc
 | **Gestión de productos** | Identificación de productos y variantes para mostrar los indicadores y análisis de inventario, y para agrupar la información por producto como vista comercial. |
 | **Gestión de variantes/SKUs** | Identificación y atributos de cada variante/SKU analizada por los indicadores y alertas. |
 | **Gestión de características** | Características de las variantes, como talla y color, para identificar correctamente las unidades analizadas. |
-| **Gestión de inventario** | Cantidades actuales, estados de disponibilidad y registros de consumo necesarios para generar los indicadores y alertas. |
+| **Gestión de inventario** | Cantidades actuales, estados de disponibilidad y registros de consumo necesarios para generar los indicadores y alertas, así como la notificación de cambios de stock mediante el contrato de evento `inventory.stock.changed`. |
 
 ## Reglas pendientes de acordar
 
@@ -83,7 +89,5 @@ La unidad primaria de inventario del dashboard es la **Variante/SKU**. El Produc
 * **Indicadores:** definir el detalle y la visualización final de los indicadores referidos en la especificación del dashboard (cantidad total de variantes/SKUs, cantidad total de unidades disponibles y variantes por estado).
 
 * **Valor del umbral de stock bajo:** el `umbral_stock_bajo` es configurable por cada variante/SKU; definir el valor concreto que se asignará a cada variante para determinar el estado **Stock bajo**.
-
-* **Actualización de información:** definir con qué frecuencia se actualizarán los indicadores y alertas.
 
 * **Filtros:** definir si el dashboard permitirá filtrar la información por producto, categoría, marca, variante u otro criterio.

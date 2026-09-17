@@ -21,7 +21,8 @@ El stock se controla para cada variante identificada mediante un SKU, consideran
 | **CA-07** | El sistema no debe permitir que el stock de una variante sea negativo. Si no existe stock suficiente, debe rechazar el consumo y conservar el stock actual. |
 | **CA-08** | Cuando el consumo deje el stock en cero, la variante debe quedar identificada como **Agotada**. Si el consumo deja el stock en `0 < stock <= umbral_stock_bajo`, la variante debe quedar identificada como **Stock bajo**. |
 | **CA-09** | La información de stock actualizada debe estar disponible para las posteriores consultas realizadas por los canales y módulos integrados. |
-| **CA-10** | Ante consumos concurrentes sobre el mismo SKU, el sistema debe garantizar que el stock no sea negativo y que la suma de consumos aceptados no supere el stock disponible de la variante. |
+| **CA-10** | Ante consumos concurrentes sobre el mismo SKU, el sistema debe garantizar que el stock no sea negativo y que la suma de consumos aceptados no supere el stock disponible de la variante. Para ello, el descuento se ejecuta como una **actualización condicional sobre el stock disponible** y emplea el **mismo control de concurrencia optimista** definido para las operaciones masivas de inventario, sin bloquear otros consumos. |
+| **CA-11** | El consumo de stock debe aplicarse únicamente cuando exista una **venta confirmada** por parte del módulo de **Ventas y Postventa**. El módulo de **Despacho** no genera consumo por sí mismo y únicamente entrega unidades correspondientes a ventas ya confirmadas. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -77,7 +78,7 @@ El stock se controla para cada variante identificada mediante un SKU, consideran
 
 * **DADO** que la variante con SKU `NK-AM-BLK-40` tiene 5 unidades disponibles y se solicitan simultáneamente un consumo de 3 unidades (Consumo A) y un consumo de 3 unidades (Consumo B),
 * **CUANDO** ambos consumos se registran de forma concurrente sobre el mismo SKU,
-* **ENTONCES** el sistema acepta un solo consumo, rechaza el otro por falta de stock y el stock final de la variante es de 2 unidades, sin quedar nunca negativo.
+* **ENTONCES** el sistema acepta un solo consumo y rechaza el otro por falta de stock, aplicando el descuento mediante una **actualización condicional sobre el saldo** con el control de concurrencia optimista de las operaciones masivas; el stock final de la variante es de 2 unidades, sin quedar nunca negativo.
 
 ### Escenario 10: Estado resultante Stock bajo después de un consumo
 
@@ -98,8 +99,8 @@ El stock se controla para cada variante identificada mediante un SKU, consideran
 | **Canal Marketplace** | Consultar la disponibilidad de las variantes antes de realizar operaciones de venta. | SKU de la variante consultada. | Stock disponible y estado de disponibilidad. |
 | **Canal Chatbot** | Responder consultas sobre la disponibilidad de productos y sus variantes. | SKU de la variante consultada. | Stock disponible y estado de disponibilidad. |
 | **Canal Retail** | Consultar la disponibilidad de las variantes durante una venta asistida. | SKU de la variante consultada. | Stock disponible y estado de disponibilidad. |
-| **Ventas y Postventa** | Comunicar el consumo de unidades para actualizar el inventario. | SKU y cantidad consumida. | Resultado de la actualización y stock actualizado. |
-| **Despacho** | Comunicar el consumo de unidades que corresponda para mantener actualizado el inventario. | SKU y cantidad consumida. | Resultado de la actualización y stock actualizado. |
+| **Ventas y Postventa** | Confirmar la venta para aplicar definitivamente el consumo de unidades sobre el inventario. | SKU y cantidad consumida de la venta confirmada. | Resultado de la actualización y stock actualizado. |
+| **Despacho** | Entregar unidades correspondientes a ventas ya confirmadas; no genera consumo ni modifica el stock por sí mismo. | SKU y cantidad a despachar de ventas confirmadas. | Confirmación de la entrega (sin consumo adicional). |
 
 La consulta de disponibilidad por parte de los canales **Marketplace, Retail y Chatbot** se realiza siempre referenciando una **Variante/SKU**; el canal no consulta el stock del producto como si el producto fuera la unidad de inventario.
 
@@ -116,8 +117,4 @@ La consulta de disponibilidad por parte de los canales **Marketplace, Retail y C
 
 * **Valor del umbral de stock bajo:** el `umbral_stock_bajo` es configurable por cada variante/SKU; definir el valor concreto que se asignará a cada variante.
 
-* **Generación del SKU:** definir si el SKU será generado automáticamente por el sistema o registrado al crear la variante.
-
-* **Confirmación del consumo:** definir qué operación o evento de Ventas y Postventa confirma definitivamente el consumo de stock.
-
-* **Actualización desde Despacho:** definir si Despacho debe actualizar directamente el stock o si su interacción corresponde únicamente a determinados tipos de consumo.
+> Nota: la generación del SKU la define la funcionalidad de **Gestión de variantes/SKUs** (generación automática desde `sku_base` y atributos identificadores); la confirmación del consumo y la interacción con Despacho ya quedaron resueltas en **CA-11** y en la tabla de interacción.
