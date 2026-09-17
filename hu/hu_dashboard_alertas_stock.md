@@ -8,7 +8,7 @@
 
 El dashboard permitirá visualizar información consolidada del inventario mediante indicadores y gráficos, facilitando el seguimiento del estado del stock y la identificación de situaciones que requieran atención.
 
-La unidad primaria de inventario del dashboard es la **Variante/SKU**. El Producto puede utilizarse únicamente como **agrupador comercial** cuando corresponda, sin representar una unidad de inventario independiente.
+La unidad primaria de inventario del dashboard es el **SKU vendible**. El Producto puede utilizarse únicamente como **agrupador comercial** cuando corresponda, sin representar una unidad de inventario independiente.
 
 ## Criterios de aceptación
 
@@ -21,7 +21,8 @@ La unidad primaria de inventario del dashboard es la **Variante/SKU**. El Produc
 | **CA-05** | El sistema debe mostrar el **Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado**, considerando exclusivamente unidades vendidas de ventas confirmadas (excluyendo operaciones que no representen una venta confirmada, como ajustes de inventario, mermas o reservas), agrupando las ventas de todas las variantes de un mismo producto, sumando las unidades vendidas de sus SKUs y mostrando los 5 productos con mayor cantidad total de unidades vendidas. |
 | **CA-06** | Los indicadores deben representar el estado actual del inventario y las alertas deben generarse según el estado calculado de cada SKU en ese momento. |
 | **CA-07** | Los indicadores y alertas deben actualizarse cuando la gestión de inventario notifique un cambio de stock de una variante mediante el contrato de evento `inventory.stock.changed`; la actualización debe reflejar el saldo y el estado vigentes. |
-| **CA-08** | Después de un consumo correctamente registrado, el estado de la variante debe reflejarse correctamente en el dashboard: si pasa de **Disponible → Stock bajo**, debe verse como **Stock bajo**; si pasa de **Stock bajo → Agotado**, debe verse como **Agotado**. |
+| **CA-08** | Después de un consumo correctamente registrado, el estado del SKU debe reflejarse correctamente en el dashboard: si pasa de **Disponible → Stock bajo**, debe verse como **Stock bajo**; si pasa de **Stock bajo → Agotado**, debe verse como **Agotado**. |
+| **CA-09** | El período del Top 5 debe ser seleccionable por el usuario; si no se especifica uno, se utilizan los últimos 30 días. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -82,12 +83,9 @@ La unidad primaria de inventario del dashboard es la **Variante/SKU**. El Produc
 | **Gestión de características** | Características de las variantes, como talla y color, para identificar correctamente las unidades analizadas. |
 | **Gestión de inventario** | Cantidades actuales, estados de disponibilidad y registros de consumo necesarios para generar los indicadores y alertas, así como la notificación de cambios de stock mediante el contrato de evento `inventory.stock.changed`. |
 
-## Reglas pendientes de acordar
+## Reglas de negocio consolidadas
 
-* **Período de análisis:** definir el período exacto utilizado para calcular el Top 5 de productos con mayor cantidad de unidades vendidas.
-
-* **Indicadores:** definir el detalle y la visualización final de los indicadores referidos en la especificación del dashboard (cantidad total de variantes/SKUs, cantidad total de unidades disponibles y variantes por estado).
-
-* **Valor del umbral de stock bajo:** el `umbral_stock_bajo` es configurable por cada variante/SKU; definir el valor concreto que se asignará a cada variante para determinar el estado **Stock bajo**.
-
-* **Filtros:** definir si el dashboard permitirá filtrar la información por producto, categoría, marca, variante u otro criterio.
+* **Indicadores mínimos:** total de SKUs vendibles, total de unidades disponibles y cantidad de SKUs por estado (Disponible, Stock bajo y Agotado).
+* **Umbral:** `umbral_stock_bajo` se configura individualmente por SKU; no existe un valor global obligatorio.
+* **Filtros:** el dashboard permite filtrar por producto, categoría, marca, SKU y estado de inventario.
+* **Top 5:** período seleccionable; por defecto, últimos 30 días.
