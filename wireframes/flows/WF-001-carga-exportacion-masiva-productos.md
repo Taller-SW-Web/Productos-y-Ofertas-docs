@@ -29,7 +29,9 @@ Reglas de producción:
 - No permitas adjuntar o incrustar imágenes; la plantilla solo admite URLs.
 - No elijas una librería de UI o estrategia CSS.
 - No consumas APIs reales ni uses datos personales reales.
-- Numera las anotaciones como A-01, A-02, A-03, etc.
+- Numera las anotaciones como A-01, A-02, A-03, etc.; estas anotaciones pertenecen a la documentación del wireframe y no deben renderizarse dentro de la interfaz del prototipo HTML.
+- Los supuestos y las preguntas abiertas pertenecen a este documento de especificación y no deben mostrarse como contenido de la interfaz del producto.
+- El comportamiento responsivo debe verificarse cambiando el tamaño real del viewport; no agregues controles internos para simular escritorio, tablet o móvil.
 - Representa todos los estados obligatorios indicados en este documento.
 - Los eventos de dominio son contexto técnico; no deben exponerse al usuario\
   salvo que una regla funcional lo requiera.
@@ -47,19 +49,19 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No requieras conexión a servicios externos.
 - Usa datos ficticios representativos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye las anotaciones visibles definidas en cada pantalla.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
+- No muestres anotaciones A-xx, supuestos, preguntas abiertas ni otra documentación interna dentro de la interfaz simulada.
+- Implementa comportamiento responsivo real para escritorio, tablet y móvil mediante HTML/CSS; no incluyas un selector o botón para cambiar de tipo de pantalla.
 - Mantén el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
 
 1. Pantallas y variantes indicadas en el inventario.
 2. Navegación funcional entre los estados simulados.
-3. Anotaciones numeradas asociadas a elementos visibles.
+3. Anotaciones numeradas documentadas en este archivo y asociadas a elementos visibles del wireframe; no forman parte de la interfaz del prototipo.
 4. Estado inicial, prevalidación, procesamiento y resultado.
 5. Casos de éxito, rechazo estructural y éxito parcial.
-6. Comportamiento responsivo.
-7. Lista visible o adjunta de supuestos y preguntas abiertas.
+6. Comportamiento responsivo verificable al redimensionar el viewport, sin controles internos de dispositivo.
+7. Supuestos y preguntas abiertas registrados en las secciones documentales correspondientes, fuera de la interfaz del prototipo.
 
 ---
 
@@ -69,11 +71,11 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | -------------------- | --------------------------------------- |
 | ID del wireframe     | WF-001                                  |
 | Nombre del flujo     | Carga y exportación masiva de productos |
-| Versión              | 0.1                                     |
+| Versión              | 0.2                                     |
 | Estado               | Borrador                                |
 | Responsable          | Por asignar                             |
 | Fecha                | 2026-09-16                              |
-| Última actualización | 2026-09-16                              |
+| Última actualización | 2026-09-17                              |
 
 ## 2. Trazabilidad
 
@@ -571,8 +573,10 @@ rechazadas.
 ## 11. Comportamiento responsivo
 
 DESIGN.md define 12 columnas para escritorio y 4 para móvil, pero no define\
-tablet ni breakpoints exactos. El prototipo debe demostrar los tres tamaños sin\
-convertir estos valores en una decisión definitiva de implementación.
+tablet ni breakpoints exactos. El prototipo debe responder correctamente a los\
+tres tamaños al cambiar el viewport real, sin incluir controles internos para\
+simular dispositivos y sin convertir estos valores en una decisión definitiva\
+de implementación.
 
 | Aspecto             | Escritorio                                   | Tablet                         | Móvil                                   |
 | ------------------- | -------------------------------------------- | ------------------------------ | --------------------------------------- |
@@ -583,7 +587,6 @@ convertir estos valores en una decisión definitiva de implementación.
 | Métricas finales    | Tres tarjetas alineadas                      | Dos + una o fila flexible      | Tres bloques apilados                   |
 | Acciones            | Agrupadas por prioridad                      | Ajuste de línea permitido      | Ancho disponible y 44 px mínimo         |
 | Modal               | Ancho contenido                              | Margen lateral                 | Diálogo casi completo sin desbordar     |
-| Anotaciones         | Panel lateral                                | Panel debajo                   | Lista colapsable o debajo del wireframe |
 | Contenido omitido   | Ninguno                                      | Ninguno                        | Ninguno; reorganizar                    |
 
 ### Condiciones críticas
@@ -609,8 +612,8 @@ convertir estos valores en una decisión definitiva de implementación.
 - Los mensajes identifican el problema y la acción necesaria para corregirlo.
 - El nombre completo del archivo permanece disponible mediante texto accesible\
   aunque visualmente se trunque.
-- Las anotaciones del prototipo no deben incorporarse al árbol accesible como\
-  parte de la interfaz del producto.
+- Las anotaciones, supuestos y preguntas del documento no deben renderizarse\
+  como parte de la interfaz del producto.
 
 ## 13. Tono visual y contenido
 
@@ -729,7 +732,6 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 | ID     | Supuesto                                                               | Motivo                                      | Impacto si es incorrecto            | Validar |
 | ------ | ---------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------- | ------- |
-| SUP-01 | WF-001 es un identificador disponible                                  | No se proporcionó INDEX.md                  | Renombrar archivo y referencias     | Sí      |
 | SUP-02 | La ruta será /productos/carga-masiva                                   | No se entregó mapa de navegación            | Cambiar ruta y entrada              | Sí      |
 | SUP-03 | Escritorio es el dispositivo principal                                 | Trabajo intensivo con Excel/CSV             | Cambiar prioridad responsive        | Sí      |
 | SUP-04 | El batch ID puede mostrarse como referencia                            | Existe en auditoría, no se exige en UI      | Ocultarlo si es interno             | Sí      |
@@ -756,6 +758,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 | Versión | Fecha      | Autor     | Cambio                                                    | Aprobado por |
 | ------- | ---------- | --------- | --------------------------------------------------------- | ------------ |
 | 0.1     | 2026-09-16 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente    |
+| 0.2     | 2026-09-17 | Asistente | Se separó la documentación del wireframe de la interfaz HTML; se retiró la exigencia de mostrar anotaciones, supuestos, preguntas y controles de dispositivo dentro del prototipo; WF-001 quedó confirmado contra INDEX.md | Pendiente    |
 
 ---
 
@@ -767,7 +770,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 - [x] Las reglas críticas están trazadas a la spec/HU.
 - [x] Los supuestos y preguntas están registrados.
 - [x] El formato HTML está definido.
-- [ ] Confirmar el ID WF-001 contra INDEX.md.
+- [x] ID WF-001 confirmado contra INDEX.md.
 - [ ] Resolver Q-01 antes de representar una plantilla definitiva.
 - [ ] Confirmar ruta y permisos antes de implementar el frontend.
 - [ ] Confirmar la política de fallo general y de fórmula insegura.
