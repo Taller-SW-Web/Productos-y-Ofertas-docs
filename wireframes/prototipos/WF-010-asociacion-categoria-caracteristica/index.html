@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WF-010 — Asociación entre categorías y características</title>
+  <style>
+    :root{
+      --surface:#fff;
+      --neutral-10:#f3f4f6;
+      --neutral-20:#e5e7eb;
+      --neutral-30:#d1d5db;
+      --neutral-50:#6b7280;
+      --neutral-70:#374151;
+      --neutral-90:#111827;
+      --radius:4px;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--neutral-90);
+      background:var(--surface);
+    }
+    *{box-sizing:border-box}
+    html{min-width:320px}
+    body{margin:0;background:var(--surface);font-size:16px;line-height:1.5}
+    button,input,select{font:inherit;color:inherit}
+    button{min-height:44px;cursor:pointer}
+    button:disabled{cursor:not-allowed;color:var(--neutral-50);border-color:var(--neutral-30);background:var(--neutral-10)}
+    a,button,input,select{outline-offset:3px}
+    .app-shell{min-height:100vh}
+    .topbar{border-bottom:1px solid var(--neutral-30);background:var(--surface)}
+    .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700}
+    .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .crumb{color:var(--neutral-50);font-size:14px}
+    .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
+    .page-header h1{font-size:32px;line-height:1.15;margin:0 0 8px;font-weight:700}
+    .page-header p{margin:0;color:var(--neutral-50);max-width:760px}
+    h2{font-size:24px;line-height:1.2;margin:0 0 16px}
+    h3{font-size:18px;line-height:1.3;margin:0 0 12px}
+    .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
+    .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+    .btn-primary{background:var(--neutral-90);color:var(--surface)}
+    .btn-danger{background:var(--surface);border-style:double;border-width:3px}
+    .btn-quiet{border-color:var(--neutral-30);font-weight:500}
+    .button-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .button-row.end{justify-content:flex-end}
+    .card{border:1px solid var(--neutral-30);background:var(--surface);padding:24px}
+    .muted{color:var(--neutral-50)}
+    .small{font-size:14px}
+    .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--neutral-30);padding:4px 8px;border-radius:999px;background:var(--surface)}
+    .status::before{content:"";width:8px;height:8px;border:1px solid var(--neutral-90);border-radius:50%;background:var(--surface)}
+    .status.active::before{background:var(--neutral-90)}
+    .status.off::before{background:transparent}
+    .notice{border:1px solid var(--neutral-90);padding:16px;display:flex;gap:12px;align-items:flex-start;background:var(--surface);margin-bottom:16px}
+    .notice-icon{width:24px;height:24px;min-width:24px;border:1px solid var(--neutral-90);border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px}
+    .notice h3{font-size:16px;margin:0 0 4px}
+    .notice p{margin:0;color:var(--neutral-70)}
+    .notice.error{border-width:2px}
+    .toast{position:fixed;right:24px;bottom:24px;border:1px solid var(--neutral-90);background:var(--surface);padding:14px 16px;max-width:360px;z-index:80;display:none}
+    .toast.show{display:block}
+
+    .layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:24px;align-items:start}
+    .tree-nav{border:1px solid var(--neutral-30)}
+    .tree-nav h2{padding:16px;margin:0;border-bottom:1px solid var(--neutral-30);font-size:16px}
+    .tree-item{padding:12px 16px;border-bottom:1px solid var(--neutral-30);cursor:pointer}
+    .tree-item:last-child{border-bottom:0}
+    .tree-item.selected{background:var(--neutral-90);color:var(--surface)}
+    .tree-item.selected .muted{color:var(--neutral-30)}
+    .tree-item.child{padding-left:40px}
+    .tree-item.off{color:var(--neutral-50)}
+    .tree-item.off.selected{background:var(--neutral-50)}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--neutral-30);vertical-align:top}
+    th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"Roboto Mono",ui-monospace,monospace;font-weight:600;color:var(--neutral-70);background:var(--neutral-10)}
+    tbody tr:last-child td{border-bottom:0}
+    .table-wrap{border:1px solid var(--neutral-30);overflow:hidden}
+    .row-actions{display:flex;gap:4px;flex-wrap:wrap}
+    .row-actions .btn{min-height:36px;padding:6px 9px;font-size:14px}
+    .tag{border:1px solid var(--neutral-30);padding:2px 8px;font-size:12px;font-family:"Roboto Mono",monospace;font-weight:600;display:inline-block}
+    .tag.strong{border-color:var(--neutral-90)}
+    .mobile-list{display:none}
+    .assoc-card{border:1px solid var(--neutral-30);padding:16px}
+    .assoc-card + .assoc-card{margin-top:12px}
+
+    .section{border:1px solid var(--neutral-30);padding:24px;margin-bottom:16px}
+    .field{margin-bottom:16px}
+    .field:last-child{margin-bottom:0}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    input[type="text"],select{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:11px 12px;border-radius:var(--radius);min-height:44px}
+    .radio-row{display:flex;gap:12px;flex-wrap:wrap}
+    .radio-option{border:1px solid var(--neutral-30);padding:14px;flex:1;min-width:180px;cursor:pointer}
+    .radio-option.selected{border-color:var(--neutral-90);border-width:2px}
+    .radio-option input{margin-right:8px}
+    .summary{position:sticky;top:16px}
+    .metric{border-bottom:1px solid var(--neutral-30);padding:14px 0}
+    .metric:first-of-type{padding-top:0}
+    .metric:last-of-type{border-bottom:0;padding-bottom:0}
+    .metric-label{display:block;font-size:13px;color:var(--neutral-50);margin-bottom:4px}
+    .metric-value{font-size:22px;font-weight:700;line-height:1.2}
+    .metric-detail{display:block;font-size:13px;color:var(--neutral-50);margin-top:4px}
+
+    .overlay{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:90;display:none;align-items:center;justify-content:center;padding:24px}
+    .overlay.open{display:flex}
+    .dialog{width:min(760px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--surface);border:1px solid var(--neutral-90);padding:24px}
+    .dialog.small-dialog{width:min(520px,100%)}
+    .dialog-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}
+    .dialog-header h2{margin:0}
+    .icon-button{width:44px;height:44px;border:1px solid var(--neutral-90);background:var(--surface);font-size:20px;line-height:1}
+    .results{border:1px solid var(--neutral-30);margin-top:16px}
+    .result-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px;border-bottom:1px solid var(--neutral-30)}
+    .result-item:last-child{border-bottom:0}
+    .result-title{font-weight:600}
+    .result-meta{font-size:13px;color:var(--neutral-50);margin-top:2px}
+    .checkbox{width:20px;height:20px}
+    .selector-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:20px}
+
+    .empty-state{border:1px solid var(--neutral-30);padding:48px 24px;text-align:center}
+    .empty-state .placeholder{width:64px;height:64px;border:1px solid var(--neutral-30);margin:0 auto 16px;position:relative;background:var(--neutral-10)}
+    .empty-state .placeholder::before,.empty-state .placeholder::after{content:"";position:absolute;left:5px;right:5px;top:31px;border-top:1px solid var(--neutral-50);transform:rotate(45deg)}
+    .empty-state .placeholder::after{transform:rotate(-45deg)}
+    .empty-state h2{margin-bottom:8px}
+    .empty-state p{color:var(--neutral-50);margin:0 auto 20px;max-width:520px}
+
+    .skeleton{border:1px solid var(--neutral-30);padding:16px}
+    .sk-line{height:14px;background:var(--neutral-10);margin:8px 0}
+    .sk-line.w30{width:30%}.sk-line.w50{width:50%}.sk-line.w80{width:80%}
+
+    @media (max-width:900px){
+      .layout{grid-template-columns:1fr}
+      .summary{position:static}
+      .desktop-table{display:none}
+      .mobile-list{display:block}
+      .page-header{align-items:stretch}
+    }
+    @media (max-width:600px){
+      .topbar-inner{padding:12px 16px}
+      .crumb{display:none}
+      .page{padding:24px 16px 48px}
+      .page-header{display:block;margin-bottom:24px}
+      .page-header h1{font-size:28px}
+      .page-header .button-row{margin-top:16px}
+      .page-header .btn{width:100%}
+      .section,.card{padding:16px}
+      .row-actions,.button-row{display:grid;grid-template-columns:1fr;width:100%}
+      .row-actions .btn,.button-row .btn{width:100%;min-height:44px}
+      .overlay{padding:12px;align-items:flex-end}
+      .dialog{max-height:92vh;padding:16px}
+      .selector-footer{display:block}
+      .selector-footer .button-row{margin-top:16px}
+      .result-item{grid-template-columns:auto minmax(0,1fr)}
+      .result-item > .btn{grid-column:1/-1;width:100%}
+      .radio-option{min-width:0}
+      .toast{left:16px;right:16px;bottom:16px}
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="crumb">Productos / Características / Asociaciones</div>
+    </div>
+  </header>
+  <main id="app" class="page" tabindex="-1"></main>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="associateOverlay" class="overlay" aria-hidden="true">
+  <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="associateTitle">
+    <div class="dialog-header">
+      <div>
+        <h2 id="associateTitle">Asociar característica</h2>
+        <p id="associateCategory" class="muted small"></p>
+      </div>
+      <button class="icon-button" type="button" data-close-associate aria-label="Cerrar">×</button>
+    </div>
+    <div class="field">
+      <label for="charSelect">Característica</label>
+      <select id="charSelect"></select>
+    </div>
+    <div class="field">
+      <label>Condición</label>
+      <div class="radio-row">
+        <label class="radio-option selected" style="display:block"><input type="radio" name="cond" value="obligatoria" checked> <strong>Obligatoria</strong><div class="small muted" style="margin-top:6px">Exigida al crear o editar un producto en esta categoría.</div></label>
+        <label class="radio-option" style="display:block"><input type="radio" name="cond" value="opcional"> <strong>Opcional</strong><div class="small muted" style="margin-top:6px">Disponible pero no exigida.</div></label>
+      </div>
+    </div>
+    <div id="associateNotice"></div>
+    <div class="selector-footer">
+      <div id="associateHint" class="small muted"></div>
+      <div class="button-row end">
+        <button class="btn" type="button" data-close-associate>Cancelar</button>
+        <button id="confirmAssociateBtn" class="btn btn-primary" type="button">Asociar</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="conditionOverlay" class="overlay" aria-hidden="true">
+  <section class="dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="conditionTitle">
+    <div class="dialog-header">
+      <div><h2 id="conditionTitle">Cambiar obligatoriedad</h2><p id="conditionMeta" class="muted small"></p></div>
+      <button class="icon-button" type="button" data-close-condition aria-label="Cerrar">×</button>
+    </div>
+    <div class="field">
+      <label>Condición</label>
+      <div class="radio-row">
+        <label class="radio-option selected" style="display:block"><input type="radio" name="cond2" value="obligatoria" checked> <strong>Obligatoria</strong></label>
+        <label class="radio-option" style="display:block"><input type="radio" name="cond2" value="opcional"> <strong>Opcional</strong></label>
+      </div>
+    </div>
+    <div class="notice">
+      <span class="notice-icon" aria-hidden="true">i</span>
+      <div><h3>Cambio de opcional a obligatoria.</h3><p>Los productos preexistentes sin este dato no se invalidan de inmediato; la obligatoriedad se exigirá en la próxima edición de cada producto.</p></div>
+    </div>
+    <div class="button-row end">
+      <button class="btn" type="button" data-close-condition>Cancelar</button>
+      <button id="confirmConditionBtn" class="btn btn-primary" type="button">Guardar condición</button>
+    </div>
+  </section>
+</div>
+
+<div id="dissociateOverlay" class="overlay" aria-hidden="true">
+  <section class="dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="dissociateTitle">
+    <div class="dialog-header">
+      <div><h2 id="dissociateTitle">Desasociar característica</h2><p id="dissociateMeta" class="muted small"></p></div>
+      <button class="icon-button" type="button" data-close-dissociate aria-label="Cerrar">×</button>
+    </div>
+    <div class="notice">
+      <span class="notice-icon" aria-hidden="true">!</span>
+      <div><h3>La característica dejará de aplicarse a esta categoría.</h3><p>Los productos ya registrados conservan sus valores.</p></div>
+    </div>
+    <div class="button-row end">
+      <button class="btn" type="button" data-close-dissociate>Cancelar</button>
+      <button id="confirmDissociateBtn" class="btn btn-danger" type="button">Desasociar</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /*
+    Estados documentales de WF-010 que pueden inspeccionarse sin contaminar la UI:
+      ?state=error
+      ?state=no-permission
+      ?state=session-expired
+    No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
+  */
+
+  const MAX_DIRECT = 20;
+
+  let categories = [
+    {id:'cat-calzado', name:'Calzado', active:true, parentId:null},
+    {id:'cat-zapatillas', name:'Zapatillas', active:true, parentId:'cat-calzado'},
+    {id:'cat-botines', name:'Botines', active:true, parentId:'cat-calzado'},
+    {id:'cat-futbol', name:'Fútbol', active:true, parentId:null},
+    {id:'cat-balones', name:'Balones', active:true, parentId:'cat-futbol'},
+    {id:'cat-retiro', name:'Línea retirada', active:false, parentId:'cat-futbol'}
+  ];
+
+  let characteristics = [
+    {id:'ch-talla', name:'Talla', active:true, type:'LISTA'},
+    {id:'ch-color', name:'Color', active:true, type:'LISTA'},
+    {id:'ch-material', name:'Material', active:true, type:'TEXTO'},
+    {id:'ch-peso', name:'Peso', active:true, type:'NUMERO'},
+    {id:'ch-suela', name:'Tipo de suela', active:true, type:'LISTA'},
+    {id:'ch-sinuso', name:'Característica retirada', active:false, type:'TEXTO'}
+  ];
+
+  // asociaciones directas: {catId, charId, condition}
+  let associations = [
+    {catId:'cat-calzado', charId:'ch-talla', condition:'obligatoria'},
+    {catId:'cat-calzado', charId:'ch-color', condition:'opcional'},
+    {catId:'cat-calzado', charId:'ch-material', condition:'opcional'},
+    {catId:'cat-zapatillas', charId:'ch-suela', condition:'obligatoria'},
+    {catId:'cat-futbol', charId:'ch-color', condition:'opcional'},
+    {catId:'cat-futbol', charId:'ch-sinuso', condition:'opcional'}
+  ];
+
+  const state = {
+    selectedCatId:'cat-zapatillas',
+    loading:true,
+    saving:false,
+    queryState:new URLSearchParams(location.search).get('state') || ''
+  };
+
+  const app = document.getElementById('app');
+  const toast = document.getElementById('toast');
+  const associateOverlay = document.getElementById('associateOverlay');
+  const conditionOverlay = document.getElementById('conditionOverlay');
+  const dissociateOverlay = document.getElementById('dissociateOverlay');
+  const associateCategory = document.getElementById('associateCategory');
+  const charSelect = document.getElementById('charSelect');
+  const associateNotice = document.getElementById('associateNotice');
+  const associateHint = document.getElementById('associateHint');
+  const confirmAssociateBtn = document.getElementById('confirmAssociateBtn');
+  const confirmConditionBtn = document.getElementById('confirmConditionBtn');
+  const confirmDissociateBtn = document.getElementById('confirmDissociateBtn');
+  let conditionTarget = null;
+  let dissociateTarget = null;
+  let toastTimer = null;
+
+  function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[ch])); }
+  function catById(id){ return categories.find(x=>x.id===id); }
+  function charById(id){ return characteristics.find(x=>x.id===id); }
+  function roots(){ return categories.filter(c=>c.parentId===null); }
+  function childrenOf(id){ return categories.filter(c=>c.parentId===id); }
+  function directAssocs(catId){ return associations.filter(a=>a.catId===catId); }
+  function inheritedAssocs(catId){
+    const c=catById(catId); if(!c||!c.parentId) return [];
+    return associations.filter(a=>a.catId===c.parentId);
+  }
+  function activeAssoc(a){ return catById(a.catId)?.active && charById(a.charId)?.active; }
+  function assocState(a,catId){
+    const cat=catById(catId);
+    return !!(cat&&cat.active&&activeAssoc(a));
+  }
+  function applicable(catId){
+    const direct=directAssocs(catId).map(a=>({...a,origin:'directa'}));
+    const inherited=inheritedAssocs(catId).map(a=>({...a,origin:'heredada'}));
+    return {direct, inherited, all:[...direct, ...inherited]};
+  }
+  function showToast(message){ clearTimeout(toastTimer); toast.textContent=message; toast.classList.add('show'); toastTimer=setTimeout(()=>toast.classList.remove('show'),2800); }
+
+  function renderGlobalState(){
+    if(state.queryState==='no-permission'){
+      app.innerHTML=`<div class="page-header"><div><h1>Asociaciones por categoría</h1><p>Define qué características aplican a cada categoría.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para administrar asociaciones.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
+      return true;
+    }
+    if(state.queryState==='session-expired'){
+      app.innerHTML=`<div class="page-header"><div><h1>Asociaciones por categoría</h1><p>Define qué características aplican a cada categoría.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
+      return true;
+    }
+    return false;
+  }
+
+  function render(){
+    if(renderGlobalState()){ bindPage(); return; }
+    const header=`<div class="page-header"><div><h1>Asociaciones por categoría</h1><p>Selecciona una categoría para ver qué características le aplican. Las heredadas provienen de la categoría padre.</p></div><div class="button-row"><button class="btn btn-primary" data-action="associate" id="topAssociateBtn">Asociar característica</button></div></div>`;
+    if(state.loading){
+      app.innerHTML=header+`<div class="layout"><div class="tree-nav"><h2>Categorías</h2><div class="skeleton"><div class="sk-line w80"></div><div class="sk-line w50"></div></div></div><div class="skeleton" aria-label="Cargando asociaciones"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div></div>`;
+      setTimeout(()=>{state.loading=false;render();},450);
+      return;
+    }
+    app.innerHTML=header+renderBody();
+    bindPage(); updateAssociateBtn();
+  }
+
+  function renderBody(){
+    const treeItems=[...roots(), ...roots().flatMap(r=>childrenOf(r.id))].map(c=>{
+      const cls='tree-item '+(c.parentId?'child':'')+(c.active?'':' off');
+      const sel=state.selectedCatId===c.id?' selected':'';
+      return `<div class="tree-item ${c.parentId?'child':''} ${c.active?'':'off'} ${state.selectedCatId===c.id?'selected':''}" data-select-cat="${c.id}" role="button" tabindex="0">${escapeHtml(c.name)}<div class="small muted">${c.parentId?'Subcategoría · '+escapeHtml(catById(c.parentId).name):'Categoría raíz'}${c.active?'':' · Inactiva'}</div></div>`;
+    }).join('');
+    const cat=catById(state.selectedCatId);
+    const {direct,inherited,all}=applicable(state.selectedCatId);
+    const aplicables=all.filter(a=>assocState(a,state.selectedCatId)).length;
+    const primaryCell={
+      Directa:(()=>{let enc='';all.forEach(a=>{if(a.origin==='directa')enc+=assocRow(a,true);});return enc;})(),
+      Heredada:(()=>{let enc='';all.forEach(a=>{if(a.origin==='heredada')enc+=assocRow(a,false);});return enc;})()
+    };
+    function assocRow(a,isDirect){
+      const c=charById(a.charId);
+      const isActive=assocState(a,state.selectedCatId);
+      const condLabel=a.condition==='obligatoria'?'Obligatoria':'Opcional';
+      const actions=isDirect?`<button class="btn btn-quiet" data-action="condition" data-id="${a.catId}::${a.charId}">Cambiar condición</button><button class="btn btn-quiet" data-action="dissociate" data-id="${a.catId}::${a.charId}">Desasociar</button>`:`<span class="small muted">Se administra en la categoría padre.</span>`;
+      return `<tr><td class="name-cell"><strong>${escapeHtml(c.name)}</strong><div class="small muted">${escapeHtml(c.type)}</div></td><td>${isDirect?'<span class="tag strong">Directa</span>':'<span class="tag">Heredada</span>'}</td><td><span class="tag">${condLabel}</span></td><td><span class="status ${isActive?'active':'off'}">${isActive?'Activa':'No activa'}</span></td><td><div class="row-actions">${actions}</div></td></tr>`;
+    }
+    const empty=all.length===0?`<div class="empty-state"><div class="placeholder" aria-hidden="true"></div><h2>Aún no hay características asociadas.</h2><p>Asocia una característica para esta categoría o verifica sus categorías padre.</p><button class="btn btn-primary" data-action="associate">Asociar característica</button></div>`:'';
+    const inactiveNotice=!cat.active?`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Categoría inactiva.</h3><p>Sus asociaciones no se consideran activas en Catálogo Core. Se mantienen registradas sin eliminarse.</p></div></div>`:'';
+    return `<div class="layout">
+      <nav class="tree-nav" aria-label="Categorías"><h2>Categorías</h2>${treeItems}</nav>
+      <div>
+        ${cat.active?'':inactiveNotice}
+        <section class="section" style="margin-top:0"><div class="detail-intro" style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start"><div><h2 style="margin:0">${escapeHtml(cat.name)}</h2><div class="small muted">${cat.active?`${cat.parentId?'Subcategoría de '+escapeHtml(catById(cat.parentId).name):'Categoría raíz'}`:'Categoría inactiva'}</div></div><span class="status active">${aplicables} aplicable${aplicables===1?'':'s'}</span></div></section>
+        ${empty||''}
+        ${all.length?`<div class="desktop-table table-wrap"><table><thead><tr><th>Característica</th><th>Origen</th><th>Condición</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${primaryCell.Directa}${primaryCell.Heredada}</tbody></table></div>`:''}
+        ${all.length?`<div class="mobile-list">${all.map(a=>{
+          const c=charById(a.charId); const isDirect=a.origin==='directa'; const isActive=assocState(a,state.selectedCatId);
+          return `<article class="assoc-card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><strong>${escapeHtml(c.name)}</strong><div class="small muted">${escapeHtml(c.type)}</div></div><span class="tag ${isDirect?'strong':''}">${isDirect?'Directa':'Heredada'}</span></div><div class="small" style="margin:8px 0"><span class="tag">${a.condition==='obligatoria'?'Obligatoria':'Opcional'}</span></div><div class="small muted" style="margin:8px 0"><span class="status ${isActive?'active':'off'}">${isActive?'Activa':'No activa'}</span></div><div class="row-actions">${isDirect?`<button class="btn btn-quiet" data-action="condition" data-id="${a.catId}::${a.charId}">Cambiar condición</button><button class="btn btn-quiet" data-action="dissociate" data-id="${a.catId}::${a.charId}">Desasociar</button>`:`<span class="small muted">Se administra en la categoría padre.</span>`}</div></article>`;
+        }).join('')}</div>`:''}
+      </div>
+      <aside class="section summary" style="grid-column:1/-1"><h2>Resumen de ${escapeHtml(cat.name)}</h2>
+        <div class="metric"><span class="metric-label">Asociaciones directas</span><span class="metric-value">${direct.length} <span class="muted" style="font-size:14px">/ ${MAX_DIRECT}</span></span><span class="metric-detail">Máximo estricto por categoría.</span></div>
+        <div class="metric"><span class="metric-label">Heredadas</span><span class="metric-value">${inherited.length}</span><span class="metric-detail">Provienen de la categoría padre.</span></div>
+      </aside>
+    </div>`;
+  }
+
+  function updateAssociateBtn(){
+    const {direct}=applicable(state.selectedCatId);
+    const atLimit=direct.length>=MAX_DIRECT;
+    document.getElementById('topAssociateBtn').disabled=atLimit || !catById(state.selectedCatId).active;
+  }
+
+  function openAssociate(trigger){
+    const cat=catById(state.selectedCatId); if(!cat) return;
+    if(!cat.active){ showToast('La categoría está inactiva.'); return; }
+    const {direct}=applicable(cat.id);
+    if(direct.length>=MAX_DIRECT){ showToast('Límite de 20 asociaciones directas alcanzado.'); return; }
+    associateCategory.textContent=`Categoría: ${cat.name}`;
+    const existing=direct.map(a=>a.charId);
+    const options=characteristics.filter(c=>c.active && !existing.includes(c.id))
+      .map(c=>`<option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.type)})</option>`).join('');
+    charSelect.innerHTML=options;
+    associateNotice.innerHTML='';
+    associateHint.textContent=`Puedes asociar hasta ${MAX_DIRECT} características directas.`;
+    confirmAssociateBtn.disabled=!options;
+    associateOverlay.classList.add('open');associateOverlay.setAttribute('aria-hidden','false');
+  }
+  function closeAssociate(){associateOverlay.classList.remove('open');associateOverlay.setAttribute('aria-hidden','true');}
+  function confirmAssociate(){
+    const cat=catById(state.selectedCatId); if(!cat) return;
+    const charId=charSelect.value; if(!charId) return;
+    if(directAssocs(cat.id).length>=MAX_DIRECT){associateNotice.innerHTML=`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Límite de ${MAX_DIRECT} alcanzado.</h3><p>Desasocia una característica directa para poder asociar otra.</p></div></div>`;return;}
+    if(directAssocs(cat.id).some(a=>a.charId===charId)){associateNotice.innerHTML=`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Ya está asociada.</h3><p>La característica ya forma parte de esta categoría.</p></div></div>`;return;}
+    const condition=associateOverlay.querySelector('input[name="cond"]:checked').value;
+    associations.push({catId:cat.id,charId,condition});
+    closeAssociate(); render(); showToast('Característica asociada.');
+  }
+
+  function openCondition(id,trigger){
+    const [catId,charId]=id.split('::'); conditionTarget={catId,charId};
+    document.getElementById('conditionMeta').textContent=`${charById(charId).name} en ${catById(catId).name}`;
+    const a=associations.find(x=>x.catId===catId&&x.charId===charId);
+    conditionOverlay.querySelectorAll('input[name="cond2"]').forEach(r=>r.checked=(r.value===a.condition)||(r.value==='obligatoria'&&!a));
+    conditionOverlay.classList.add('open');conditionOverlay.setAttribute('aria-hidden','false');
+  }
+  function closeCondition(){conditionOverlay.classList.remove('open');conditionOverlay.setAttribute('aria-hidden','true');}
+  function confirmCondition(){
+    const a=associations.find(x=>x.catId===conditionTarget.catId&&x.charId===conditionTarget.charId);
+    if(a){ a.condition=conditionOverlay.querySelector('input[name="cond2"]:checked').value; }
+    closeCondition(); render(); showToast('Condición actualizada.');
+  }
+
+  function openDissociate(id,trigger){
+    const [catId,charId]=id.split('::'); dissociateTarget={catId,charId};
+    document.getElementById('dissociateMeta').textContent=`${charById(charId).name} · ${catById(catId).name}`;
+    dissociateOverlay.classList.add('open');dissociateOverlay.setAttribute('aria-hidden','false');
+  }
+  function closeDissociate(){dissociateOverlay.classList.remove('open');dissociateOverlay.setAttribute('aria-hidden','true');}
+  function confirmDissociate(){
+    associations=associations.filter(x=>!(x.catId===dissociateTarget.catId&&x.charId===dissociateTarget.charId));
+    closeDissociate(); render(); showToast('Asociación eliminada.');
+  }
+
+  function bindPage(){
+    app.querySelectorAll('[data-select-cat]').forEach(el=>{
+      const click=()=>{state.selectedCatId=el.dataset.selectCat;render();};
+      el.addEventListener('click',click);
+      el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();click();}});
+    });
+    app.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',e=>{
+      const action=e.currentTarget.dataset.action,id=e.currentTarget.dataset.id;
+      if(action==='associate')openAssociate(e.currentTarget);
+      else if(action==='condition')openCondition(id,e.currentTarget);
+      else if(action==='dissociate')openDissociate(id,e.currentTarget);
+      else if(action==='safe-back'){showToast('Regreso simulado al módulo de productos.');}
+      else if(action==='login'){state.queryState='';state.loading=true;render();showToast('Sesión recuperada para el prototipo.');}
+    }));
+  }
+
+  document.querySelectorAll('[data-close-associate]').forEach(b=>b.addEventListener('click',closeAssociate));
+  document.querySelectorAll('[data-close-condition]').forEach(b=>b.addEventListener('click',closeCondition));
+  document.querySelectorAll('[data-close-dissociate]').forEach(b=>b.addEventListener('click',closeDissociate));
+  confirmAssociateBtn.addEventListener('click',confirmAssociate);
+  confirmConditionBtn.addEventListener('click',confirmCondition);
+  confirmDissociateBtn.addEventListener('click',confirmDissociate);
+  [associateOverlay,conditionOverlay,dissociateOverlay].forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov){ov===associateOverlay?closeAssociate():ov===conditionOverlay?closeCondition():closeDissociate();}}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(associateOverlay.classList.contains('open'))closeAssociate();else if(conditionOverlay.classList.contains('open'))closeCondition();else if(dissociateOverlay.classList.contains('open'))closeDissociate();}});
+
+  render();
+})();
+</script>
+</body>
+</html>
