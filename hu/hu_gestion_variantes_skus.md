@@ -32,6 +32,9 @@ Esta funcionalidad solo aplica a productos con el atributo `tiene_variantes = tr
 | CA-09 | Al desactivar una variante, esta deja de mostrarse en los canales de venta, sin afectar la disponibilidad de las demás variantes del mismo producto, y conserva su registro para pedidos históricos. |
 | CA-10 | Las características identificadoras que componen el SKU de una variante (ej. talla, color) son **inmutables** una vez creada: no pueden editarse. Para "cambiar" una de ellas, el gestor comercial debe desactivar la variante actual y registrar una nueva con el valor correcto. Los atributos no identificadores y la imagen sí son editables libremente. |
 | CA-11 | Toda operación de registro, actualización o desactivación de una variante debe quedar trazable con usuario, fecha/hora y resultado. |
+| CA-12 | Pricing puede definir un precio específico para un SKU de variante; si no existe override, se usa el precio base vigente del producto. |
+| CA-13 | Los combos referencian componentes por SKU vendible; para una variante utilizan su SKU y para un producto simple su `sku_base`. |
+| CA-14 | Los pedidos confirmados conservan un snapshot del SKU vendido aunque la variante se desactive posteriormente. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -104,12 +107,13 @@ Estas son coordinaciones internas con otras funcionalidades del mismo módulo.
 | Gestión de productos (misma persona) | Identificador, `sku_base`, nombre, categoría, marca, estado y bandera `tiene_variantes` del producto padre, del cual la variante hereda los datos generales. |
 | Marcas y características — Persona 1 | Catálogo de características disponibles (ej. talla, color) para asociarlas a cada variante como identificador del SKU. |
 | Inventario y stock — Persona 6 | Notificación de variante creada o desactivada, para que Inventario inicialice y gestione su stock de forma independiente por SKU. Variantes nunca almacena ni calcula cantidades; solo consulta disponibilidad cuando el canal lo requiere. |
-| Gestión de precios — Persona 3 | Definición pendiente: si las variantes comparten el precio base del producto o pueden tener un precio diferenciado (ver reglas pendientes). |
-| Agrupaciones y combos — Persona 5 | Definición pendiente: si un combo referencia un producto genérico o una variante específica (ver reglas pendientes). |
+| Gestión de precios — Persona 3 | Una variante puede tener precio específico por SKU; si no existe, hereda el precio base vigente del producto. |
+| Agrupaciones y combos — Persona 5 | Los combos referencian componentes por SKU vendible. |
 
-## Reglas pendientes de acordar
+## Reglas de negocio consolidadas
 
-1. Si las variantes pueden tener un precio distinto al del producto base (ej. recargo por talla especial) o todas comparten el mismo precio base.
-2. Si la bandera `tiene_variantes` puede modificarse después de creado el producto (por ejemplo, un producto que empezó como simple y luego necesita variantes), y qué ocurre con el stock de producto simple ya inicializado en ese caso.
-3. Si los combos y las promociones se aplican a nivel de producto (cualquier variante) o deben especificar variantes concretas.
-4. Qué sucede con los pedidos ya confirmados de una variante que luego se desactiva por corrección de un atributo del SKU.
+1. Una variante puede tener precio específico en Pricing; si no lo tiene, hereda el precio base del producto.
+2. `tiene_variantes` es inmutable después de crear el producto.
+3. Combos trabaja con SKUs vendibles.
+4. Promociones pueden tener alcance a nivel producto o SKU según su configuración.
+5. Los pedidos confirmados conservan snapshot de la variante aunque después sea desactivada.
