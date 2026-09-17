@@ -7,8 +7,8 @@
 | Parámetro | Detalle |
 | :--- | :--- |
 | **Rol (Como)** | Gestor Comercial / Auditor Interno |
-| **Acción (Quiero)** | Visualizar, filtrar y exportar la bitácora inmutable de auditoría que registre de forma automática quién, cuándo, desde qué IP y bajo qué mecanismo se modificó el precio de un producto |
-| **Beneficio (Para)** | Garantizar la trazabilidad total de variaciones comerciales, prevenir fraudes internos o errores de digitación y resolver discrepancias de facturación con pedidos históricos |
+| **Acción (Quiero)** | Registrar de forma automática e inmutable cada cambio de precio con su contrato completo y consultar o exportar el historial cronológico (en CSV o PDF) con filtros por SKU, usuario, fechas, canal y lote |
+| **Beneficio (Para)** | Contar con trazabilidad absoluta (quién, cuándo, valor anterior, valor nuevo, variación %, motivo, canal, IP), resolviendo contingencias operativas, comerciales o legales y garantizando el cumplimiento normativo |
 
 ---
 
@@ -16,42 +16,49 @@
 
 | ID | Criterio |
 | :---: | :--- |
-| **CA-01** | **Captura Automática y Transaccional:** Cada vez que el motor de precios procese un cambio (individual o por lote masivo), el sistema debe registrar en la bitácora: `audit_id`, `product_id` (SKU), `precio_anterior`, `precio_nuevo`, `variacion_porcentual`, `usuario_id`, `ip_origen`, `timestamp_utc`, `canal_origen` (UI Individual, API, Lote CSV) y `motivo_cambio`. La inserción del log debe formar parte de la misma transacción de actualización de precio. |
-| **CA-02** | **Acceso y Control de Permisos:** Solo usuarios con rol de Gestor Comercial con privilegios de auditoría o Administrador del Sistema pueden consultar la interfaz de bitácora y consumir los endpoints de lectura de auditoría. Solicitudes no autorizadas deben ser rechazadas con error HTTP `403 Forbidden`. |
-| **CA-03** | **Inmutabilidad Estricta:** La base de datos y la API no deben exponer bajo ninguna circunstancia operaciones de actualización (`UPDATE`) o borrado (`DELETE`) sobre la entidad de logs de precios. |
-| **CA-04** | **Filtrado y Búsqueda Multicriterio:** La interfaz debe permitir buscar eventos de auditoría mediante filtros combinados por: identificador de producto (SKU/nombre), identificador de usuario, rango de fechas/horas (desde/hasta), dirección IP y modalidad de cambio (Individual / Lote masivo). |
-| **CA-05** | **Paginación y Rendimiento:** Debido al alto volumen de transacciones de precios en catálogos deportivos, las consultas deben estar paginadas (por defecto 20 registros por página) con tiempo de respuesta menor a 800 ms, utilizando índices sobre `product_id`, `timestamp` y `usuario_id`. |
-| **CA-06** | **Trazabilidad de Procesamiento Masivo:** Si la modificación provino de una carga masiva por archivo, el log debe almacenar el `batch_id` o `archivo_id` asociado para que el auditor pueda vincular el cambio individual con el archivo fuente que lo originó. |
-| **CA-07** | **Exportación Auditable:** El usuario debe poder exportar los resultados del log filtrado a formato CSV o PDF firmado/marcado temporalmente con fecha, hora y usuario que solicitó la exportación, con fines de control interno. |
+| **CA-01** | **Captura Asíncrona y Desacoplada:** Toda modificación exitosa de precios (individual o masiva) debe capturarse mediante eventos asíncronos (`pricing.price.changed`). La captura y persistencia en la bitácora no debe añadir más de 50 ms a la operación de precios del microservicio emisor. |
+| **CA-02** | **Contrato Completo de Auditoría:** Cada registro de auditoría debe persistir de forma mandatoria: `id_auditoria`, `sku`, `product_id`, `tipo_precio` (`REGULAR` u `OFERTA`), `precio_anterior`, `precio_nuevo`, `variacion_porcentual`, `motivo_cambio`, `canal_origen` (`BACKOFFICE`, `BULK_IMPORT`, `API`), `batch_id` (obligatorio si provino de lote masivo, `null` si fue individual), `usuario_id`, `usuario_email`, `ip_origen` (evaluando `X-Forwarded-For` o `X-Real-IP`) y `timestamp` (UTC). |
+| **CA-03** | **Omisión ante Operaciones Fallidas:** Si una actualización de precio es rechazada por regla de negocio, falta de motivo obligatorio o error transaccional, no se emite el evento y la auditoría no genera ningún registro. Solo se auditan cambios efectivamente persistidos. |
+| **CA-04** | **Inmutabilidad Estricta (Append-Only):** El almacén de auditoría solo admite operaciones `INSERT` y `SELECT`. Todo intento de invocar `PUT`, `PATCH` o `DELETE` sobre las rutas de auditoría debe ser rechazado inmediatamente con HTTP `405 Method Not Allowed` o `403 Forbidden`. |
+| **CA-05** | **Consulta y Filtrado Multicriterio:** Provee endpoints para consultar cronológicamente el log en orden descendente, permitiendo filtrar por: `sku`, rango de fechas/horas (`fecha_desde` / `fecha_hasta`), identificador o email de usuario, `canal_origen` y `batch_id`. |
+| **CA-06** | **Paginación y Tiempos de Respuesta:** La consulta debe ser paginada y responder en menos de 800 ms. Si no existen registros para los filtros seleccionados, retorna HTTP `200 OK` con un arreglo vacío (`[]`) y total de elementos 0, mostrando en interfaz: "No se registraron cambios de precio bajo los criterios seleccionados". |
+| **CA-07** | **Exportación de Registros (CSV y PDF):** Permite exportar los registros consultados. La exportación en formato **CSV** soporta hasta 100,000 filas para análisis masivo; la exportación en **PDF** está restringida a un máximo de 500 registros para reportes ejecutivos de control con membrete oficial. |
+| **CA-08** | **Seguridad y Accesos:** La consulta y exportación del historial está restringida a usuarios autenticados con rol `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA`. |
+| **CA-09** | **Política de Retención y Archivado:** Los registros se mantienen indexados en la base de datos operativa durante **24 meses exactos**. Al cumplirse este tiempo, un proceso mensual por lotes traslada las particiones a almacenamiento en frío en formato Parquet (S3/Cloud Storage) donde se conservan por 5 años adicionales. |
 
 ---
 
 ## 3. Escenarios (Dado - Cuando - Entonces / Gherkin)
 
-### Escenario 1: Registro automático de cambio individual
-* **Dado** que el gestor comercial con usuario `USR-102` y desde la IP `192.168.1.45` modifica el precio del balón oficial (SKU `BAL-001`) de S/ 80.00 a S/ 95.00 indicando motivo "Incremento por arancel",
-* **Cuando** se confirma exitosamente la actualización de precio,
-* **Entonces** el sistema inserta de forma inmediata un nuevo registro de auditoría con los datos del usuario, timestamp, IP, precios anterior/nuevo (+18.75%) y motivo.
+### Escenario 1: Registro de auditoría con contrato completo
+* **Dado** que el gestor comercial autenticado con ID `usr_204`, email `gestor@tienda.com` y desde la IP `200.48.85.10` modifica en el Backoffice el precio regular del SKU `AD-ZAP-09` de S/ 200.00 a S/ 250.00 indicando el motivo "Ajuste de margen",
+* **Cuando** el microservicio de precios completa la mutación con éxito,
+* **Entonces** el sistema persiste en la bitácora un registro con: `sku: "AD-ZAP-09"`, `tipo_precio: "REGULAR"`, `precio_anterior: 200.00`, `precio_nuevo: 250.00`, `variacion_porcentual: +25.00%`, `motivo_cambio: "Ajuste de margen"`, `canal_origen: "BACKOFFICE"`, `batch_id: null`, `usuario_id: "usr_204"`, `usuario_email: "gestor@tienda.com"`, `ip_origen: "200.48.85.10"` y timestamp en UTC, sin demorar la respuesta al gestor en más de 50 ms.
 
-### Escenario 2: Trazabilidad en procesamiento masivo
-* **Dado** que se procesa un lote de actualización masiva mediante el archivo `precios_calzado_2026.csv` con identificador `BATCH-8821`,
-* **Cuando** se actualiza el precio de cada producto contenido en el lote,
-* **Entonces** el sistema genera una entrada de auditoría individual por cada ítem actualizado, asociándoles el `batch_id: BATCH-8821` y la IP desde la que se subió el archivo.
+### Escenario 2: Omisión de registro ante cambio fallido
+* **Dado** que un gestor intenta ingresar un precio de oferta de S/ 100.00 cuando el regular es de S/ 90.00,
+* **Cuando** la validación de negocio bloquea la solicitud y retorna HTTP 400,
+* **Entonces** no se publica ningún evento y el sistema no persiste ningún registro en el historial de auditoría.
 
-### Escenario 3: Consulta histórica de un producto específico
-* **Dado** que un gestor comercial detecta una inconsistencia en el precio de una camiseta deportiva (SKU `CAM-PER-01`),
-* **Cuando** filtra en el módulo de auditoría por el SKU `CAM-PER-01` en los últimos 30 días,
-* **Entonces** el sistema muestra la secuencia cronológica descendente de todos los cambios de precio experimentados por el producto, evidenciando usuarios responsables y timestamps exactos.
+### Escenario 3: Trazabilidad de cambio masivo por lote
+* **Dado** que se ejecuta una carga masiva mediante un archivo CSV generando el lote `batch_id: BATCH-3301` por el usuario `admin@tienda.com` desde la IP `190.236.14.88`,
+* **Cuando** el lote es procesado y aplicado,
+* **Entonces** se genera una entrada de auditoría individual por cada SKU actualizado con `canal_origen: "BULK_IMPORT"`, el motivo consignado en el archivo y el identificador `batch_id: BATCH-3301`.
 
-### Escenario 4: Intento de alteración o borrado de bitácora (Seguridad)
-* **Dado** que un usuario malintencionado intenta invocar un método HTTP `DELETE` o `PUT` contra el endpoint `/api/v1/precios/auditoria/{id}`,
-* **Cuando** la petición llega al backend del microservicio,
-* **Entonces** el servicio responde con HTTP `405 Method Not Allowed`, no ejecuta ninguna modificación sobre la base de datos y genera una alerta de seguridad.
+### Escenario 4: Exportación de resultados a CSV
+* **Dado** que un auditor comercial filtra las variaciones de precios de los últimos 6 meses obteniendo 12,400 registros,
+* **Cuando** selecciona la opción "Exportar a CSV",
+* **Entonces** el sistema genera de forma asíncrona el archivo `.csv` con todas las columnas del contrato de auditoría y provee el enlace de descarga correspondiente.
 
-### Escenario 5: Exportación de log para revisión contable
-* **Dado** que el gestor comercial aplica un filtro de auditoría entre el 01/09/2026 y el 14/09/2026 y obtiene 120 registros,
-* **Cuando** presiona la opción "Exportar a CSV",
-* **Entonces** el sistema genera y descarga un archivo estructurado con el desglose exacto de los 120 eventos, incluyendo metadatos de emisión.
+### Escenario 5: Exportación a PDF restringida a 500 registros
+* **Dado** que un auditor aplica un filtro que arroja 650 registros e intenta exportar directamente a formato PDF,
+* **Cuando** el sistema evalúa la solicitud de exportación,
+* **Entonces** bloquea la generación indicando el mensaje: "La exportación en PDF admite un máximo de 500 registros. Por favor acote el rango de búsqueda o utilice la exportación en CSV".
+
+### Escenario 6: Inmutabilidad de la bitácora
+* **Dado** que un usuario intenta enviar una solicitud `DELETE` o `PUT` al endpoint `/api/v1/auditoria-precios/8f3b2d12`,
+* **Cuando** el servidor de auditoría recibe la petición,
+* **Entonces** deniega inmediatamente la acción con código HTTP 405 Method Not Allowed, preservando la inmutabilidad de la bitácora.
 
 ---
 
@@ -59,27 +66,24 @@
 
 | Módulo | Necesidad de Interacción | Información que Recibe | Información que Entrega |
 | :--- | :--- | :--- | :--- |
-| **Seguridad y Usuarios** | Validar identidad del autor del cambio y verificar roles de acceso a la bitácora. | Identidad del usuario autenticado (ID, nombre, rol), token JWT y validación de permisos. | Eventos de intento de acceso no autorizado al módulo de auditoría. |
-| **Ventas y Postventa** | Esclarecer discrepancias de precios reportadas en reclamos o devoluciones de pedidos. | Identificador de pedido, producto cuestionado y fecha/hora de la transacción de compra. | Precio base vigente en el instante exacto de la orden y registro histórico del cambio anterior y posterior. |
-| **Canal Marketplace / Retail / Chatbot** | Sin interacción directa (canal desacoplado de auditoría por rendimiento). | Ninguna (no consumen la bitácora de auditoría). | Ninguna. |
+| **Gestión de Precios** | Disparar el registro de auditoría ante cada cambio efectivo. | Evento `pricing.price.changed` con el contrato completo de auditoría. | Confirmación de recepción / ACK en el bus de eventos. |
+| **Seguridad y Usuarios** | Validar identidad, correo y permisos de auditoría (`AUDITOR_COMERCIAL`). | Token JWT con claims y roles. | Denegación o autorización de visualización/exportación. |
+| **Ventas y Postventa** | Esclarecer discrepancias de precios reportadas en reclamos o auditorías de ventas. | SKU y rango de fechas de consulta. | Trazabilidad del precio vigente, motivo del cambio y actor responsable. |
 
 ---
 
 ## 5. Dependencias del Dominio (Productos y Ofertas)
 
-*Coordinaciones internas con las demás responsabilidades dentro del mismo módulo:*
-
-* **Gestión de precios individuales y masivos (Responsabilidad principal):**
-  * *Datos requeridos:* Evento de confirmación de cambio de precio (SKU, precio anterior, precio nuevo, IP del cliente HTTP, ID de usuario, tipo de operación).
-  * *Propósito:* Disparar la persistencia síncrona/asíncrona del registro en el almacén de auditoría.
+* **Gestión de precios (Emisor):**
+  * *Datos requeridos:* Evento con SKU, product_id, tipo de precio, precios previo y nuevo, variación %, motivo, canal, batch_id, IP y usuario.
+  * *Propósito:* Garantizar el desacoplamiento de la persistencia de auditoría sin penalizar la latencia operativa.
 * **Gestión de productos:**
-  * *Datos requeridos:* Nombre comercial, SKU y marca del producto.
-  * *Propósito:* Enriquecer la visualización de la bitácora para que el auditor no solo vea identificadores alfanuméricos sino la descripción del producto.
+  * *Datos requeridos:* Identificador único y SKU para validar consistencia en la búsqueda.
 
 ---
 
 ## 6. Reglas de Negocio Pendientes de Definición
 
-- [ ] **Política de retención y archivado de logs:** Definir si los registros de auditoría de precios se mantendrán en la base de datos operativa de forma permanente o si pasarán a almacenamiento frío (cold storage / data warehouse) tras cumplir un periodo (ej. 1 o 2 años).
-- [ ] **Umbral de alerta temprana por variaciones atípicas:** Definir si la auditoría debe emitir alertas reactivas automáticas (correo o notificación) al detectar cambios de precio individuales o masivos que superen cierto porcentaje crítico (ej. caída mayor al 50% de su valor).
-- [ ] **Privacidad y enmascaramiento de IP:** Confirmar si la dirección IP almacenada debe registrarse en texto claro o con anonimización parcial (enmascaramiento del último octeto) según las políticas de privacidad y protección de datos del proyecto.
+- [x] **Contrato completo homologado:** Resuelto. Se capturan mandatoriamente `canal_origen`, `motivo_cambio`, `batch_id` y `variacion_porcentual`.
+- [x] **Formatos de exportación:** Resuelto. CSV habilitado hasta 100,000 registros y PDF limitado a 500 filas para reportes ejecutivos.
+- [x] **Retención y archivado:** Resuelto. 24 meses exactos en base de datos operativa y posterior exportación mensual en Parquet hacia almacenamiento en frío por 5 años.
