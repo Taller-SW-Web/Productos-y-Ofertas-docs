@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carga y exportación masiva de productos</title>
+  <style>
+    :root {
+      --surface: #ffffff;
+      --neutral-10: #f3f4f6;
+      --neutral-30: #d1d5db;
+      --neutral-50: #6b7280;
+      --neutral-90: #111827;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 32px;
+      --space-xl: 64px;
+      --gutter: 24px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --content: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: light; }
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--neutral-90);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    button, select, input { font: inherit; }
+    button, select, a { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, select:focus-visible, input:focus-visible, [tabindex]:focus-visible, a:focus-visible {
+      outline: 3px solid var(--neutral-90);
+      outline-offset: 2px;
+    }
+    [hidden] { display: none !important; }
+
+    .app-header {
+      border-bottom: 1px solid var(--neutral-30);
+      background: var(--surface);
+    }
+    .header-inner {
+      max-width: var(--content);
+      margin: 0 auto;
+      padding: 14px var(--gutter);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      font-weight: 700;
+    }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border: 2px solid var(--neutral-90);
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      font-size: 12px;
+    }
+    .brand-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: var(--neutral-50);
+      font-size: 14px;
+    }
+    .header-nav span[aria-current="page"] { color: var(--neutral-90); font-weight: 600; }
+
+    .offline-banner {
+      border-bottom: 1px solid var(--neutral-90);
+      background: var(--neutral-10);
+      padding: 10px var(--gutter);
+      text-align: center;
+      font-weight: 600;
+    }
+
+    main {
+      max-width: var(--content);
+      margin: 0 auto;
+      padding: 40px var(--gutter) 72px;
+    }
+    .breadcrumbs {
+      margin: 0 0 24px;
+      color: var(--neutral-50);
+      font-size: 14px;
+    }
+    .breadcrumbs span:last-child { color: var(--neutral-90); }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+    }
+    h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+    p { margin: 0; }
+    .lede {
+      margin-top: 14px;
+      max-width: 760px;
+      color: var(--neutral-50);
+      font-size: 18px;
+    }
+    .page-heading { margin-bottom: 32px; }
+
+    .grid-12 {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: var(--gutter);
+    }
+    .col-8 { grid-column: span 8; }
+    .col-4 { grid-column: span 4; }
+    .col-12 { grid-column: span 12; }
+
+    .panel {
+      border: 1px solid var(--neutral-30);
+      background: var(--surface);
+      padding: 24px;
+    }
+    .panel + .panel { margin-top: 16px; }
+    .panel-title { margin-bottom: 8px; }
+    .muted { color: var(--neutral-50); }
+    .small { font-size: 14px; }
+
+    .drop-zone {
+      margin-top: 20px;
+      min-height: 260px;
+      border: 1px dashed var(--neutral-50);
+      background: var(--neutral-10);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+    }
+    .drop-zone.is-dragover {
+      border-style: solid;
+      border-color: var(--neutral-90);
+    }
+    .file-symbol {
+      width: 54px;
+      height: 64px;
+      border: 2px solid var(--neutral-90);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      background: var(--surface);
+    }
+    .drop-zone strong { font-size: 18px; }
+
+    .btn {
+      min-height: 44px;
+      border: 1px solid var(--neutral-90);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      background: var(--surface);
+      color: var(--neutral-90);
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .btn:hover:not(:disabled) { background: var(--neutral-10); }
+    .btn-primary { background: var(--neutral-90); color: var(--surface); }
+    .btn-primary:hover:not(:disabled) { background: #000; }
+    .btn:disabled { color: var(--neutral-50); border-color: var(--neutral-30); cursor: not-allowed; background: var(--neutral-10); }
+    .btn-link { border-color: transparent; padding-inline: 8px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+    .download-card {
+      border: 1px solid var(--neutral-30);
+      padding: 18px;
+    }
+    .download-card + .download-card { margin-top: 14px; }
+    .download-card h3 { margin-bottom: 6px; }
+    .download-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .select {
+      min-height: 44px;
+      border: 1px solid var(--neutral-30);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--neutral-90);
+      padding: 8px 34px 8px 12px;
+      width: 100%;
+    }
+
+    .rules {
+      margin: 20px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .rules li {
+      padding: 12px 0 12px 30px;
+      border-top: 1px solid var(--neutral-30);
+      position: relative;
+    }
+    .rules li:first-child { border-top: 0; }
+    .rules li::before {
+      content: "✓";
+      position: absolute;
+      left: 2px;
+      top: 12px;
+      font-weight: 700;
+    }
+
+    .notice {
+      border: 1px solid var(--neutral-90);
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: var(--surface);
+    }
+    .notice + .notice { margin-top: 12px; }
+    .notice-icon { font-weight: 800; flex: 0 0 auto; }
+    .notice-title { font-weight: 700; }
+    .notice p + p { margin-top: 3px; }
+
+    .status-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid var(--neutral-90);
+      margin-bottom: 20px;
+    }
+    .status-icon {
+      width: 42px;
+      height: 42px;
+      border: 2px solid var(--neutral-90);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 3px solid var(--neutral-30);
+      border-top-color: var(--neutral-90);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      flex: 0 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-top-color: var(--neutral-30); } }
+
+    .file-summary {
+      border: 1px solid var(--neutral-30);
+      margin-top: 18px;
+    }
+    .file-summary dl {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 0;
+    }
+    .file-summary .item {
+      min-width: 0;
+      padding: 16px;
+      border-right: 1px solid var(--neutral-30);
+    }
+    .file-summary .item:last-child { border-right: 0; }
+    .file-summary dt { color: var(--neutral-50); font-size: 13px; margin-bottom: 4px; }
+    .file-summary dd { margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .check-list { list-style: none; padding: 0; margin: 18px 0 0; }
+    .check-list li { display: flex; gap: 10px; padding: 9px 0; }
+    .check-mark { font-weight: 800; }
+
+    .actions-bar {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--neutral-30);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .actions-bar .group { display: flex; flex-wrap: wrap; gap: 12px; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .metric {
+      border: 1px solid var(--neutral-30);
+      padding: 20px;
+    }
+    .metric-label { color: var(--neutral-50); font-size: 14px; }
+    .metric-value { display: block; margin-top: 4px; font-size: 34px; font-weight: 700; line-height: 1; }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      border: 1px solid var(--neutral-30);
+      background: var(--neutral-30);
+      margin: 20px 0 0;
+    }
+    .detail { background: var(--surface); padding: 14px 16px; min-width: 0; }
+    .detail-label { color: var(--neutral-50); font-size: 13px; }
+    .detail-value { margin-top: 4px; font-weight: 600; overflow-wrap: anywhere; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgb(17 24 39 / 0.5);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      z-index: 20;
+    }
+    .modal {
+      width: min(620px, 100%);
+      max-height: min(760px, calc(100vh - 40px));
+      overflow: auto;
+      background: var(--surface);
+      border: 2px solid var(--neutral-90);
+      padding: 24px;
+    }
+    .modal h2 { margin-bottom: 8px; }
+    .modal .modal-summary {
+      margin: 20px 0;
+      padding: 14px 16px;
+      border: 1px solid var(--neutral-30);
+    }
+    .modal .modal-actions {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .toast-region {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 30;
+      width: min(420px, calc(100vw - 40px));
+    }
+    .toast {
+      border: 1px solid var(--neutral-90);
+      background: var(--surface);
+      padding: 14px 16px;
+    }
+
+    .global-state {
+      max-width: 720px;
+      margin: 50px auto 0;
+      border: 1px solid var(--neutral-90);
+      padding: 28px;
+    }
+    .global-state .status-icon { margin-bottom: 18px; }
+    .global-state h1 { font-size: 32px; }
+    .global-state .btn-row { margin-top: 24px; }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    @media (max-width: 900px) {
+      main { padding-top: 32px; }
+      .col-8, .col-4 { grid-column: span 12; }
+      .grid-12 { gap: 16px; }
+      .file-summary dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .file-summary .item:nth-child(2) { border-right: 0; }
+      .file-summary .item:nth-child(-n+2) { border-bottom: 1px solid var(--neutral-30); }
+      .details-grid { grid-template-columns: 1fr 1fr; }
+      .details-grid .detail:last-child { grid-column: 1 / -1; }
+      .header-nav .optional { display: none; }
+    }
+
+    @media (max-width: 600px) {
+      :root { --gutter: 16px; }
+      main { padding-top: 24px; padding-bottom: 48px; }
+      .header-inner { padding-block: 10px; }
+      .brand-text { max-width: 190px; }
+      .header-nav { display: none; }
+      .breadcrumbs { margin-bottom: 18px; }
+      .page-heading { margin-bottom: 24px; }
+      .lede { font-size: 16px; }
+      .panel { padding: 18px; }
+      .drop-zone { min-height: 220px; padding: 24px 16px; background: var(--surface); }
+      .download-controls { grid-template-columns: 1fr; }
+      .download-controls .btn { width: 100%; }
+      .file-summary dl { grid-template-columns: 1fr; }
+      .file-summary .item { border-right: 0; border-bottom: 1px solid var(--neutral-30); }
+      .file-summary .item:last-child { border-bottom: 0; }
+      .metrics { grid-template-columns: 1fr; }
+      .details-grid { grid-template-columns: 1fr; }
+      .details-grid .detail:last-child { grid-column: auto; }
+      .actions-bar { flex-direction: column; }
+      .actions-bar .group { width: 100%; }
+      .actions-bar .btn { width: 100%; }
+      .btn-row { flex-direction: column; align-items: stretch; }
+      .btn-row .btn { width: 100%; }
+      .modal-backdrop { padding: 10px; align-items: end; }
+      .modal { width: 100%; max-height: calc(100vh - 20px); padding: 20px 16px; }
+      .modal .modal-actions { flex-direction: column-reverse; }
+      .modal .modal-actions .btn { width: 100%; }
+      .toast-region { right: 12px; bottom: 12px; width: calc(100vw - 24px); }
+      .global-state { margin-top: 20px; padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand" aria-label="Administración de productos">
+        <div class="brand-mark" aria-hidden="true">P</div>
+        <span class="brand-text">Productos y Ofertas</span>
+      </div>
+      <nav class="header-nav" aria-label="Navegación principal">
+        <span class="optional">Catálogo</span>
+        <span class="optional">Precios</span>
+        <span class="optional">Inventario</span>
+        <span aria-current="page">Carga masiva</span>
+      </nav>
+    </div>
+  </header>
+
+  <div id="offline-banner" class="offline-banner" role="status" hidden>
+    Sin conexión. Conservaremos el contexto disponible y podrás volver a consultar el estado cuando recuperes la conexión.
+  </div>
+
+  <main id="main-content" tabindex="-1"></main>
+
+  <div id="modal-root"></div>
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <div id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const MAX_BYTES = 10 * 1024 * 1024;
+      const MAX_ROWS = 5000;
+      const mockFile = {
+        name: 'catalogo_actualizacion_septiembre.csv',
+        typeLabel: 'CSV',
+        sizeBytes: 4.8 * 1024 * 1024,
+        rows: 2450,
+        structure: 'Válida'
+      };
+
+      const state = {
+        screen: 's01',
+        file: null,
+        prevalidating: false,
+        modalOpen: false,
+        sending: false,
+        batchStatus: 'En cola',
+        batchId: 'LOT-2026-0917-0142',
+        batchStart: '17/09/2026, 13:12',
+        lastCheck: '13:12:08',
+        queryError: false,
+        result: null,
+        downloadError: null,
+        rejectedReasons: [],
+        structuralReject: false
+      };
+
+      const main = document.getElementById('main-content');
+      const modalRoot = document.getElementById('modal-root');
+      const toastRegion = document.getElementById('toast-region');
+      const liveRegion = document.getElementById('live-region');
+      const offlineBanner = document.getElementById('offline-banner');
+      let modalReturnFocus = null;
+      let processingTimers = [];
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>'"]/g, c => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[c]));
+      }
+
+      function announce(text) {
+        liveRegion.textContent = '';
+        window.setTimeout(() => { liveRegion.textContent = text; }, 20);
+      }
+
+      function toast(text) {
+        toastRegion.innerHTML = `<div class="toast" role="status">${escapeHtml(text)}</div>`;
+        window.setTimeout(() => { toastRegion.innerHTML = ''; }, 3200);
+      }
+
+      function formatBytes(bytes) {
+        const mb = bytes / (1024 * 1024);
+        return `${mb.toFixed(mb < 1 ? 2 : 1)} MB`;
+      }
+
+      function clearTimers() {
+        processingTimers.forEach(window.clearTimeout);
+        processingTimers = [];
+      }
+
+      function baseHeading(title, description) {
+        return `
+          <p class="breadcrumbs"><span>Productos</span> / <span>Carga masiva</span></p>
+          <div class="page-heading">
+            <h1>${escapeHtml(title)}</h1>
+            ${description ? `<p class="lede">${escapeHtml(description)}</p>` : ''}
+          </div>`;
+      }
+
+      function render() {
+        modalRoot.innerHTML = '';
+        if (state.modalOpen) renderModal();
+
+        if (state.screen === 'no-permission') return renderNoPermission();
+        if (state.screen === 'session-expired') return renderSessionExpired();
+        if (state.screen === 's02') return renderS02();
+        if (state.screen === 's02r') return renderS02Rejected();
+        if (state.screen === 's04') return renderS04();
+        if (state.screen === 's05s') return renderS05('success');
+        if (state.screen === 's05p') return renderS05('partial');
+        return renderS01();
+      }
+
+      function renderS01() {
+        state.screen = 's01';
+        main.innerHTML = `
+          ${baseHeading('Carga y exportación masiva de productos', 'Importa o exporta productos y variantes mediante archivos XLSX o CSV.')}
+          ${state.downloadError ? `
+            <div class="notice" role="alert" style="margin-bottom:20px">
+              <div class="notice-icon" aria-hidden="true">!</div>
+              <div>
+                <p class="notice-title">No se pudo iniciar la descarga.</p>
+                <p class="muted">${escapeHtml(state.downloadError)}</p>
+                <div class="btn-row" style="margin-top:12px">
+                  <button class="btn" type="button" data-action="retry-download">Reintentar</button>
+                  <button class="btn btn-link" type="button" data-action="dismiss-download-error">Cerrar</button>
+                </div>
+              </div>
+            </div>` : ''}
+          <div class="grid-12">
+            <section class="panel col-8" aria-labelledby="import-title">
+              <h2 id="import-title" class="panel-title">Importar archivo</h2>
+              <p class="muted">Cada fila representa un SKU o variante. El archivo debe respetar la estructura oficial.</p>
+              <div id="drop-zone" class="drop-zone">
+                <div class="file-symbol" aria-hidden="true">.X</div>
+                <strong>Arrastra un archivo aquí</strong>
+                <p class="muted small">XLSX o CSV · máximo 10 MB · máximo 5,000 filas</p>
+                <button id="select-file" class="btn btn-primary" type="button">Seleccionar archivo</button>
+                <input id="file-input" class="sr-only" type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" />
+              </div>
+
+              <div style="margin-top:24px">
+                <h3>Antes de importar</h3>
+                <ul class="rules">
+                  <li>El archivo debe conservar la estructura exacta de la plantilla oficial.</li>
+                  <li>En SKU existentes, las celdas vacías conservan el valor actual.</li>
+                  <li>Usa URLs válidas para imágenes; no adjuntes ni incrustes archivos.</li>
+                  <li>El procesamiento continúa en segundo plano y no bloquea la interfaz.</li>
+                </ul>
+              </div>
+            </section>
+
+            <aside class="col-4" aria-label="Descargas">
+              <div class="download-card">
+                <h3>Descargar plantilla</h3>
+                <p class="muted small">Estructura oficial con ejemplos eliminables.</p>
+                <div class="download-controls">
+                  <label class="sr-only" for="template-format">Formato de plantilla</label>
+                  <select id="template-format" class="select" aria-label="Formato de plantilla">
+                    <option value="xlsx">XLSX</option>
+                    <option value="csv">CSV</option>
+                  </select>
+                  <button class="btn" type="button" data-action="download-template">Descargar plantilla</button>
+                </div>
+              </div>
+
+              <div class="download-card">
+                <h3>Exportar catálogo</h3>
+                <p class="muted small">Catálogo completo con una fila por SKU o variante.</p>
+                <div class="download-controls">
+                  <label class="sr-only" for="catalog-format">Formato de exportación</label>
+                  <select id="catalog-format" class="select" aria-label="Formato de exportación">
+                    <option value="xlsx">XLSX</option>
+                    <option value="csv">CSV</option>
+                  </select>
+                  <button class="btn" type="button" data-action="export-catalog">Exportar catálogo</button>
+                </div>
+              </div>
+            </aside>
+          </div>`;
+        bindS01();
+      }
+
+      function bindS01() {
+        const input = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        document.getElementById('select-file')?.addEventListener('click', () => input.click());
+        input?.addEventListener('change', () => {
+          const file = input.files && input.files[0];
+          if (file) prevalidateFile(file);
+        });
+        dropZone?.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('is-dragover'); });
+        dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('is-dragover'));
+        dropZone?.addEventListener('drop', e => {
+          e.preventDefault();
+          dropZone.classList.remove('is-dragover');
+          const file = e.dataTransfer.files && e.dataTransfer.files[0];
+          if (file) prevalidateFile(file);
+        });
+      }
+
+      async function prevalidateFile(file) {
+        state.prevalidating = true;
+        main.innerHTML = `
+          ${baseHeading('Prevalidando archivo', 'Estamos comprobando el archivo antes de crear cualquier lote.')}
+          <section class="panel" aria-labelledby="pre-title">
+            <div class="status-box" role="status">
+              <div class="spinner" aria-hidden="true"></div>
+              <div>
+                <h2 id="pre-title">Comprobando ${escapeHtml(file.name)}</h2>
+                <p class="muted">Validando formato, tamaño, filas y estructura.</p>
+              </div>
+            </div>
+            <button class="btn" type="button" data-action="replace-file">Reemplazar archivo</button>
+          </section>`;
+        announce('Prevalidando archivo.');
+
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        const allowed = ext === 'csv' || ext === 'xlsx';
+        const reasons = [];
+        let structural = false;
+        let rows = null;
+
+        if (!allowed) reasons.push('El formato no es compatible. Selecciona un archivo XLSX o CSV.');
+        if (file.size > MAX_BYTES) reasons.push('El archivo supera el límite de 10 MB.');
+
+        if (ext === 'csv' && file.size <= MAX_BYTES) {
+          try {
+            const text = await file.text();
+            const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const lines = normalized.split('\n').filter(line => line.trim().length > 0);
+            rows = Math.max(0, lines.length - 1);
+            if (rows > MAX_ROWS) reasons.push('El archivo supera el límite de 5,000 filas.');
+            const unsafe = lines.some(line => line.split(',').some(cell => /^[=+@]/.test(cell.trim())));
+            if (unsafe) {
+              reasons.push('El archivo contiene contenido potencialmente inseguro y no puede procesarse.');
+              structural = true;
+            }
+          } catch (_) {
+            rows = null;
+          }
+        }
+
+        state.file = {
+          name: file.name,
+          typeLabel: ext ? ext.toUpperCase() : 'No disponible',
+          sizeBytes: file.size,
+          rows: rows ?? (ext === 'xlsx' ? 2480 : 0),
+          structure: reasons.length ? 'Inválida' : 'Válida'
+        };
+        state.rejectedReasons = reasons;
+        state.structuralReject = structural || !allowed;
+
+        processingTimers.push(window.setTimeout(() => {
+          state.prevalidating = false;
+          if (reasons.length) {
+            state.screen = 's02r';
+            history.replaceState(null, '', '#s02r');
+          } else {
+            state.screen = 's02';
+            history.replaceState(null, '', '#s02');
+          }
+          render();
+          main.focus();
+          announce(reasons.length ? 'Archivo rechazado durante la prevalidación.' : 'Archivo prevalidado correctamente.');
+        }, 700));
+      }
+
+      function fileData() { return state.file || mockFile; }
+
+      function renderFileSummary(file) {
+        return `
+          <div class="file-summary">
+            <dl>
+              <div class="item"><dt>Archivo</dt><dd title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</dd></div>
+              <div class="item"><dt>Tipo</dt><dd>${escapeHtml(file.typeLabel)}</dd></div>
+              <div class="item"><dt>Tamaño</dt><dd>${escapeHtml(formatBytes(file.sizeBytes))}</dd></div>
+              <div class="item"><dt>Filas detectadas</dt><dd>${Number(file.rows).toLocaleString('es-PE')}</dd></div>
+            </dl>
+          </div>`;
+      }
+
+      function renderS02() {
+        const file = fileData();
+        main.innerHTML = `
+          ${baseHeading('Archivo listo para continuar', 'La prevalidación estructural terminó correctamente. Revisa el resumen antes de confirmar la importación.')}
+          <section class="panel" aria-labelledby="valid-title">
+            <div class="status-box">
+              <div class="status-icon" aria-hidden="true">✓</div>
+              <div>
+                <h2 id="valid-title">Archivo válido</h2>
+                <p class="muted">La estructura fue aceptada y todavía no se ha creado ningún lote.</p>
+              </div>
+            </div>
+            ${renderFileSummary(file)}
+            <ul class="check-list" aria-label="Comprobaciones aprobadas">
+              <li><span class="check-mark" aria-hidden="true">✓</span><span>Formato admitido: XLSX o CSV.</span></li>
+              <li><span class="check-mark" aria-hidden="true">✓</span><span>Tamaño dentro del límite de 10 MB.</span></li>
+              <li><span class="check-mark" aria-hidden="true">✓</span><span>Cantidad de filas dentro del límite de 5,000.</span></li>
+              <li><span class="check-mark" aria-hidden="true">✓</span><span>La estructura coincide con la plantilla oficial.</span></li>
+            </ul>
+          </section>
+
+          <section class="panel" aria-labelledby="update-rules-title">
+            <h2 id="update-rules-title" class="panel-title">Reglas de actualización</h2>
+            <ul class="rules">
+              <li>Las filas válidas se aplicarán aunque existan errores de negocio en otras filas.</li>
+              <li>En SKU existentes, una celda vacía conserva el valor actual; no lo elimina.</li>
+              <li>Las imágenes se registran mediante URLs válidas.</li>
+            </ul>
+          </section>
+
+          <div class="actions-bar">
+            <div class="group">
+              <button class="btn" type="button" data-action="back-s01">Volver</button>
+              <button class="btn" type="button" data-action="replace-file">Reemplazar archivo</button>
+            </div>
+            <button id="continue-btn" class="btn btn-primary" type="button" data-action="open-confirm">Continuar</button>
+          </div>`;
+      }
+
+      function renderS02Rejected() {
+        const file = fileData();
+        const reasons = state.rejectedReasons.length ? state.rejectedReasons : ['Las columnas no coinciden con la plantilla oficial.'];
+        const showTemplate = state.structuralReject || reasons.some(r => /estructura|column|formato/i.test(r));
+        main.innerHTML = `
+          ${baseHeading('Archivo no válido', 'El archivo fue rechazado durante la prevalidación y no se creó ningún lote.')}
+          <section class="panel" aria-labelledby="reject-title">
+            <div class="status-box" role="alert">
+              <div class="status-icon" aria-hidden="true">!</div>
+              <div>
+                <h2 id="reject-title">No podemos procesar este archivo</h2>
+                <p class="muted">Corrige las causas indicadas y selecciona un nuevo archivo.</p>
+              </div>
+            </div>
+            ${renderFileSummary(file)}
+            <div style="margin-top:20px">
+              <h3>Motivos del rechazo</h3>
+              <ul class="check-list">
+                ${reasons.map(r => `<li><span class="check-mark" aria-hidden="true">×</span><span>${escapeHtml(r)}</span></li>`).join('')}
+              </ul>
+            </div>
+          </section>
+          <div class="actions-bar">
+            <div class="group">
+              <button class="btn" type="button" data-action="back-s01">Volver</button>
+              ${showTemplate ? '<button class="btn" type="button" data-action="download-template">Descargar plantilla</button>' : ''}
+            </div>
+            <button class="btn btn-primary" type="button" data-action="replace-file">Reemplazar archivo</button>
+          </div>`;
+      }
+
+      function renderModal() {
+        const file = fileData();
+        modalRoot.innerHTML = `
+          <div class="modal-backdrop" data-modal-backdrop>
+            <section class="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-description">
+              <h2 id="confirm-title" tabindex="-1">Confirmar importación</h2>
+              <p id="confirm-description" class="muted">Revisa el archivo y las reglas antes de iniciar los cambios masivos.</p>
+              <div class="modal-summary">
+                <strong title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</strong>
+                <p class="muted small">${escapeHtml(formatBytes(file.sizeBytes))} · ${Number(file.rows).toLocaleString('es-PE')} filas</p>
+              </div>
+              <ul class="rules">
+                <li>Las filas válidas se aplicarán y las inválidas podrán quedar rechazadas.</li>
+                <li>En SKU existentes, las celdas vacías conservarán el valor actual.</li>
+                <li>El procesamiento continuará en segundo plano.</li>
+              </ul>
+              <div class="modal-actions">
+                <button class="btn" type="button" data-action="close-confirm" ${state.sending ? 'disabled' : ''}>Volver</button>
+                <button class="btn btn-primary" type="button" data-action="confirm-import" ${state.sending ? 'disabled' : ''}>${state.sending ? 'Enviando…' : 'Confirmar importación'}</button>
+              </div>
+            </section>
+          </div>`;
+        const title = document.getElementById('confirm-title');
+        window.setTimeout(() => title?.focus(), 0);
+      }
+
+      function openModal(trigger) {
+        modalReturnFocus = trigger || document.activeElement;
+        state.modalOpen = true;
+        renderModal();
+      }
+
+      function closeModal() {
+        if (state.sending) return;
+        state.modalOpen = false;
+        modalRoot.innerHTML = '';
+        modalReturnFocus?.focus?.();
+      }
+
+      function confirmImport() {
+        if (state.sending) return;
+        state.sending = true;
+        renderModal();
+        announce('Enviando importación.');
+        processingTimers.push(window.setTimeout(() => {
+          state.modalOpen = false;
+          state.sending = false;
+          state.screen = 's04';
+          state.batchStatus = 'En cola';
+          state.queryError = false;
+          state.result = null;
+          history.replaceState(null, '', '#s04');
+          render();
+          main.focus();
+          announce('Importación en cola.');
+          startProcessingSimulation();
+        }, 650));
+      }
+
+      function renderS04() {
+        const file = fileData();
+        main.innerHTML = `
+          ${baseHeading('Estado de la importación', 'El archivo se está procesando en segundo plano.')}
+          ${state.queryError ? `
+            <div class="notice" role="alert" style="margin-bottom:20px">
+              <div class="notice-icon" aria-hidden="true">!</div>
+              <div>
+                <p class="notice-title">No pudimos consultar el estado en este momento.</p>
+                <p class="muted">Esto no significa que la importación haya fallado. El lote conserva su último estado conocido.</p>
+                <button class="btn" type="button" data-action="retry-query" style="margin-top:12px">Actualizar estado</button>
+              </div>
+            </div>` : ''}
+          <section class="panel" aria-labelledby="processing-title">
+            <div class="status-box" role="status">
+              <div class="spinner" aria-hidden="true"></div>
+              <div>
+                <h2 id="processing-title">${escapeHtml(state.batchStatus)}</h2>
+                <p class="muted">Puede salir de esta pantalla. Le notificaremos cuando termine.</p>
+              </div>
+            </div>
+            <div class="details-grid">
+              <div class="detail"><div class="detail-label">Archivo</div><div class="detail-value" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div></div>
+              <div class="detail"><div class="detail-label">Referencia</div><div class="detail-value">${escapeHtml(state.batchId)}</div></div>
+              <div class="detail"><div class="detail-label">Inicio</div><div class="detail-value">${escapeHtml(state.batchStart)}</div></div>
+            </div>
+            <p class="muted small" style="margin-top:14px">Última consulta: ${escapeHtml(state.lastCheck)}</p>
+          </section>
+          <div class="actions-bar">
+            <button class="btn" type="button" data-action="leave-products">Volver a productos</button>
+          </div>`;
+      }
+
+      function startProcessingSimulation(outcome = 'success') {
+        clearTimers();
+        processingTimers.push(window.setTimeout(() => {
+          if (state.screen !== 's04') return;
+          state.batchStatus = 'Procesando';
+          state.lastCheck = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          render();
+          announce('La importación está procesando.');
+        }, 1300));
+        processingTimers.push(window.setTimeout(() => {
+          if (state.screen !== 's04' || state.queryError) return;
+          finishProcessing(outcome);
+        }, 3400));
+      }
+
+      function finishProcessing(outcome) {
+        clearTimers();
+        state.result = outcome;
+        state.screen = outcome === 'partial' ? 's05p' : 's05s';
+        history.replaceState(null, '', outcome === 'partial' ? '#s05p' : '#s05s');
+        render();
+        main.focus();
+        announce(outcome === 'partial' ? 'Importación completada con filas rechazadas.' : 'Importación completada sin errores.');
+      }
+
+      function renderS05(kind) {
+        const file = fileData();
+        const partial = kind === 'partial';
+        const metrics = partial
+          ? { total: 2450, ok: 2435, failed: 15 }
+          : { total: Number(file.rows) || 2480, ok: Number(file.rows) || 2480, failed: 0 };
+        main.innerHTML = `
+          ${baseHeading(partial ? 'Importación completada con errores' : 'Importación completada', partial ? 'Las filas válidas fueron aplicadas y algunas filas fueron rechazadas.' : 'Se procesaron correctamente todas las filas.')}
+          <section class="panel" aria-labelledby="result-title">
+            <div class="status-box">
+              <div class="status-icon" aria-hidden="true">${partial ? '!' : '✓'}</div>
+              <div>
+                <h2 id="result-title">${partial ? 'Completado con errores parciales' : 'Completado sin errores'}</h2>
+                <p class="muted">${partial ? 'Puedes descargar el detalle de las filas rechazadas.' : 'No se detectaron filas fallidas.'}</p>
+              </div>
+            </div>
+            <div class="metrics" aria-label="Resumen del procesamiento">
+              <div class="metric"><span class="metric-label">Total procesado</span><span class="metric-value">${metrics.total.toLocaleString('es-PE')}</span></div>
+              <div class="metric"><span class="metric-label">Exitosos</span><span class="metric-value">${metrics.ok.toLocaleString('es-PE')}</span></div>
+              <div class="metric"><span class="metric-label">Fallidos</span><span class="metric-value">${metrics.failed.toLocaleString('es-PE')}</span></div>
+            </div>
+            ${partial ? `
+              <div class="notice">
+                <div class="notice-icon" aria-hidden="true">i</div>
+                <div>
+                  <p class="notice-title">Hay ${metrics.failed} filas rechazadas.</p>
+                  <p class="muted">El reporte incluye el número de fila y la causa exacta.</p>
+                  <button class="btn btn-primary" type="button" data-action="download-errors" style="margin-top:12px">Descargar errores CSV</button>
+                </div>
+              </div>` : ''}
+            <div class="details-grid">
+              <div class="detail"><div class="detail-label">Archivo</div><div class="detail-value" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div></div>
+              <div class="detail"><div class="detail-label">Referencia</div><div class="detail-value">${escapeHtml(state.batchId)}</div></div>
+              <div class="detail"><div class="detail-label">Finalización</div><div class="detail-value">17/09/2026, 13:16</div></div>
+            </div>
+          </section>
+          <div class="actions-bar">
+            <button class="btn" type="button" data-action="leave-products">Volver a productos</button>
+            <button class="btn" type="button" data-action="restart">Importar otro archivo</button>
+          </div>`;
+      }
+
+      function renderNoPermission() {
+        main.innerHTML = `
+          <section class="global-state" aria-labelledby="permission-title">
+            <div class="status-icon" aria-hidden="true">!</div>
+            <h1 id="permission-title">No tienes permiso para realizar esta acción</h1>
+            <p class="lede">Las acciones de importación y exportación están restringidas para tu sesión actual.</p>
+            <div class="btn-row"><button class="btn" type="button" data-action="leave-products">Volver a productos</button></div>
+          </section>`;
+      }
+
+      function renderSessionExpired() {
+        main.innerHTML = `
+          <section class="global-state" aria-labelledby="session-title">
+            <div class="status-icon" aria-hidden="true">!</div>
+            <h1 id="session-title">Tu sesión expiró</h1>
+            <p class="lede">Inicia sesión nuevamente para continuar. Cuando sea posible, se conservará la referencia del lote en curso.</p>
+            <div class="btn-row"><button class="btn btn-primary" type="button" data-action="login">Iniciar sesión</button></div>
+          </section>`;
+      }
+
+      function simulateDownload(kind, format) {
+        if (!navigator.onLine || state.downloadError) {
+          state.downloadError = 'La descarga no está disponible temporalmente. Intenta nuevamente.';
+          state.screen = 's01';
+          render();
+          announce('No se pudo iniciar la descarga.');
+          return;
+        }
+        const label = kind === 'template' ? 'La descarga de la plantilla' : 'La exportación del catálogo';
+        toast(`${label} en formato ${format.toUpperCase()} fue iniciada.`);
+        announce(`${label} fue iniciada.`);
+      }
+
+      function downloadErrorsCsv() {
+        const rows = [['fila','causa']];
+        for (let i = 0; i < 5; i++) rows.push([String(12 + i), 'Formato de precio inválido']);
+        for (let i = 0; i < 10; i++) rows.push([String(38 + i), 'Categoría inexistente']);
+        const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'errores_importacion.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast('Descarga del reporte de errores iniciada.');
+      }
+
+      function restart() {
+        clearTimers();
+        Object.assign(state, {
+          screen: 's01', file: null, prevalidating: false, modalOpen: false, sending: false,
+          batchStatus: 'En cola', queryError: false, result: null, downloadError: null,
+          rejectedReasons: [], structuralReject: false
+        });
+        history.replaceState(null, '', '#s01');
+        render();
+        main.focus();
+      }
+
+      function replaceFile() {
+        state.screen = 's01';
+        state.rejectedReasons = [];
+        state.structuralReject = false;
+        history.replaceState(null, '', '#s01');
+        render();
+        document.getElementById('file-input')?.click();
+      }
+
+      function parseHash() {
+        const hash = location.hash.replace('#', '').toLowerCase();
+        clearTimers();
+        state.modalOpen = false;
+        state.sending = false;
+        state.queryError = false;
+        state.downloadError = null;
+        state.file = state.file || { ...mockFile };
+        switch (hash) {
+          case 's02': state.screen = 's02'; break;
+          case 's02r':
+            state.screen = 's02r';
+            state.rejectedReasons = ['Las columnas no coinciden con la plantilla oficial.'];
+            state.structuralReject = true;
+            break;
+          case 's04': state.screen = 's04'; state.batchStatus = 'Procesando'; break;
+          case 's04e': state.screen = 's04'; state.batchStatus = 'Procesando'; state.queryError = true; break;
+          case 's05s': state.screen = 's05s'; break;
+          case 's05p': state.screen = 's05p'; break;
+          case 's01e': state.screen = 's01'; state.downloadError = 'La descarga no está disponible temporalmente. Intenta nuevamente.'; break;
+          case 'no-permission': state.screen = 'no-permission'; break;
+          case 'session-expired': state.screen = 'session-expired'; break;
+          default: state.screen = 's01'; state.file = null; break;
+        }
+        render();
+      }
+
+      document.addEventListener('click', e => {
+        const button = e.target.closest('[data-action]');
+        if (!button) return;
+        const action = button.dataset.action;
+        if (action === 'download-template') {
+          const select = document.getElementById('template-format');
+          simulateDownload('template', select?.value || 'xlsx');
+        } else if (action === 'export-catalog') {
+          const select = document.getElementById('catalog-format');
+          simulateDownload('catalog', select?.value || 'xlsx');
+        } else if (action === 'retry-download') {
+          state.downloadError = null;
+          render();
+          toast('Puedes intentar la descarga nuevamente.');
+        } else if (action === 'dismiss-download-error') {
+          state.downloadError = null;
+          render();
+        } else if (action === 'back-s01') {
+          restart();
+        } else if (action === 'replace-file') {
+          replaceFile();
+        } else if (action === 'open-confirm') {
+          openModal(button);
+        } else if (action === 'close-confirm') {
+          closeModal();
+        } else if (action === 'confirm-import') {
+          confirmImport();
+        } else if (action === 'retry-query') {
+          state.queryError = false;
+          state.lastCheck = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          render();
+          announce('Estado actualizado. El lote continúa procesando.');
+          startProcessingSimulation('success');
+        } else if (action === 'download-errors') {
+          downloadErrorsCsv();
+        } else if (action === 'restart') {
+          restart();
+        } else if (action === 'leave-products') {
+          toast(state.screen === 's04' ? 'El lote continúa en segundo plano.' : 'Volviendo al módulo de productos.');
+        } else if (action === 'login') {
+          toast('Redirigiendo al inicio de sesión.');
+        }
+      });
+
+      document.addEventListener('keydown', e => {
+        if (!state.modalOpen) return;
+        const modal = modalRoot.querySelector('.modal');
+        if (!modal) return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeModal();
+          return;
+        }
+        if (e.key === 'Tab') {
+          const focusables = [...modal.querySelectorAll('button:not(:disabled), [href], select:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])')]
+            .filter(el => !el.hasAttribute('hidden'));
+          if (!focusables.length) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      });
+
+      window.addEventListener('online', () => {
+        offlineBanner.hidden = true;
+        announce('Conexión recuperada.');
+      });
+      window.addEventListener('offline', () => {
+        offlineBanner.hidden = false;
+        announce('Sin conexión.');
+        if (state.screen === 's04') {
+          state.queryError = true;
+          render();
+        }
+      });
+      window.addEventListener('hashchange', parseHash);
+
+      offlineBanner.hidden = navigator.onLine;
+      parseHash();
+    })();
+  </script>
+</body>
+</html>
