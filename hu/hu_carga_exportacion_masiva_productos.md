@@ -1,7 +1,7 @@
 **Como** **gestor comercial**,
 
 **quiero** descargar el catálogo completo y cargar archivos
-en formato Excel o CSV estructurados por SKU/variante con múltiples registros
+en formato Excel o CSV estructurados por SKU vendible con múltiples registros
 
 **para** registrar nuevos productos y variantes
 o actualizar masivamente los existentes (precios, stock, estado, etc.) de forma
@@ -12,13 +12,14 @@ rápida y asíncrona, coordinando los dominios de Catálogo, Pricing e Inventari
 |  |  |
 | --- | --- |
 | **ID** | **Criterio** |
-| **CA-01** | El sistema debe permitir al gestor descargar el catálogo actual completo a nivel de SKU/variante o una plantilla vacía en formato Excel/CSV con las cabeceras predefinidas, soportando hasta 5,000 filas o 10 MB por archivo. |
+| **CA-01** | El sistema debe permitir al gestor descargar el catálogo actual completo a nivel de SKU vendible o una plantilla vacía en formato Excel/CSV con las cabeceras predefinidas, soportando hasta 5,000 filas o 10 MB por archivo. |
 | **CA-02** | La importación no debe requerir mapeo dinámico; el archivo subido debe respetar la estructura y formato exacto de la plantilla, de lo contrario será rechazado en su totalidad durante la pre-validación de estructura. |
-| **CA-03** | Cada fila representa un SKU/variante vinculado a su código de producto base. Si el SKU no existe, se registra como nueva variante/producto; si el SKU ya existe, se procede a su actualización masiva. |
+| **CA-03** | Cada fila representa un SKU vendible vinculado a su código de producto base. Si el SKU no existe, se registra como nueva variante/producto; si el SKU ya existe, se procede a su actualización masiva. |
 | **CA-04** | En filas de actualización (SKU existente), las celdas vacías o en blanco deben ser ignoradas por el sistema, conservando intactos los valores actuales persistidos en la base de datos (evitando sobreescrituras o borrados accidentales). |
 | **CA-05** | Solo se admitirán URLs válidas para registrar las imágenes de los productos en la carga masiva; el sistema no procesará archivos físicos adjuntos o imágenes incrustadas en el documento. |
 | **CA-06** | En caso de existir errores parciales de validación de negocio en filas individuales, el sistema debe procesar y persistir las filas válidas, rechazar las inválidas, mostrar un resumen cuantitativo en pantalla y proveer la descarga de un archivo CSV con el detalle de las filas fallidas y el motivo exacto del error. |
-| **CA-07** | El procesamiento del archivo debe ser asíncrono mediante un Worker desacoplado (EDA) que emita eventos de dominio independientes hacia Catálogo (`catalog.product.upserted`), Pricing (`pricing.price.changed`) e Inventario (`inventory.stock.adjusted`), sin bloquear la interfaz web y notificando al gestor al finalizar. |
+| **CA-07** | El procesamiento debe ser asíncrono mediante Worker/EDA, sin transacción distribuida global. Cada fila se correlaciona con `batch_id` y `row_id`, y los mensajes hacia Catálogo, Pricing e Inventario deben ser idempotentes y reintentables. |
+| **CA-07A** | Una fila solo se marca como exitosa cuando todos los dominios que debía modificar confirman la aplicación. Si un dominio falla definitivamente, la fila queda `FAILED` y el reporte identifica el dominio y motivo. |
 | **CA-08** | La actualización de inventario debe gestionarse como un evento de ajuste en Kardex (`inventory.stock.adjusted`) con control de concurrencia optimista, garantizando que ventas concurrentes en canales (Marketplace, Retail) no sufran bloqueos globales de base de datos. |
 | **CA-09** | El sistema debe validar la extensión (XLSX, CSV), tipo MIME y sanear el contenido contra inyecciones de fórmulas ejecutables (CSV/Excel Formula Injection). |
 | **CA-10** | Debe registrarse en los logs de auditoría el usuario, timestamp, batch ID y archivo procesado para garantizar la trazabilidad completa. |
@@ -47,9 +48,9 @@ rápida y asíncrona, coordinando los dominios de Catálogo, Pricing e Inventari
 * **DADO** que el gestor comercial ha completado un archivo
   respetando la plantilla con hasta 5,000 variantes válidas,
 * **CUANDO** sube el archivo al sistema y confirma la importación,
-* **ENTONCES** el sistema delega el procesamiento al Worker asíncrono, emite los eventos
+* **ENTONCES** el sistema delega el procesamiento al Worker asíncrono, correlaciona cada fila y emite los mensajes
   `catalog.product.upserted`, `pricing.price.changed` e `inventory.stock.adjusted` hacia sus dominios respectivos
-  y notifica al usuario el éxito de la operación.
+  y solo notifica éxito de cada fila cuando los dominios requeridos confirman su aplicación.
 
 **Escenario 4: Actualización de producto existente con celdas vacías**
 
@@ -100,4 +101,6 @@ Estas son las coordinaciones que el orquestador de importación ejecuta mediante
 * **Límites del archivo:** Máximo **5,000 filas** o un peso límite de **10 MB** por archivo. Archivos que excedan estos límites son rechazados en la validación inicial de cabeceras.
 * **Tratamiento de campos vacíos:** Al actualizar un SKU existente, cualquier celda en blanco se interpreta como **"ignorar y conservar valor actual"**, previniendo borrados accidentales de atributos preexistentes.
 * **Reporte de errores:** Se presenta un resumen consolidado en la interfaz web (total procesados, exitosos, fallidos) y se provee un botón para **descargar un archivo CSV con el reporte detallado** de cada fila rechazada y su causa.
-* **Concurrencia de stock:** Las modificaciones de stock masivas operan como movimientos de ajuste en Inventario (`inventory.stock.adjusted`) con control optimista en Kardex, conviviendo armónicamente con las transacciones de ventas sin bloqueos pesimistas de tabla.
+* **Concurrencia de stock:** Las modificaciones de stock masivas operan como movimientos de ajuste en Inventario (`inventory.stock.adjusted`) con control optimista en Kardex.
+* **Consistencia multi-dominio:** No se usa una transacción distribuida entre Catálogo, Pricing e Inventario. Se aplica consistencia eventual con mensajes idempotentes, reintentos y confirmaciones correlacionadas por `batch_id`/`row_id`.
+* **Definición de éxito:** una fila es exitosa solo cuando todos los dominios requeridos han confirmado el cambio.

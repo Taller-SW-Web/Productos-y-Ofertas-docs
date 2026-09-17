@@ -562,7 +562,7 @@
       function renderS01() {
         state.screen = 's01';
         main.innerHTML = `
-          ${baseHeading('Carga y exportación masiva de productos', 'Importa o exporta productos y variantes mediante archivos XLSX o CSV.')}
+          ${baseHeading('Carga y exportación masiva de productos', 'Importa o exporta productos y SKUs vendibles mediante archivos XLSX o CSV.')}
           ${state.downloadError ? `
             <div class="notice" role="alert" style="margin-bottom:20px">
               <div class="notice-icon" aria-hidden="true">!</div>
@@ -578,7 +578,7 @@
           <div class="grid-12">
             <section class="panel col-8" aria-labelledby="import-title">
               <h2 id="import-title" class="panel-title">Importar archivo</h2>
-              <p class="muted">Cada fila representa un SKU o variante. El archivo debe respetar la estructura oficial.</p>
+              <p class="muted">Cada fila representa un SKU vendible. El archivo debe respetar la estructura oficial.</p>
               <div id="drop-zone" class="drop-zone">
                 <div class="file-symbol" aria-hidden="true">.X</div>
                 <strong>Arrastra un archivo aquí</strong>
@@ -614,7 +614,7 @@
 
               <div class="download-card">
                 <h3>Exportar catálogo</h3>
-                <p class="muted small">Catálogo completo con una fila por SKU o variante.</p>
+                <p class="muted small">Catálogo completo con una fila por SKU vendible.</p>
                 <div class="download-controls">
                   <label class="sr-only" for="catalog-format">Formato de exportación</label>
                   <select id="catalog-format" class="select" aria-label="Formato de exportación">
@@ -941,7 +941,7 @@
                 <div class="notice-icon" aria-hidden="true">i</div>
                 <div>
                   <p class="notice-title">Hay ${metrics.failed} filas rechazadas.</p>
-                  <p class="muted">El reporte incluye el número de fila y la causa exacta.</p>
+                  <p class="muted">El reporte incluye el número de fila, el dominio afectado y el motivo.</p>
                   <button class="btn btn-primary" type="button" data-action="download-errors" style="margin-top:12px">Descargar errores CSV</button>
                 </div>
               </div>` : ''}
@@ -991,9 +991,9 @@
       }
 
       function downloadErrorsCsv() {
-        const rows = [['fila','causa']];
-        for (let i = 0; i < 5; i++) rows.push([String(12 + i), 'Formato de precio inválido']);
-        for (let i = 0; i < 10; i++) rows.push([String(38 + i), 'Categoría inexistente']);
+        const rows = [['fila', 'dominio', 'motivo']];
+        for (let i = 0; i < 5; i++) rows.push([String(12 + i), 'Pricing', 'Formato de precio inválido']);
+        for (let i = 0; i < 10; i++) rows.push([String(38 + i), 'Catálogo', 'Categoría inexistente']);
         const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);

@@ -1,19 +1,19 @@
 # Especificación: Gestión de paquetes/combos de productos
 
 ## 1. Contexto
-La empresa deportiva busca incentivar las ventas agrupando productos complementarios en paquetes (combos) atractivos para los clientes. El gestor comercial necesita una herramienta para crear y gestionar estos combos, permitiendo que se vendan bajo un precio promocional unificado, pero garantizando que al momento de la venta se descuente y reserve correctamente el stock individual de cada SKU específico que compone el paquete, preservando la consistencia transaccional y la arquitectura orientada a eventos (EDA).
+La empresa deportiva busca incentivar las ventas agrupando productos complementarios en paquetes (combos) atractivos para los clientes. El gestor comercial necesita una herramienta para crear y gestionar estos combos, permitiendo que se vendan bajo un precio promocional unificado, pero garantizando que, al confirmarse la venta, se descuente correctamente el stock individual de cada SKU específico que compone el paquete, preservando la consistencia transaccional y la arquitectura orientada a eventos (EDA).
 
 ## 2. Propósito
-Permitir al gestor comercial agrupar múltiples artículos individuales a nivel de SKU/Variante en un combo con un precio único con descuento garantizado, asegurando el cálculo de disponibilidad en tiempo real, el descuento automático ante la creación del pedido y la compensación transaccional si el pedido se cancela.
+Permitir al gestor comercial agrupar múltiples artículos individuales a nivel de SKU vendible en un combo con un precio único con descuento garantizado, asegurando el cálculo de disponibilidad en tiempo real, el descuento automático ante la creación del pedido y la compensación transaccional si el pedido se cancela.
 
 ## 3. Alcance
 Incluye:
 - Creación, edición, consulta y desactivación de combos de productos.
-- Configuración de componentes a nivel de **SKU / Variante específica** (o producto simple sin variantes) con sus respectivas cantidades (mínimo 2 artículos).
+- Configuración de componentes exclusivamente por **SKU vendible** (SKU de variante o `sku_base` de producto simple) con sus respectivas cantidades (mínimo 2 artículos).
 - Validación de regla de negocio obligatoria de precio: el precio del combo DEBE ser estrictamente menor a la suma de los precios vigentes de sus componentes individuales ($precio\_combo < \sum precio\_componentes$).
 - Prohibición estricta de anidamiento (un combo solo puede componerse de productos/SKUs directos; no se permiten combos dentro de combos).
 - Cálculo dinámico de disponibilidad del combo basado en la existencia del SKU con menor disponibilidad proporcional.
-- Deducción inmediata de stock al recibir el evento `order.created` (creación de pedido) y mecanismo de compensación/rollback al recibir el evento `order.cancelled` (cancelación o expiración de pago).
+- Deducción definitiva de stock al recibir `order.confirmed` desde Ventas/Postventa. `order.created` no descuenta ni reserva stock en el alcance actual. Si una venta confirmada se cancela antes del despacho, `order.cancelled` compensa el consumo.
 - Reposición atómica e integral de stock de todos los SKUs componentes en devoluciones totales confirmadas (`order.returned`).
 - Desactivación reactiva automática del combo en todos los canales de venta ante el evento de baja o desactivación de cualquiera de sus SKUs componentes (`catalog.sku.deactivated`).
 
@@ -51,16 +51,16 @@ El sistema DEBE calcular en tiempo real el stock disponible del combo en funció
 - ENTONCES el sistema responde disponibilidad 0 y los canales lo muestran como no disponible para compra.
 
 ### Requisito 3: Descuento inmediato, compensación y devolución de stock (EDA)
-El sistema DEBE descontar el inventario de todos los SKUs del combo de forma atómica ante `order.created`, compensar ante `order.cancelled`, y reponer integralmente ante `order.returned`.
+El sistema DEBE descontar el inventario de todos los SKUs del combo de forma atómica ante `order.confirmed`, compensar ante `order.cancelled` cuando la cancelación ocurra antes del despacho, y reponer integralmente ante `order.returned` cuando exista devolución aceptada.
 
-#### Escenario: Descuento de stock ante creación de pedido (order.created)
+#### Escenario: Descuento de stock ante venta confirmada (`order.confirmed`)
 - DADO que un cliente adquiere un combo compuesto por 1 "Raqueta" (SKU-RAQ, Stock: 5) y 3 "Pelotas" (SKU-PEL, Stock: 20)
-- CUANDO el módulo de Ventas y Postventa emite el evento `order.created`
+- CUANDO Ventas y Postventa emite `order.confirmed`
 - ENTONCES el sistema descuenta de forma atómica 1 unidad a SKU-RAQ (Nuevo Stock: 4) y 3 unidades a SKU-PEL (Nuevo Stock: 17).
 
-#### Escenario: Compensación automática por pago fallido o cancelado (order.cancelled)
-- DADO que se descontó el stock de los SKUs de un combo por un pedido generado
-- CUANDO el pedido no se paga en la ventana de tiempo o se cancela, emitiendo el evento `order.cancelled`
+#### Escenario: Compensación por cancelación posterior a confirmación y previa a despacho (`order.cancelled`)
+- DADO que se descontó el stock de los SKUs de un combo por una venta confirmada
+- CUANDO la venta se cancela antes del despacho y se emite `order.cancelled`
 - ENTONCES el sistema ejecuta una transacción de compensación reponiendo atómicamente 1 unidad a SKU-RAQ y 3 unidades a SKU-PEL.
 
 #### Escenario: Devolución integral del combo (order.returned)
@@ -78,7 +78,7 @@ El sistema DEBE inhabilitar automáticamente el combo en los canales comerciales
 
 ## 5. Requisitos no funcionales
 - Consistencia transaccional: El descuento, compensación y reposición de stock de los múltiples SKUs del combo debe ejecutarse dentro de una transacción ACID indivisible (se aplican todos o ninguno).
-- Patrón Saga / Eventos: Resiliencia ante fallos en pagos mediante eventos de compensación (`order.cancelled`), asegurando consistencia eventual y sin reservas huérfanas.
+- Patrón Saga / Eventos: `order.confirmed` inicia el débito definitivo; `order.cancelled` compensa cancelaciones previas al despacho y `order.returned` repone devoluciones aceptadas.
 - Rendimiento: La consulta dinámica de disponibilidad del combo debe responder en menos de **200 ms** para optimizar la navegación en carritos de compra y canales digitales.
 
 ## 6. Fuera de alcance
@@ -90,6 +90,6 @@ El sistema DEBE inhabilitar automáticamente el combo en los canales comerciales
 La capacidad se considera correctamente implementada cuando:
 - Los combos se articulan exclusivamente sobre SKUs individuales y rechazan anidamiento.
 - Se valida obligatoriamente que $precio\_combo < \sum precio\_componentes$.
-- El descuento se ejecuta en `order.created` y compensa en `order.cancelled`.
+- El descuento se ejecuta en `order.confirmed`; `order.created` no afecta stock. Se compensa con `order.cancelled` cuando corresponde.
 - Se desactiva automáticamente en canales al desactivarse un componente.
 - Todos los escenarios y transacciones ACID de stock se cumplen rigurosamente.
