@@ -55,6 +55,12 @@ El sistema DEBE permitir eliminar la asociación entre una característica y una
 - CUANDO el gestor comercial intenta eliminar esa asociación inexistente
 - ENTONCES el sistema devuelve un error indicando que la asociación no existe
 
+### Requisito 4: Reglas de negocio confirmadas
+Las siguientes reglas fueron resueltas en la capacidad "Gestión de características" y aplican a la asociación:
+1. **Herencia:** Las características asociadas a una categoría padre SE HEREDAN obligatoriamente a todas sus subcategorías.
+2. **Cambio opcional a obligatoria:** Si una característica pasa de opcional a obligatoria, los productos preexistentes NO se invalidan de inmediato; la obligatoriedad se exigirá en la próxima edición/guardado de cada producto.
+3. **Límite por categoría:** Máximo estricto de 20 características asociables por cada categoría.
+
 ## 5. Requisitos no funcionales
 - Rendimiento: la consulta de características por categoría debe responder en menos de 500 ms, dado que será invocada frecuentemente por el Catálogo Core al crear productos.
 - Seguridad: solo el gestor comercial autenticado puede crear o eliminar asociaciones; la consulta puede exponerse como API interna de solo lectura para otros módulos.

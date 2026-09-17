@@ -13,7 +13,7 @@
 | **CA-03** | El sistema debe limitar a un máximo de 50 valores activos por característica tipo `LISTA`. |
 | **CA-04** | Al renombrar un valor de característica en uso, este debe actualizarse por ID (afectando visualmente a productos existentes sin romper data). |
 | **CA-05 (Marcas)** | El sistema debe tener un CRUD completo de Marcas: crear, consultar, actualizar y activar/desactivar. |
-| **CA-06 (Marcas)** | Al crear o editar una Marca, se debe validar unicidad exacta para evitar marcas duplicadas. |
+| **CA-06 (Marcas)** | Al crear o editar una Marca, se debe validar la unicidad del nombre (ignorando mayúsculas/minúsculas) para evitar marcas duplicadas. |
 | **CA-07 (Asociación)** | Las características asignadas a una categoría padre se heredan automáticamente a sus subcategorías. |
 | **CA-08 (Asociación)** | Existe un límite máximo de 20 características que pueden asociarse a una misma categoría. |
 | **CA-09 (Asociación)** | Si una característica asociada cambia de opcional a obligatoria, los productos preexistentes mantendrán su estado válido hasta que el producto vuelva a ser editado. |
