@@ -1,15 +1,9 @@
+
 # Módulo Productos y Ofertas — Gestión de Productos (Catálogo Core)
 **Responsable:** Gabriel — Persona 2
 **Referencia:** MDPYO-6
 **Versión:** v2 — corregida para eliminar discrepancias con `spec_gestion_productos_crud.md`
 
-> **Decisiones de corrección aplicadas** (ver resumen completo en el mensaje de respuesta):
-> 1. Se mantiene el modelo **borrador → validar → activo** (no "crear en activo").
-> 2. Los campos obligatorios se dividen en **mínimos para crear** vs. **requisitos para activar**.
-> 3. La duplicidad se define sobre `sku_base` y sobre `(nombre, marca_id)`, no sobre un "código" genérico.
-> 4. El **slug** es propiedad explícita de este componente (Catálogo Core), no de Taxonomía y SEO.
-> 5. Se agrega **reactivación** como criterio y escenario propios.
-> 6. Se resuelve la regla pendiente del **precio base**: se ingresa en el mismo formulario de creación y se notifica a Motor de Precios.
 
 ## Historia de usuario principal
 
@@ -24,13 +18,13 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 | ID | Criterio |
 |---|---|
 | CA-01 | Solo un gestor comercial con los permisos correspondientes puede crear, modificar, activar, desactivar o reactivar productos. |
-| CA-02 | Para **crear** un producto (estado "borrador") basta con nombre, descripción, categoría, marca y precio base referencial. No se exige característica ni imagen en este punto. |
+| CA-02 | Para **crear** un producto (estado "borrador") basta con nombre, descripción, categoría, marca, precio base referencial, `sku_base` y `tiene_variantes`. No se exige característica ni imagen en este punto. |
 | CA-03 | El sistema debe validar que la categoría y la marca indicadas existan y estén activas antes de guardar o actualizar el producto, sin importar su estado. |
 | CA-04 | El sistema debe impedir el registro de un producto con el mismo `sku_base` que otro existente, o con la misma combinación `(nombre, marca_id)` que un producto ya registrado. |
 | CA-05 | Un producto solo puede pasar de "borrador" a "activo" cuando, además de los campos de CA-02, cuente con al menos una característica y al menos una imagen. |
 | CA-06 | El gestor comercial puede consultar los productos registrados, filtrando por categoría, marca o estado, y ver el detalle completo de cada uno. |
-| CA-07 | Al actualizar un producto, el sistema debe validar los mismos campos y relaciones exigidos según su estado (CA-02 o CA-05), conservando el historial de cambios. |
-| CA-08 | Al desactivar un producto, el sistema debe impedir que sea mostrado a los canales de venta, pero debe conservar su registro para pedidos históricos y reportes. |
+| CA-07 | Al actualizar un producto, el sistema valida las mismas reglas según su estado. Los cambios válidos de un producto activo se publican inmediatamente; si dejan de cumplir una condición de activación, el guardado se rechaza. `tiene_variantes` no es editable. |
+| CA-08 | Al desactivar un producto, deja de mostrarse para nuevas ventas, conserva su registro/snapshot histórico y emite `catalog.product.deactivated` para que Promociones, Combos y otros consumidores reaccionen. |
 | CA-09 | Un producto inactivo puede reactivarse; al reactivarlo, el sistema debe volver a validar las condiciones de CA-05 antes de marcarlo como "activo" nuevamente. |
 | CA-10 | El sistema genera y mantiene el **slug** del producto (a partir del nombre) como parte de este componente; no depende del componente de Taxonomía y SEO. |
 | CA-11 | El precio base ingresado en la creación se notifica al Motor de Precios para abrir su historial de auditoría; las actualizaciones posteriores del precio (individuales o masivas) son responsabilidad exclusiva de ese componente, no de Catálogo Core. |
@@ -112,7 +106,10 @@ Estas son coordinaciones internas con otras funcionalidades del mismo módulo.
 | Motor de promociones — Persona 4 | Consulta de existencia y estado del producto antes de asociarlo a una promoción (esta funcionalidad es consumida, no consumidora). |
 | Agrupaciones y combos — Persona 5 | Consulta de existencia, estado y precio del producto antes de incluirlo en un combo (esta funcionalidad es consumida, no consumidora). |
 
-## Reglas pendientes de acordar
+## Reglas de negocio consolidadas
 
-1. Si la actualización de un producto activo requiere pasar nuevamente por un estado de revisión antes de reflejarse en los canales, o se publica de inmediato.
-2. Qué ocurre con las promociones, combos o carritos activos que referencian a un producto cuando este se desactiva.
+1. Los cambios válidos sobre productos activos se publican inmediatamente; no existe un estado adicional de revisión.
+2. `tiene_variantes` es inmutable después de la creación.
+3. Al desactivar un producto se emite `catalog.product.deactivated`; promociones y combos dejan de considerarlo para nuevas operaciones, mientras pedidos confirmados conservan su snapshot.
+
+
