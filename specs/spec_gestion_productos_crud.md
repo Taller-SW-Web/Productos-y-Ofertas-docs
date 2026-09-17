@@ -1,8 +1,6 @@
 # Especificación: Gestión de Productos (CRUD Principal)
 **Versión:** v2 — corregida para eliminar discrepancias con `hu_gestion_productos_crud.md`
 
-> **Cambios respecto a la v1:** estado inicial en "borrador" (no "activo"); nuevo requisito de activación; duplicidad redefinida sobre `sku_base` y `(nombre, marca_id)`; slug como propiedad de este componente; reactivación con re-validación; precio base con responsabilidad resuelta.
-
 ## 1. Contexto
 
 El módulo de Productos y Ofertas es el dueño de la entidad "producto" dentro de la arquitectura de microservicios del Marketplace Multicanal, e incluye también la gestión del stock asociado a productos que no manejan variantes (ver sección 6). Todos los demás módulos (Marketplace Cliente, Chatbot Cliente, Retail Vendedor, Ventas y Postventa, Despacho y Entrega) consumen la información de productos mediante APIs, sin acceso directo a la base de datos de este módulo. Esto significa que este módulo es la única fuente de verdad del catálogo, y cualquier error, inconsistencia o demora en sus operaciones CRUD repercute directamente en la disponibilidad y confiabilidad de todos los canales de venta. Como parte del equipo del gestor comercial, esta capacidad constituye la base sobre la cual se construirán posteriormente las funcionalidades de precios, ofertas, combos y variantes.
@@ -14,7 +12,7 @@ Permitir al gestor comercial administrar el ciclo de vida completo de los produc
 ## 3. Alcance
 
 Incluye:
-- Registro (creación) de nuevos productos, en estado **borrador**, con sus atributos mínimos (nombre, descripción, categoría, marca, precio base referencial).
+- Registro (creación) de nuevos productos, en estado **borrador**, con sus atributos mínimos (nombre, descripción, categoría, marca, precio base referencial, `sku_base` y bandera `tiene_variantes`).
 - Activación de un producto en borrador a estado **activo**, sujeta a validaciones adicionales (características, imágenes).
 - Actualización de los datos de un producto existente, en cualquiera de sus estados.
 - Consulta de productos, tanto individual (por identificador/slug) como en listado, con filtros básicos (categoría, marca, estado).
@@ -28,7 +26,9 @@ Incluye:
 
 ### Requisito 1: Creación de productos (estado borrador)
 
-El sistema DEBE permitir registrar un nuevo producto con sus atributos mínimos (nombre, categoría, marca, precio base, descripción), asignarle un identificador interno único y un slug, y guardarlo en estado **"borrador"**. No se exige característica ni imagen en este punto.
+El sistema DEBE permitir registrar un nuevo producto con sus atributos mínimos (nombre, categoría, marca, precio base, descripción, `sku_base` y `tiene_variantes`), asignarle un identificador interno único y un slug, y guardarlo en estado **"borrador"**. No se exige característica ni imagen en este punto.
+
+La bandera `tiene_variantes` se define al crear el producto y es **inmutable** en el alcance actual. Si es `false`, `sku_base` identifica también el SKU vendible que Inventario inicializa en 0. Si es `true`, `sku_base` solo sirve de raíz para generar los SKUs de variantes y no posee stock.
 
 #### Escenario: Registro exitoso de un producto nuevo (borrador)
 - DADO que el gestor comercial ha ingresado todos los campos mínimos con datos válidos
@@ -61,7 +61,9 @@ El sistema DEBE permitir cambiar un producto de "borrador" a "activo" únicament
 
 ### Requisito 2: Actualización de productos
 
-El sistema DEBE permitir modificar los atributos de un producto existente, en cualquiera de sus estados, preservando la trazabilidad del cambio.
+El sistema DEBE permitir modificar los atributos editables de un producto existente, en cualquiera de sus estados, preservando la trazabilidad del cambio. `tiene_variantes` no es editable.
+
+Los cambios válidos sobre un producto activo se publican inmediatamente. Si el cambio provoca que deje de cumplir una condición de activación, la operación se rechaza y se conserva la última versión válida.
 
 #### Escenario: Actualización exitosa de atributos de un producto
 - DADO un producto existente en el catálogo
@@ -94,7 +96,7 @@ El sistema DEBE permitir cambiar el estado de un producto entre "activo" e "inac
 #### Escenario: Desactivación exitosa de un producto
 - DADO un producto activo en el catálogo
 - CUANDO el gestor comercial solicita su desactivación
-- ENTONCES el sistema cambia el estado del producto a "inactivo" y este deja de estar disponible para su venta en los canales, aunque sigue siendo consultable para fines administrativos e históricos
+- ENTONCES el sistema cambia el estado del producto a "inactivo" y este deja de estar disponible para su venta en los canales, aunque sigue siendo consultable para fines administrativos e históricos; además emite `catalog.product.deactivated` para que Promociones, Combos y otros consumidores dejen de utilizarlo en nuevas operaciones. Los pedidos ya confirmados conservan su snapshot histórico
 
 #### Escenario: Intento de desactivar un producto que ya está inactivo
 - DADO un producto que ya se encuentra en estado "inactivo"
@@ -125,7 +127,7 @@ El sistema DEBE permitir cambiar el estado de un producto entre "activo" e "inac
 - **Gestión de precios individuales y masivos, ofertas, promociones y cupones** — corresponde a otras funcionalidades del módulo de Productos y Ofertas, fuera del alcance del CRUD principal. Este componente solo entrega el precio base inicial al crear el producto.
 - **Gestión de categorías, subcategorías, marcas y características** — se asume que estas entidades maestras existen o son gestionadas por una funcionalidad complementaria dentro del mismo módulo.
 - **Gestión de metadatos SEO adicionales (meta-título, meta-descripción, palabras clave)** — corresponde al componente de Taxonomía y SEO; este componente solo genera y mantiene el slug del producto.
-- **Actualización de stock por consumo desde los canales** — corresponde a la funcionalidad de "Consulta y actualización de disponibilidad de stock" (Inventario), no al CRUD de producto en sí. Este componente solo notifica la creación de un producto simple (sin variantes) para que Inventario inicialice su stock en 0.
+- **Actualización de stock por consumo desde los canales** — corresponde a la funcionalidad de "Consulta y actualización de disponibilidad de stock" (Inventario), no al CRUD de producto en sí. Este componente notifica la creación de un producto simple para que Inventario inicialice en 0 el SKU vendible identificado por `sku_base`.
 - **Eliminación física (borrado permanente) de productos** — no contemplada; solo se maneja baja lógica (desactivación/reactivación), para preservar integridad referencial e historial.
 
 ## Criterio de completitud
