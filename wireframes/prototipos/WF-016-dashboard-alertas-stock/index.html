@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WF-016 — Dashboard analítico y alertas de stock</title>
+  <style>
+    :root{
+      --surface:#fff;
+      --neutral-10:#f3f4f6;
+      --neutral-20:#e5e7eb;
+      --neutral-30:#d1d5db;
+      --neutral-50:#6b7280;
+      --neutral-70:#374151;
+      --neutral-90:#111827;
+      --radius:4px;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--neutral-90);
+      background:var(--surface);
+    }
+    *{box-sizing:border-box}
+    html{min-width:320px}
+    body{margin:0;background:var(--surface);font-size:16px;line-height:1.5}
+    button,input,select{font:inherit;color:inherit}
+    button{min-height:44px;cursor:pointer}
+    button:disabled{cursor:not-allowed;color:var(--neutral-50);border-color:var(--neutral-30);background:var(--neutral-10)}
+    a,button,input,select{outline-offset:3px}
+    .app-shell{min-height:100vh}
+    .topbar{border-bottom:1px solid var(--neutral-30);background:var(--surface)}
+    .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700}
+    .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .crumb{color:var(--neutral-50);font-size:14px}
+    .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
+    .page-header h1{font-size:32px;line-height:1.15;margin:0 0 8px;font-weight:700}
+    .page-header p{margin:0;color:var(--neutral-50);max-width:760px}
+    h2{font-size:24px;line-height:1.2;margin:0 0 16px}
+    h3{font-size:18px;line-height:1.3;margin:0 0 12px}
+    .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
+    .ann{display:inline-block;color:var(--neutral-50);border-left:2px solid var(--neutral-30);padding-left:8px;margin-top:10px;font-size:12px}
+    .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+    .btn-primary{background:var(--neutral-90);color:var(--surface)}
+    .btn-quiet{border-color:var(--neutral-30);font-weight:500}
+    .button-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .button-row.end{justify-content:flex-end}
+    .muted{color:var(--neutral-50)}
+    .small{font-size:14px}
+    .notice{border:1px solid var(--neutral-90);padding:16px;display:flex;gap:12px;align-items:flex-start;background:var(--surface);margin-bottom:16px}
+    .notice-icon{width:24px;height:24px;min-width:24px;border:1px solid var(--neutral-90);border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px}
+    .notice h3{font-size:16px;margin:0 0 4px}
+    .notice p{margin:0;color:var(--neutral-70)}
+    .notice.error{border-width:2px}
+    .toast{position:fixed;right:24px;bottom:24px;border:1px solid var(--neutral-90);background:var(--surface);padding:14px 16px;max-width:380px;z-index:80;display:none}
+    .toast.show{display:block}
+
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+    .kpi{border:1px solid var(--neutral-30);padding:20px}
+    .kpi-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--neutral-50);font-family:"Roboto Mono",monospace;margin-bottom:8px}
+    .kpi-value{font-size:32px;font-weight:700;line-height:1.1}
+    .kpi-sub{font-size:13px;color:var(--neutral-50);margin-top:4px}
+
+    .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center}
+    .filter{min-width:150px;flex:1 1 150px}
+
+    .section{border:1px solid var(--neutral-30);padding:24px;margin-bottom:16px}
+    .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    .section-head h2{margin:0}
+
+    input[type="text"],select{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:11px 12px;border-radius:var(--radius);min-height:44px}
+
+    .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--neutral-30);padding:4px 8px;border-radius:999px;background:var(--surface)}
+    .status::before{content:"";width:8px;height:8px;border:1px solid var(--neutral-90);border-radius:50%;background:var(--surface)}
+    .status.low::before{background:var(--surface);border-width:2px}
+    .status.out::before{background:transparent;border-style:dashed}
+
+    .table-wrap{border:1px solid var(--neutral-30);overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--neutral-30);vertical-align:middle}
+    th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"Roboto Mono",ui-monospace,monospace;font-weight:600;color:var(--neutral-70);background:var(--neutral-10)}
+    tbody tr:last-child td{border-bottom:0}
+    .sku-code{font-family:"Roboto Mono",ui-monospace,monospace;font-size:13px;font-weight:600}
+    .product-name{font-weight:600}
+
+    .top5{list-style:none;margin:0;padding:0}
+    .top5 li{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--neutral-30)}
+    .top5 li:last-child{border-bottom:0}
+    .rank{width:32px;height:32px;min-width:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-weight:700;font-family:"Roboto Mono",monospace}
+    .top5-info{flex:1;min-width:0}
+    .top5-name{font-weight:600}
+    .top5-units{font-family:"Roboto Mono",monospace;font-size:13px;color:var(--neutral-50);font-weight:600;white-space:nowrap}
+    .bar{height:8px;background:var(--neutral-10);margin-top:6px;max-width:260px}
+    .bar-fill{height:100%;background:var(--neutral-90)}
+
+    .mobile-alerts{display:none}
+    .alert-card{border:1px solid var(--neutral-30);padding:16px}
+    .alert-card + .alert-card{margin-top:12px}
+
+    .empty-state{border:1px solid var(--neutral-30);padding:48px 24px;text-align:center}
+    .empty-state h2{margin-bottom:8px}
+    .empty-state p{color:var(--neutral-50);margin:0 auto 20px;max-width:520px}
+
+    .skeleton{border:1px solid var(--neutral-30);padding:16px}
+    .sk-line{height:14px;background:var(--neutral-10);margin:8px 0}
+    .sk-line.w30{width:30%}.sk-line.w50{width:50%}.sk-line.w80{width:80%}
+
+    .event-banner{border:1px dashed var(--neutral-90);padding:12px 16px;margin-bottom:24px;display:flex;gap:12px;align-items:center;font-size:14px}
+    .event-banner .mono{color:var(--neutral-50)}
+    .live-dot{width:10px;height:10px;border:1px solid var(--neutral-90);border-radius:50%;background:var(--neutral-10);flex-shrink:0}
+
+    @media (max-width:900px){
+      .mobile-alerts{display:block}
+      .desktop-alerts{display:none}
+    }
+    @media (max-width:600px){
+      .topbar-inner{padding:12px 16px}
+      .crumb{display:none}
+      .page{padding:24px 16px 48px}
+      .page-header{display:block;margin-bottom:24px}
+      .page-header h1{font-size:28px}
+      .kpis{grid-template-columns:1fr 1fr}
+      .kpi-value{font-size:26px}
+      .section{padding:16px}
+      .filters{display:grid;grid-template-columns:1fr}
+      .filter{width:100%}
+      .section-head{display:block}
+      .button-row .btn{width:100%;min-height:44px}
+      .toast{left:16px;right:16px;bottom:16px}
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="crumb">Productos / Inventario / Dashboard</div>
+    </div>
+  </header>
+  <main id="app" class="page" tabindex="-1"></main>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /*
+    Estados documentales de WF-016 que pueden inspeccionarse sin contaminar la UI:
+      ?state=empty            -> panel sin inventario (S-01-E)
+      ?state=list-error       -> error de carga (S-01-E)
+      ?state=top5-error       -> error del Top 5 (S-01-T)
+      ?state=no-permission    -> usuario sin permiso
+      ?state=session-expired  -> sesión expirada
+    No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
+  */
+
+  const PERIOD_DEFAULT = '30d';
+  const PERIODS = [
+    {id:'30d', label:'Últimos 30 días'},
+    {id:'7d', label:'Últimos 7 días'},
+    {id:'90d', label:'Últimos 90 días'},
+    {id:'custom', label:'Rango personalizado'}
+  ];
+
+  let skus = [
+    {id:'sk-nk-blk40', product:'Nike Air Max', sku:'NK-AM-BLK-40', attrs:'Negro / Talla 40', stock:3, umbral:5},
+    {id:'sk-nk-blk41', product:'Nike Air Max', sku:'NK-AM-BLK-41', attrs:'Negro / Talla 41', stock:0, umbral:5},
+    {id:'sk-nk-wht40', product:'Nike Air Max', sku:'NK-AM-WHT-40', attrs:'Blanco / Talla 40', stock:8, umbral:5},
+    {id:'sk-ad-pred42', product:'Adidas Predator', sku:'AD-PR-42-RD', attrs:'Rojo / Talla 42', stock:15, umbral:6},
+    {id:'sk-ad-pred43', product:'Adidas Predator', sku:'AD-PR-43-RD', attrs:'Rojo / Talla 43', stock:5, umbral:6},
+    {id:'sk-pum-ft40', product:'Puma Future', sku:'PM-FT-40-BK', attrs:'Negro / Talla 40', stock:0, umbral:4},
+    {id:'sk-pum-ft41', product:'Puma Future', sku:'PM-FT-41-BK', attrs:'Negro / Talla 41', stock:2, umbral:4}
+  ];
+  let top5 = [
+    {product:'Nike Air Max', units:45},
+    {product:'Adidas Predator', units:38},
+    {product:'Puma Future', units:30},
+    {product:'Nike Revolution', units:25},
+    {product:'Adidas Run', units:20}
+  ];
+
+  const state = {
+    loading:true,
+    period:'30d',
+    filters:{product:'',state:'all'},
+    queryState:new URLSearchParams(location.search).get('state') || ''
+  };
+  let lastEvent = null;
+
+  const app = document.getElementById('app');
+  const toast = document.getElementById('toast');
+  let toastTimer = null;
+
+  function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[ch])); }
+  function showToast(message){ clearTimeout(toastTimer); toast.textContent=message; toast.classList.add('show'); toastTimer=setTimeout(()=>toast.classList.remove('show'),3200); }
+  function estadoOf(s){ if(s.stock===0) return 'out'; return s.stock<=s.umbral?'low':'avail'; }
+  function labelOf(st){ if(st==='low') return 'Stock bajo'; if(st==='out') return 'Agotado'; return 'Disponible'; }
+  function statusBadge(s){
+    const st=estadoOf(s);
+    if(st==='avail') return '';
+    return `<span class="status ${st}">${labelOf(st)}</span>`;
+  }
+  function periodLabel(id){ const p=PERIODS.find(x=>x.id===id); return p?p.label:id; }
+
+  function renderGlobalState(){
+    if(state.queryState==='no-permission'){
+      app.innerHTML=`<div class="page-header"><div><h1>Dashboard de inventario</h1><p>Indicadores, alertas de stock y Top 5 de productos más vendidos.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para consultar el dashboard.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
+      return true;
+    }
+    if(state.queryState==='session-expired'){
+      app.innerHTML=`<div class="page-header"><div><h1>Dashboard de inventario</h1><p>Indicadores, alertas de stock y Top 5 de productos más vendidos.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
+      return true;
+    }
+    return false;
+  }
+
+  function computeKpis(list){
+    const total=list.length;
+    const units=list.reduce((a,s)=>a+s.stock,0);
+    const byState={avail:0,low:0,out:0};
+    list.forEach(s=>byState[estadoOf(s)]++);
+    return {total,units,avail:byState.avail,low:byState.low,out:byState.out};
+  }
+
+  function filteredSkus(){
+    return skus.filter(s=>{
+      const matchProduct=!state.filters.product || s.product.toLowerCase().includes(state.filters.product.toLowerCase()) || s.sku.toLowerCase().includes(state.filters.product.toLowerCase());
+      const st=estadoOf(s);
+      const matchState=state.filters.state==='all' || st===state.filters.state;
+      return matchProduct && matchState;
+    });
+  }
+
+  function renderDashboard(){
+    if(state.loading){
+      app.innerHTML=`<div class="page-header"><div><h1>Dashboard de inventario</h1><p>Cargando los indicadores y alertas de stock…</p></div></div><div class="skeleton"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div>`;
+      setTimeout(()=>{state.loading=false;render();},450);
+      return;
+    }
+    if(state.queryState==='list-error'){
+      app.innerHTML=`<div class="page-header"><div><h1>Dashboard de inventario</h1><p>Indicadores, alertas de stock y Top 5 de productos más vendidos.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar el dashboard.</h3><p>Vuelve a intentarlo en unos momentos.</p></div></div><button class="btn btn-primary" data-action="retry">Reintentar</button>`;
+      bindPage();
+      return;
+    }
+
+    const list=filteredSkus();
+    const kpis=computeKpis(list);
+    const alerts=list.filter(s=>estadoOf(s)!=='avail');
+
+    const emptyInventory = skus.length===0 || state.queryState==='empty';
+    const noAlerts = alerts.length===0;
+
+    const alertsBody = emptyInventory
+      ? null
+      : noAlerts
+        ? alertEmptyBlock()
+        : alertTable(alerts);
+
+    const topBody = (state.queryState==='top5-error')
+      ? `<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar los productos más vendidos.</h3><p>Intenta nuevamente. El resto del dashboard sigue disponible.</p></div></div><button class="btn btn-quiet" data-action="retry-top5">Reintentar</button>`
+      : topBlock();
+
+    const emptyBlock = emptyInventory
+      ? `<div class="empty-state"><h2>Aún no hay variantes con inventario.</h2><p>Las variantes deben existir en Gestión de variantes para que su SKU vendible aparezca aquí.</p></div>`
+      : '';
+
+    app.innerHTML=`<div class="page-header">
+        <div><h1>Dashboard de inventario</h1><p>Monitoreo del estado del inventario a nivel de SKU vendible, alertas de stock y Top 5 de productos más vendidos.</p></div>
+      </div>
+      ${lastEvent?`<div class="event-banner"><span class="live-dot" aria-hidden="true"></span><div><span class="mono">inventory.stock.changed</span> · ${escapeHtml(lastEvent)}</div></div>`:''}
+      ${filtersBlock()}
+      ${emptyBlock}
+      <div class="section">
+        <div class="section-head"><div><h2>Indicadores de inventario</h2><p class="small muted">Unidad: SKU vendible. El producto es solo agrupador comercial.</p></div></div>
+        <div class="kpis">
+          <div class="kpi"><div class="kpi-label">SKUs vendibles</div><div class="kpi-value">${kpis.total}</div><div class="kpi-sub">Total de variantes con inventario</div></div>
+          <div class="kpi"><div class="kpi-label">Unidades disponibles</div><div class="kpi-value">${kpis.units}</div><div class="kpi-sub">Suma del stock disponible</div></div>
+          <div class="kpi"><div class="kpi-label">SKUs disponibles</div><div class="kpi-value">${kpis.avail}</div><div class="kpi-sub">Por encima del umbral</div></div>
+          <div class="kpi"><div class="kpi-label">Stock bajo</div><div class="kpi-value">${kpis.low}</div><div class="kpi-sub">0 &lt; stock &le; umbral por SKU</div></div>
+          <div class="kpi"><div class="kpi-label">Agotados</div><div class="kpi-value">${kpis.out}</div><div class="kpi-sub">Sin unidades disponibles</div></div>
+        </div>
+        <p class="ann">A-01 · Indicadores a nivel de SKU vendible · A-02 · Estado calculado con stock y umbral por SKU</p>
+      </div>
+      <div class="section">
+        <div class="section-head"><div><h2>Alertas de stock</h2><p class="small muted">Solo se alerta a SKUs en estado Stock bajo o Agotado.</p></div></div>
+        ${alertsBody || (emptyInventory?'':`<div class="empty-state"><h2>Sin alertas.</h2><p>Todos los SKUs del filtro se encuentran disponibles.</p></div>`)}
+        <p class="ann">A-03 · Alertas solo para Stock bajo y Agotado · A-04 · Se recalculan con inventory.stock.changed · A-08 · La ausencia de SKUs no es un error</p>
+      </div>
+      <div class="section">
+        <div class="section-head">
+          <div><h2>Top 5 de productos más vendidos</h2><p class="small muted">Ventas confirmadas agrupadas por producto; período ${escapeHtml(periodLabel(state.period))}.</p></div>
+          ${periodSelect()}
+        </div>
+        ${topBody}
+        <p class="ann">A-05 · Top 5 de productos con ventas confirmadas · A-06 · Período seleccionable; 30 días por defecto</p>
+      </div>`;
+    bindControls();
+    bindPage();
+  }
+
+  function filtersBlock(){
+    return `<div class="filters">
+      <input class="filter" type="text" id="fProduct" placeholder="Filtrar por producto, categoría, marca o SKU…" value="${escapeHtml(state.filters.product)}" aria-label="Buscar por producto, categoría, marca o SKU">
+      <select class="filter" id="fState" aria-label="Filtrar por estado de inventario">
+        <option value="all" ${state.filters.state==='all'?'selected':''}>Todos los estados</option>
+        <option value="avail" ${state.filters.state==='avail'?'selected':''}>Disponible</option>
+        <option value="low" ${state.filters.state==='low'?'selected':''}>Stock bajo</option>
+        <option value="out" ${state.filters.state==='out'?'selected':''}>Agotado</option>
+      </select>
+    </div>`;
+  }
+
+  function alertTable(alerts){
+    const rows=alerts.map(s=>`
+      <tr>
+        <td class="product-name">${escapeHtml(s.product)}</td>
+        <td><span class="sku-code">${escapeHtml(s.sku)}</span></td>
+        <td>${escapeHtml(s.attrs)}</td>
+        <td>${s.stock}</td>
+        <td>${s.umbral}</td>
+        <td>${statusBadge(s)}</td>
+      </tr>`).join('');
+    const cards=alerts.map(s=>`
+      <article class="alert-card">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+          <div>
+            <div class="product-name">${escapeHtml(s.product)}</div>
+            <div class="sku-code">${escapeHtml(s.sku)}</div>
+            <div class="small muted">${escapeHtml(s.attrs)}</div>
+          </div>
+          ${statusBadge(s)}
+        </div>
+        <div class="small" style="margin:10px 0">Stock: ${s.stock} · Umbral: ${s.umbral}</div>
+      </article>`).join('');
+    return `<div class="desktop-alerts table-wrap"><table>
+      <thead><tr><th>Producto</th><th>Variante/SKU</th><th>Características</th><th>Stock</th><th>Umbral</th><th>Estado</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="mobile-alerts">${cards}</div>`;
+  }
+
+  function alertEmptyBlock(){
+    return `<div class="empty-state" style="padding:24px"><h2>Sin alertas.</h2><p>Todos los SKUs del filtro se encuentran disponibles.</p></div>`;
+  }
+
+  function periodSelect(){
+    return `<select class="filter" id="fPeriod" aria-label="Período del Top 5" style="max-width:260px">
+      ${PERIODS.map(p=>`<option value="${p.id}" ${state.period===p.id?'selected':''}>${escapeHtml(p.label)}</option>`).join('')}
+    </select>`;
+  }
+
+  function topBlock(){
+    if(top5.length===0){
+      return `<div class="empty-state" style="padding:24px"><h2>Sin ventas confirmadas en el período.</h2><p>No hay información suficiente para calcular el Top 5 en ${escapeHtml(periodLabel(state.period))}.</p></div>`;
+    }
+    const max=top5[0].units;
+    const items=top5.map((t,i)=>`
+      <li>
+        <span class="rank" aria-hidden="true">${i+1}</span>
+        <div class="top5-info">
+          <div class="top5-name">${escapeHtml(t.product)}</div>
+          <div class="bar" aria-hidden="true"><div class="bar-fill" style="width:${Math.round(t.units/max*100)}%"></div></div>
+        </div>
+        <span class="top5-units">${t.units} unds</span>
+      </li>`).join('');
+    return `<ol class="top5">${items}</ol>`;
+  }
+
+  function bindControls(){
+    const fProduct=document.getElementById('fProduct');
+    const fState=document.getElementById('fState');
+    const fPeriod=document.getElementById('fPeriod');
+    if(fProduct) fProduct.addEventListener('input',()=>{ state.filters.product=fProduct.value; render(); });
+    if(fState) fState.addEventListener('change',()=>{ state.filters.state=fState.value; render(); });
+    if(fPeriod) fPeriod.addEventListener('change',()=>{ state.period=fPeriod.value; render(); showToast(`Período del Top 5: ${periodLabel(state.period)}.`); });
+  }
+
+  function bindPage(){
+    app.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',e=>{
+      const action=e.currentTarget.dataset.action;
+      if(action==='retry'){ state.queryState=''; state.loading=true; render(); }
+      else if(action==='retry-top5'){ state.queryState=''; render(); }
+      else if(action==='safe-back'){ showToast('Regreso simulado al módulo de productos.'); }
+      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión recuperada para el prototipo.'); }
+    }));
+  }
+
+  function simulateEvent(){
+    // Simula un inventory.stock.changed que mueve un SKU de Disponible a Stock bajo.
+    const target=skus.find(s=>s.id==='sk-pum-ft41');
+    if(target){
+      target.stock=Math.max(0,target.stock+2);
+      lastEvent=`PM-FT-41-BK · stock: 1 → 3 · estado: Stock bajo → Stock bajo · panel recalculado`;
+    }else{
+      lastEvent='Panel recalculado ante cambio de stock notificado por inventario.';
+    }
+    showToast('inventory.stock.changed recibido · panel recalculado.');
+  }
+
+  function render(){
+    if(renderGlobalState()){ bindPage(); return; }
+    renderDashboard();
+  }
+
+  document.addEventListener('keydown',e=>{
+    if((e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='s') && (e.ctrlKey||e.metaKey)){
+      simulateEvent();
+    }
+  });
+  document.body.addEventListener('dblclick',e=>{
+    if(e.target.closest('.kpis')){ simulateEvent(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
