@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestión de productos</title>
+  <style>
+    :root {
+      --surface: #ffffff;
+      --neutral-10: #f3f4f6;
+      --neutral-30: #d1d5db;
+      --neutral-50: #6b7280;
+      --neutral-90: #111827;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 32px;
+      --space-xl: 64px;
+      --gutter: 24px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --content: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: light; }
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--neutral-90);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    button, input, select, textarea { font: inherit; }
+    button, select, a, input { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+    a:focus-visible, [tabindex]:focus-visible {
+      outline: 3px solid var(--neutral-90);
+      outline-offset: 2px;
+    }
+    [hidden] { display: none !important; }
+    a { color: inherit; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 0; font-size: clamp(30px, 4vw, 48px); line-height: 1.1; letter-spacing: -.025em; }
+    h2 { margin-bottom: 0; font-size: 24px; line-height: 1.2; }
+    h3 { margin-bottom: 0; font-size: 18px; line-height: 1.3; }
+
+    .app-header { border-bottom: 1px solid var(--neutral-30); background: var(--surface); }
+    .header-inner {
+      max-width: var(--content);
+      margin: 0 auto;
+      padding: 14px var(--gutter);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; font-weight: 700; }
+    .brand-mark {
+      width: 34px; height: 34px; border: 2px solid var(--neutral-90);
+      display: grid; place-items: center; flex: 0 0 auto; font-size: 12px;
+    }
+    .brand-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .header-nav { display: flex; gap: 20px; color: var(--neutral-50); font-size: 14px; }
+    .header-nav span[aria-current="page"] { color: var(--neutral-90); font-weight: 700; }
+    .user-chip { border: 1px solid var(--neutral-30); border-radius: 999px; padding: 6px 12px; white-space: nowrap; }
+
+    .offline-banner {
+      border-bottom: 1px solid var(--neutral-90); background: var(--neutral-10);
+      padding: 10px var(--gutter); text-align: center; font-weight: 700;
+    }
+    main { max-width: var(--content); margin: 0 auto; padding: 40px var(--gutter) 72px; outline: none; }
+    .breadcrumbs { margin: 0 0 24px; color: var(--neutral-50); font-size: 14px; }
+    .breadcrumb-button { border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; text-decoration: underline; }
+    .page-heading { margin-bottom: 32px; }
+    .heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+    .lede { margin: 14px 0 0; max-width: 760px; color: var(--neutral-50); font-size: 18px; }
+    .muted { color: var(--neutral-50); }
+    .small { font-size: 14px; }
+    .mono { font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+    .btn {
+      min-height: 44px; border: 1px solid var(--neutral-90); border-radius: var(--radius-sm);
+      padding: 10px 16px; background: var(--surface); color: var(--neutral-90); cursor: pointer;
+      font-weight: 650; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      text-decoration: none;
+    }
+    .btn:hover:not(:disabled) { background: var(--neutral-10); }
+    .btn-primary { background: var(--neutral-90); color: var(--surface); }
+    .btn-primary:hover:not(:disabled) { background: #000; }
+    .btn-quiet { border-color: transparent; padding-inline: 8px; }
+    .btn-danger { border-width: 2px; }
+    .btn:disabled { color: var(--neutral-50); border-color: var(--neutral-30); background: var(--neutral-10); cursor: not-allowed; }
+    .button-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .button-row.end { justify-content: flex-end; }
+
+    .filters {
+      border: 1px solid var(--neutral-30); padding: 20px; margin-bottom: 20px;
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 16px; align-items: end;
+    }
+    .field { min-width: 0; }
+    .field label, .field-label { display: block; margin-bottom: 7px; font-size: 14px; font-weight: 700; }
+    .required::after { content: " *"; }
+    .control {
+      width: 100%; min-height: 44px; border: 1px solid var(--neutral-30); border-radius: var(--radius-sm);
+      background: var(--surface); color: var(--neutral-90); padding: 10px 12px;
+    }
+    textarea.control { min-height: 120px; resize: vertical; }
+    .control[aria-invalid="true"] { border: 2px solid var(--neutral-90); }
+    .control[readonly] { background: var(--neutral-10); color: var(--neutral-50); }
+    .field-help { margin: 6px 0 0; color: var(--neutral-50); font-size: 13px; }
+    .field-error { margin: 6px 0 0; font-size: 14px; font-weight: 700; }
+
+    .results-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 12px; }
+    .table-wrap { border: 1px solid var(--neutral-30); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 850px; }
+    th, td { padding: 15px 14px; text-align: left; border-bottom: 1px solid var(--neutral-30); vertical-align: middle; }
+    th { background: var(--neutral-10); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fafafa; }
+    .product-link { border: 0; padding: 0; background: transparent; color: var(--neutral-90); font-weight: 750; cursor: pointer; text-align: left; text-decoration: underline; }
+    .status {
+      display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--neutral-90);
+      border-radius: 999px; padding: 4px 9px; font-size: 13px; font-weight: 700; white-space: nowrap;
+    }
+    .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--neutral-90); }
+    .status.draft::before { background: var(--neutral-50); }
+    .status.inactive { border-style: dashed; }
+    .row-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .row-actions .btn { min-height: 36px; padding: 6px 10px; font-size: 14px; }
+    .pagination { margin-top: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+    .panel { border: 1px solid var(--neutral-30); background: var(--surface); padding: 24px; }
+    .panel + .panel { margin-top: 16px; }
+    .panel-heading { margin-bottom: 20px; }
+    .panel-heading p { margin: 6px 0 0; }
+    .form-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px 24px; }
+    .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+    .radio-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .radio-card { border: 1px solid var(--neutral-30); padding: 14px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+    .radio-card:has(input:checked) { border: 2px solid var(--neutral-90); padding: 13px; }
+    .radio-card input { margin-top: 4px; }
+    .readonly-box { min-height: 44px; border: 1px solid var(--neutral-30); background: var(--neutral-10); padding: 12px; }
+    .checkbox-list { display: grid; gap: 10px; }
+    .check-option { display: flex; gap: 10px; align-items: flex-start; }
+    .check-option input { width: 18px; height: 18px; margin-top: 3px; }
+    .upload-box { border: 1px dashed var(--neutral-50); background: var(--neutral-10); padding: 20px; }
+    .upload-box input { margin-top: 12px; max-width: 100%; }
+    .image-preview { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+    .image-placeholder { width: 84px; height: 64px; background: var(--neutral-10); border: 1px solid var(--neutral-50); position: relative; flex: 0 0 auto; }
+    .image-placeholder::before, .image-placeholder::after { content: ""; position: absolute; left: 8px; right: 8px; top: 50%; height: 1px; background: var(--neutral-50); }
+    .image-placeholder::before { transform: rotate(31deg); }
+    .image-placeholder::after { transform: rotate(-31deg); }
+    .actions-bar {
+      margin-top: 24px; border-top: 1px solid var(--neutral-30); padding-top: 20px;
+      display: flex; justify-content: space-between; gap: 16px; align-items: center;
+    }
+
+    .notice { border: 1px solid var(--neutral-90); padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+    .notice + .notice { margin-top: 12px; }
+    .notice-icon { width: 26px; height: 26px; border: 1px solid var(--neutral-90); border-radius: 50%; display: grid; place-items: center; flex: 0 0 auto; font-weight: 800; }
+    .notice-title { margin: 0; font-weight: 800; }
+    .notice p + p { margin-top: 4px; }
+    .error-summary { border: 2px solid var(--neutral-90); padding: 18px; margin-bottom: 20px; }
+    .error-summary h2 { font-size: 20px; }
+    .error-summary ul { margin-bottom: 0; }
+    .error-summary a { font-weight: 700; }
+
+    .detail-header { border-bottom: 1px solid var(--neutral-30); padding-bottom: 24px; margin-bottom: 24px; }
+    .title-with-status { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+    .detail-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 24px; align-items: start; }
+    .definition-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
+    .definition { padding: 16px 0; border-bottom: 1px solid var(--neutral-30); }
+    .definition-label { color: var(--neutral-50); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .definition-value { margin-top: 5px; font-weight: 650; overflow-wrap: anywhere; }
+    .requirements { list-style: none; margin: 18px 0 0; padding: 0; }
+    .requirements li { padding: 10px 0 10px 30px; position: relative; border-top: 1px solid var(--neutral-30); }
+    .requirements li:first-child { border-top: 0; }
+    .requirements li::before { position: absolute; left: 2px; top: 10px; font-weight: 900; }
+    .requirements .met::before { content: "✓"; }
+    .requirements .missing::before { content: "×"; }
+    .requirements .missing { font-weight: 700; }
+    .meta-list { margin: 0; padding: 0; list-style: none; }
+    .meta-list li { padding: 10px 0; border-bottom: 1px solid var(--neutral-30); }
+
+    .empty-state, .global-state { border: 1px solid var(--neutral-30); padding: 56px 24px; text-align: center; }
+    .empty-symbol { width: 52px; height: 52px; margin: 0 auto 18px; border: 2px solid var(--neutral-90); display: grid; place-items: center; font-weight: 800; }
+    .empty-state p, .global-state p { max-width: 600px; margin: 12px auto 22px; color: var(--neutral-50); }
+    .skeleton { background: var(--neutral-10); min-height: 18px; animation: pulse 1.3s ease-in-out infinite; }
+    .skeleton + .skeleton { margin-top: 14px; }
+    @keyframes pulse { 50% { opacity: .45; } }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 30; background: rgb(17 24 39 / 50%); display: grid; place-items: center; padding: 20px; }
+    .modal { width: min(560px, 100%); max-height: calc(100vh - 40px); overflow: auto; border: 2px solid var(--neutral-90); background: var(--surface); padding: 28px; }
+    .modal p { margin: 12px 0 0; }
+    .modal-actions { margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 40; max-width: 420px; border: 2px solid var(--neutral-90); background: var(--surface); padding: 14px 18px; font-weight: 700; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 860px) {
+      .header-nav { display: none; }
+      .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .filters .button-row { grid-column: span 2; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .span-8, .span-6, .span-4 { grid-column: span 12; }
+    }
+    @media (max-width: 620px) {
+      :root { --gutter: 16px; }
+      main { padding-top: 28px; }
+      .user-chip { display: none; }
+      .heading-row, .actions-bar, .pagination { align-items: stretch; flex-direction: column; }
+      .heading-row .btn, .actions-bar .btn { width: 100%; }
+      .filters { grid-template-columns: 1fr; }
+      .filters .button-row { grid-column: auto; }
+      .definition-grid { grid-template-columns: 1fr; }
+      .radio-group { grid-template-columns: 1fr; }
+      .panel { padding: 18px; }
+      .modal { padding: 22px; }
+      .modal-actions { flex-direction: column-reverse; }
+      .modal-actions .btn { width: 100%; }
+      .toast { left: 16px; right: 16px; bottom: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">MC</span>
+        <span class="brand-text">Marketplace multicanal</span>
+      </div>
+      <nav class="header-nav" aria-label="Navegación principal">
+        <span>Inicio</span>
+        <span aria-current="page">Productos</span>
+        <span>Ofertas</span>
+      </nav>
+      <span class="user-chip">Gestor comercial</span>
+    </div>
+  </header>
+  <div id="offline-banner" class="offline-banner" role="status" hidden>Sin conexión. Los cambios no se guardarán hasta recuperar la conexión.</div>
+  <main id="main" tabindex="-1"></main>
+  <div id="modal-root"></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const initialProducts = [
+        {
+          id: 'p-001', name: 'Zapatillas Running ProSpeed X', description: 'Zapatillas ligeras para entrenamiento diario.',
+          category: 'Calzado', brand: 'ProSpeed', price: '329.90', sku: 'ZAP-PSX', variants: true,
+          status: 'Activo', slug: 'zapatillas-running-prospeed-x', characteristics: ['Talla', 'Color'], images: 2,
+          validRelations: true, activeVariants: 6, updated: '17/09/2026, 09:42'
+        },
+        {
+          id: 'p-002', name: 'Camiseta Training Essential', description: 'Camiseta deportiva transpirable para entrenamiento.',
+          category: 'Ropa deportiva', brand: 'NorthPeak', price: '89.90', sku: 'CAM-ESS', variants: true,
+          status: 'Borrador', slug: 'camiseta-training-essential', characteristics: ['Talla', 'Color'], images: 1,
+          validRelations: true, activeVariants: 0, updated: '16/09/2026, 16:18'
+        },
+        {
+          id: 'p-003', name: 'Botella térmica 750 ml', description: 'Botella térmica de acero con tapa hermética.',
+          category: 'Accesorios', brand: 'UrbanFit', price: '74.50', sku: 'BOT-750', variants: false,
+          status: 'Activo', slug: 'botella-termica-750-ml', characteristics: ['Capacidad'], images: 1,
+          validRelations: true, activeVariants: 0, updated: '15/09/2026, 11:06'
+        },
+        {
+          id: 'p-004', name: 'Mochila Trail 18L', description: 'Mochila compacta para rutas cortas y entrenamiento.',
+          category: 'Accesorios', brand: 'NorthPeak', price: '159.00', sku: 'MOC-T18', variants: false,
+          status: 'Inactivo', slug: 'mochila-trail-18l', characteristics: ['Capacidad'], images: 1,
+          validRelations: true, activeVariants: 0, updated: '12/09/2026, 14:30'
+        },
+        {
+          id: 'p-005', name: 'Balón de fútbol Match', description: 'Balón de entrenamiento con cubierta resistente.',
+          category: 'Equipamiento', brand: 'Arena', price: '119.00', sku: 'BAL-MAT', variants: false,
+          status: 'Borrador', slug: 'balon-de-futbol-match', characteristics: [], images: 0,
+          validRelations: true, activeVariants: 0, updated: '11/09/2026, 10:15'
+        },
+        {
+          id: 'p-006', name: 'Casaca Outdoor Shield', description: 'Casaca ligera para actividades al aire libre.',
+          category: 'Outdoor', brand: 'UrbanFit', price: '249.00', sku: 'CAS-OUT', variants: false,
+          status: 'Inactivo', slug: 'casaca-outdoor-shield', characteristics: ['Talla'], images: 1,
+          validRelations: false, activeVariants: 0, updated: '09/09/2026, 08:54'
+        }
+      ];
+
+      const state = {
+        screen: 'list', products: initialProducts.map(p => ({ ...p, characteristics: [...p.characteristics] })),
+        selectedId: null, formMode: 'create', filters: { category: '', brand: '', status: '' },
+        listMode: 'normal', modal: null, modalReturn: null, formDirty: false, errors: {}, saving: false,
+        toastTimer: null
+      };
+
+      const main = document.getElementById('main');
+      const modalRoot = document.getElementById('modal-root');
+      const toastEl = document.getElementById('toast');
+      const announcer = document.getElementById('announcer');
+      const offlineBanner = document.getElementById('offline-banner');
+
+      const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      }[char]));
+
+      const slugify = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+      function announce(message) {
+        announcer.textContent = '';
+        window.setTimeout(() => { announcer.textContent = message; }, 20);
+      }
+
+      function toast(message) {
+        window.clearTimeout(state.toastTimer);
+        toastEl.textContent = message;
+        toastEl.hidden = false;
+        state.toastTimer = window.setTimeout(() => { toastEl.hidden = true; }, 3200);
+      }
+
+      function statusClass(status) {
+        if (status === 'Borrador') return 'draft';
+        if (status === 'Inactivo') return 'inactive';
+        return 'active';
+      }
+
+      function statusBadge(status) {
+        return `<span class="status ${statusClass(status)}">${escapeHtml(status)}</span>`;
+      }
+
+      function currentProduct() {
+        return state.products.find(p => p.id === state.selectedId) || null;
+      }
+
+      function breadcrumbs(items) {
+        return `<nav class="breadcrumbs" aria-label="Ruta de navegación">${items.map((item, index) => {
+          const last = index === items.length - 1;
+          return last ? `<span aria-current="page">${escapeHtml(item.label)}</span>` :
+            `<button class="breadcrumb-button" type="button" data-action="${escapeHtml(item.action)}">${escapeHtml(item.label)}</button><span aria-hidden="true"> / </span>`;
+        }).join('')}</nav>`;
+      }
+
+      function pageHeading(title, description, action = '') {
+        return `<div class="page-heading"><div class="heading-row"><div><h1>${escapeHtml(title)}</h1><p class="lede">${escapeHtml(description)}</p></div>${action}</div></div>`;
+      }
+
+      function navigate(screen, id = null, hash = '') {
+        state.screen = screen;
+        if (id) state.selectedId = id;
+        state.errors = {};
+        state.modal = null;
+        modalRoot.innerHTML = '';
+        const targetHash = hash || (screen === 'list' ? '#productos' : screen === 'create' ? '#producto-nuevo' : `#producto-${state.selectedId || ''}-${screen}`);
+        history.replaceState(null, '', targetHash);
+        render();
+        main.focus();
+      }
+
+      function filteredProducts() {
+        return state.products.filter(p =>
+          (!state.filters.category || p.category === state.filters.category) &&
+          (!state.filters.brand || p.brand === state.filters.brand) &&
+          (!state.filters.status || p.status === state.filters.status)
+        );
+      }
+
+      function renderList() {
+        const products = filteredProducts();
+        const activeFilters = Object.values(state.filters).some(Boolean);
+        main.innerHTML = `
+          ${breadcrumbs([{ label: 'Productos' }])}
+          ${pageHeading('Productos', 'Administra la información y visibilidad de los productos del catálogo.', '<button class="btn btn-primary" type="button" data-action="new-product">Nuevo producto</button>')}
+          ${state.listMode === 'loading' ? renderLoadingList() : state.listMode === 'error' ? renderListError() : `
+            <section class="filters" aria-label="Filtros de productos">
+              <div class="field">
+                <label for="filter-category">Categoría</label>
+                <select id="filter-category" class="control" data-filter="category">
+                  <option value="">Todas</option>${['Calzado','Ropa deportiva','Accesorios','Equipamiento','Outdoor'].map(v => `<option ${state.filters.category === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="field">
+                <label for="filter-brand">Marca</label>
+                <select id="filter-brand" class="control" data-filter="brand">
+                  <option value="">Todas</option>${['ProSpeed','NorthPeak','UrbanFit','Arena'].map(v => `<option ${state.filters.brand === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="field">
+                <label for="filter-status">Estado</label>
+                <select id="filter-status" class="control" data-filter="status">
+                  <option value="">Todos</option>${['Borrador','Activo','Inactivo'].map(v => `<option ${state.filters.status === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="button-row"><button class="btn" type="button" data-action="clear-filters" ${activeFilters ? '' : 'disabled'}>Limpiar filtros</button></div>
+            </section>
+            ${products.length ? renderProductTable(products) : renderEmptyList(activeFilters)}
+          `}`;
+      }
+
+      function renderLoadingList() {
+        return `<section class="panel" aria-label="Cargando productos" aria-busy="true">
+          <div class="skeleton" style="width:35%"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton" style="width:72%"></div>
+        </section>`;
+      }
+
+      function renderListError() {
+        return `<section class="global-state" aria-labelledby="load-error-title">
+          <div class="empty-symbol" aria-hidden="true">!</div><h2 id="load-error-title">No pudimos cargar los productos</h2>
+          <p>La información no está disponible en este momento. Intenta nuevamente.</p>
+          <button class="btn btn-primary" type="button" data-action="retry-list">Reintentar</button>
+        </section>`;
+      }
+
+      function renderEmptyList(filtered) {
+        return `<section class="empty-state" aria-labelledby="empty-title">
+          <div class="empty-symbol" aria-hidden="true">${filtered ? '0' : '+'}</div>
+          <h2 id="empty-title">${filtered ? 'No hay productos que coincidan con estos filtros' : 'Aún no hay productos registrados'}</h2>
+          <p>${filtered ? 'Prueba otra combinación o limpia los filtros aplicados.' : 'Registra el primer producto para comenzar a construir el catálogo.'}</p>
+          <button class="btn btn-primary" type="button" data-action="${filtered ? 'clear-filters' : 'new-product'}">${filtered ? 'Limpiar filtros' : 'Nuevo producto'}</button>
+        </section>`;
+      }
+
+      function renderProductTable(products) {
+        return `<section aria-labelledby="results-title">
+          <div class="results-head"><h2 id="results-title">Resultados</h2><span class="muted" aria-live="polite">${products.length} ${products.length === 1 ? 'producto' : 'productos'}</span></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Producto</th><th>SKU base</th><th>Categoría</th><th>Marca</th><th>Tipo</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+            <tbody>${products.map(p => `<tr>
+              <td><button class="product-link" type="button" data-action="view-product" data-id="${p.id}">${escapeHtml(p.name)}</button></td>
+              <td class="mono">${escapeHtml(p.sku)}</td><td>${escapeHtml(p.category)}</td><td>${escapeHtml(p.brand)}</td>
+              <td>${p.variants ? 'Con variantes' : 'Simple'}</td><td>${statusBadge(p.status)}</td>
+              <td><div class="row-actions"><button class="btn" type="button" data-action="view-product" data-id="${p.id}">Ver</button><button class="btn" type="button" data-action="edit-product" data-id="${p.id}">Editar</button></div></td>
+            </tr>`).join('')}</tbody>
+          </table></div>
+          <div class="pagination"><span class="muted small">Página 1 de 1</span><div class="button-row"><button class="btn" type="button" disabled>Anterior</button><button class="btn" type="button" disabled>Siguiente</button></div></div>
+        </section>`;
+      }
+
+      function formValues(product) {
+        return product || { name: '', description: '', category: '', brand: '', price: '', sku: '', variants: null, characteristics: [], images: 0 };
+      }
+
+      function renderForm(mode) {
+        const editing = mode === 'edit';
+        const product = editing ? currentProduct() : null;
+        if (editing && !product) return renderNotFound();
+        const data = formValues(product);
+        const errors = state.errors;
+        const title = editing ? 'Editar producto' : 'Nuevo producto';
+        const description = editing ? 'Actualiza los datos permitidos. Los cambios válidos de un producto activo se publican inmediatamente.' : 'Completa los datos mínimos para guardar el producto en estado borrador.';
+        main.innerHTML = `
+          ${breadcrumbs([{ label: 'Productos', action: 'back-list' }, { label: title }])}
+          ${pageHeading(title, description)}
+          ${Object.keys(errors).length ? renderErrorSummary(errors) : ''}
+          <form id="product-form" novalidate>
+            <section class="panel" aria-labelledby="general-title">
+              <div class="panel-heading"><h2 id="general-title">Datos generales</h2><p class="muted">Los campos marcados con * son obligatorios para guardar el borrador.</p></div>
+              <div class="form-grid">
+                ${field('name','Nombre','text',data.name,errors.name,'span-8',true)}
+                ${field('sku','SKU base','text',data.sku,errors.sku,'span-4',true, editing ? 'El SKU base se mantiene editable según el alcance del CRUD; debe seguir siendo único.' : 'Debe ser único en todo el catálogo.')}
+                <div class="field span-12"><label class="required" for="description">Descripción</label><textarea class="control" id="description" name="description" aria-invalid="${errors.description ? 'true' : 'false'}" ${errors.description ? 'aria-describedby="description-error"' : ''}>${escapeHtml(data.description)}</textarea>${errorText('description', errors.description)}</div>
+                ${field('price','Precio base referencial','number',data.price,errors.price,'span-4',true, editing ? 'Los cambios posteriores de precio se gestionan fuera de esta pantalla.' : 'Este valor abrirá el historial de precios del producto.', editing)}
+                <div class="field span-4"><label class="required" for="category">Categoría</label><select class="control" id="category" name="category" aria-invalid="${errors.category ? 'true' : 'false'}" ${errors.category ? 'aria-describedby="category-error"' : ''}>
+                  <option value="">Selecciona una categoría</option>${['Calzado','Ropa deportiva','Accesorios','Equipamiento'].map(v => `<option ${data.category === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}<option disabled>Outdoor — no disponible</option>
+                </select>${errorText('category', errors.category)}</div>
+                <div class="field span-4"><label class="required" for="brand">Marca</label><select class="control" id="brand" name="brand" aria-invalid="${errors.brand ? 'true' : 'false'}" ${errors.brand ? 'aria-describedby="brand-error"' : ''}>
+                  <option value="">Selecciona una marca</option>${['ProSpeed','NorthPeak','UrbanFit','Arena'].map(v => `<option ${data.brand === v ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}
+                </select>${errorText('brand', errors.brand)}</div>
+              </div>
+            </section>
+            <section class="panel" aria-labelledby="type-title">
+              <div class="panel-heading"><h2 id="type-title">Tipo de producto</h2><p class="muted">Define si el producto se vende directamente o mediante variantes.</p></div>
+              ${editing ? `<div class="readonly-box"><strong>${data.variants ? 'Producto con variantes' : 'Producto simple'}</strong><p class="field-help">Esta configuración se definió al crear el producto y no puede modificarse.</p></div>` : `<div class="radio-group" role="radiogroup" aria-describedby="variants-help">
+                <label class="radio-card"><input type="radio" name="variants" value="false"><span><strong>Producto simple</strong><br><span class="muted small">El SKU base identifica el producto vendible.</span></span></label>
+                <label class="radio-card"><input type="radio" name="variants" value="true"><span><strong>Producto con variantes</strong><br><span class="muted small">El SKU base se utilizará para generar los SKU de variantes.</span></span></label>
+              </div><p id="variants-help" class="field-help">Esta elección no podrá cambiarse después de guardar.</p>${errorText('variants', errors.variants)}`}
+            </section>
+            <section class="panel" aria-labelledby="complements-title">
+              <div class="panel-heading"><h2 id="complements-title">Características e imágenes</h2><p class="muted">Son opcionales al guardar un borrador, pero necesitarás al menos una de cada una para activarlo.</p></div>
+              <div class="form-grid">
+                <fieldset id="characteristics" class="field span-6" style="border:0;padding:0;margin:0"><legend class="field-label">Características</legend>
+                  <div class="checkbox-list">${['Talla','Color','Material','Capacidad'].map(v => `<label class="check-option"><input type="checkbox" name="characteristics" value="${v}" ${data.characteristics.includes(v) ? 'checked' : ''}><span>${v}</span></label>`).join('')}</div>
+                  ${errorText('characteristics', errors.characteristics)}
+                </fieldset>
+                <div id="image" class="field span-6"><span class="field-label">Imágenes del producto</span><div class="upload-box"><strong>${data.images ? `${data.images} ${data.images === 1 ? 'imagen asociada' : 'imágenes asociadas'}` : 'Aún no hay imágenes'}</strong><p class="field-help">Selecciona un archivo para simular que se agrega una imagen.</p><input id="image-input" name="image" type="file" accept="image/*"><div id="image-name" class="image-preview" ${data.images ? '' : 'hidden'}><span class="image-placeholder" aria-hidden="true"></span><span>${data.images ? 'Imagen del producto' : ''}</span></div>${errorText('image', errors.image)}</div></div>
+              </div>
+            </section>
+            <div class="actions-bar"><button class="btn" type="button" data-action="cancel-form">Cancelar</button><button class="btn btn-primary" type="submit" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Guardar borrador'}</button></div>
+          </form>`;
+      }
+
+      function field(name, label, type, value, error, span, required, help = '', readonly = false) {
+        return `<div class="field ${span}"><label class="${required ? 'required' : ''}" for="${name}">${label}</label><input class="control" id="${name}" name="${name}" type="${type}" value="${escapeHtml(value)}" ${type === 'number' ? 'step="0.01" min="0"' : ''} ${readonly ? 'readonly' : ''} aria-invalid="${error ? 'true' : 'false'}" ${error ? `aria-describedby="${name}-error"` : ''}>${help ? `<p class="field-help">${escapeHtml(help)}</p>` : ''}${errorText(name,error)}</div>`;
+      }
+
+      function errorText(name, error) {
+        return error ? `<p class="field-error" id="${name}-error">${escapeHtml(error)}</p>` : '';
+      }
+
+      function renderErrorSummary(errors) {
+        return `<section class="error-summary" role="alert" aria-labelledby="error-title" tabindex="-1"><h2 id="error-title">Revisa los datos antes de continuar</h2><ul>${Object.entries(errors).map(([key,value]) => `<li><a href="#${escapeHtml(key)}">${escapeHtml(value)}</a></li>`).join('')}</ul></section>`;
+      }
+
+      function validateForm(form, editing) {
+        const data = new FormData(form);
+        const values = {
+          name: String(data.get('name') || '').trim(), description: String(data.get('description') || '').trim(),
+          category: String(data.get('category') || ''), brand: String(data.get('brand') || ''),
+          price: String(data.get('price') || ''), sku: String(data.get('sku') || '').trim().toUpperCase(),
+          variants: editing ? currentProduct().variants : data.get('variants') === null ? null : data.get('variants') === 'true',
+          characteristics: data.getAll('characteristics').map(String), imageSelected: Boolean(document.getElementById('image-input')?.files?.length)
+        };
+        const errors = {};
+        if (!values.name) errors.name = 'Ingresa el nombre del producto.';
+        if (!values.description) errors.description = 'Ingresa una descripción.';
+        if (!values.category) errors.category = 'Selecciona una categoría activa.';
+        if (!values.brand) errors.brand = 'Selecciona una marca activa.';
+        if (!values.price || Number(values.price) <= 0) errors.price = 'Ingresa un precio base válido.';
+        if (!values.sku) errors.sku = 'Ingresa un SKU base.';
+        if (values.variants === null) errors.variants = 'Indica si el producto tendrá variantes.';
+        const currentId = editing ? currentProduct().id : null;
+        if (values.sku && state.products.some(p => p.id !== currentId && p.sku.toLowerCase() === values.sku.toLowerCase())) errors.sku = 'Este SKU base ya está en uso.';
+        if (values.name && values.brand && state.products.some(p => p.id !== currentId && p.name.toLowerCase() === values.name.toLowerCase() && p.brand === values.brand)) errors.name = 'Ya existe un producto con este nombre y marca.';
+        const product = currentProduct();
+        const resultingImages = (editing ? product.images : 0) + (values.imageSelected ? 1 : 0);
+        if (editing && product.status === 'Activo') {
+          if (!values.characteristics.length) errors.characteristics = 'Un producto activo debe conservar al menos una característica.';
+          if (!resultingImages) errors.image = 'Un producto activo debe conservar al menos una imagen.';
+        }
+        return { values, errors, resultingImages };
+      }
+
+      function saveForm(form) {
+        const editing = state.screen === 'edit';
+        const { values, errors, resultingImages } = validateForm(form, editing);
+        state.errors = errors;
+        if (Object.keys(errors).length) {
+          renderForm(editing ? 'edit' : 'create');
+          document.querySelector('.error-summary')?.focus();
+          announce('El formulario contiene errores.');
+          return;
+        }
+        if (!navigator.onLine) { toast('No se pudo guardar. Revisa tu conexión e intenta nuevamente.'); return; }
+        state.saving = true;
+        renderForm(editing ? 'edit' : 'create');
+        window.setTimeout(() => {
+          if (editing) {
+            const product = currentProduct();
+            Object.assign(product, { name: values.name, description: values.description, category: values.category, brand: values.brand, sku: values.sku, characteristics: values.characteristics, images: resultingImages, slug: slugify(values.name), updated: '17/09/2026, 14:20' });
+            state.saving = false; state.formDirty = false; navigate('detail', product.id); toast('Los cambios del producto fueron guardados.');
+          } else {
+            const id = `p-${String(state.products.length + 1).padStart(3,'0')}`;
+            const product = { id, name: values.name, description: values.description, category: values.category, brand: values.brand, price: Number(values.price).toFixed(2), sku: values.sku, variants: values.variants, status: 'Borrador', slug: slugify(values.name), characteristics: values.characteristics, images: resultingImages, validRelations: true, activeVariants: 0, updated: '17/09/2026, 14:20' };
+            state.products.unshift(product); state.saving = false; state.formDirty = false; navigate('detail', id); toast('Producto guardado como borrador.');
+          }
+        }, 500);
+      }
+
+      function activationChecks(product) {
+        return [
+          { label: 'Categoría activa', met: product.validRelations },
+          { label: 'Marca activa', met: product.validRelations },
+          { label: 'Al menos una característica', met: product.characteristics.length > 0 },
+          { label: 'Al menos una imagen', met: product.images > 0 },
+          ...(product.variants ? [{ label: 'Al menos una variante activa con SKU e imagen válidos', met: product.activeVariants > 0 }] : [])
+        ];
+      }
+
+      function renderDetail() {
+        const p = currentProduct();
+        if (!p) return renderNotFound();
+        const checks = activationChecks(p);
+        const canActivate = checks.every(c => c.met);
+        const action = p.status === 'Borrador' ? `<button class="btn btn-primary" type="button" data-action="request-status" data-status="Activo">Activar producto</button>` : p.status === 'Inactivo' ? `<button class="btn btn-primary" type="button" data-action="request-status" data-status="Activo">Reactivar producto</button>` : '';
+        main.innerHTML = `
+          ${breadcrumbs([{ label: 'Productos', action: 'back-list' }, { label: p.name }])}
+          <section class="detail-header"><div class="heading-row"><div><div class="title-with-status"><h1>${escapeHtml(p.name)}</h1>${statusBadge(p.status)}</div><p class="lede mono">${escapeHtml(p.sku)}</p></div><div class="button-row">${action}<button class="btn" type="button" data-action="edit-current">Editar</button>${p.status === 'Activo' ? '<button class="btn btn-danger" type="button" data-action="request-status" data-status="Inactivo">Desactivar</button>' : ''}</div></div></section>
+          ${p.status === 'Borrador' && !canActivate ? `<div class="notice" role="status" style="margin-bottom:20px"><span class="notice-icon" aria-hidden="true">!</span><div><p class="notice-title">Este producto aún no puede activarse</p><p class="muted">Completa los requisitos pendientes antes de intentarlo.</p></div></div>` : ''}
+          ${p.status === 'Inactivo' && !canActivate ? `<div class="notice" role="status" style="margin-bottom:20px"><span class="notice-icon" aria-hidden="true">!</span><div><p class="notice-title">La reactivación requiere revisión</p><p class="muted">Una o más condiciones dejaron de ser válidas.</p></div></div>` : ''}
+          <div class="detail-grid">
+            <div>
+              <section class="panel" aria-labelledby="product-data-title"><div class="panel-heading"><h2 id="product-data-title">Información del producto</h2></div><div class="definition-grid">
+                ${definition('Descripción',p.description)}${definition('Categoría',p.category)}${definition('Marca',p.brand)}${definition('Precio base referencial',`S/ ${Number(p.price).toFixed(2)}`)}${definition('Slug',p.slug,true)}${definition('Tipo',p.variants ? 'Con variantes' : 'Simple')}
+              </div></section>
+              <section class="panel" aria-labelledby="configuration-title"><div class="panel-heading"><h2 id="configuration-title">Configuración del catálogo</h2></div>
+                <div class="definition-grid">${definition('Características',p.characteristics.length ? p.characteristics.join(', ') : 'Ninguna')}${definition('Imágenes',p.images ? `${p.images} ${p.images === 1 ? 'imagen' : 'imágenes'}` : 'Ninguna')}</div>
+                ${p.images ? `<div class="image-preview"><span class="image-placeholder" aria-hidden="true"></span><span class="muted">Vista referencial de la imagen principal</span></div>` : ''}
+              </section>
+              ${p.variants ? `<section class="panel" aria-labelledby="variants-title"><div class="panel-heading"><h2 id="variants-title">Variantes del producto</h2><p class="muted">${p.activeVariants ? `${p.activeVariants} variantes activas` : 'Todavía no hay variantes activas válidas.'}</p></div><button class="btn" type="button" data-action="manage-variants">Gestionar variantes</button></section>` : ''}
+            </div>
+            <aside>
+              <section class="panel" aria-labelledby="requirements-title"><h2 id="requirements-title">Requisitos para estar activo</h2><ul class="requirements">${checks.map(c => `<li class="${c.met ? 'met' : 'missing'}">${escapeHtml(c.label)} — ${c.met ? 'Cumplido' : 'Pendiente'}</li>`).join('')}</ul></section>
+              <section class="panel" aria-labelledby="metadata-title"><h2 id="metadata-title">Información administrativa</h2><ul class="meta-list"><li><span class="muted small">Identificador</span><br><span class="mono">${escapeHtml(p.id.toUpperCase())}</span></li><li><span class="muted small">Última modificación</span><br>${escapeHtml(p.updated)}</li></ul></section>
+            </aside>
+          </div>`;
+      }
+
+      function definition(label, value, mono = false) {
+        return `<div class="definition"><div class="definition-label">${escapeHtml(label)}</div><div class="definition-value ${mono ? 'mono' : ''}">${escapeHtml(value)}</div></div>`;
+      }
+
+      function requestStatus(nextStatus, trigger) {
+        const p = currentProduct();
+        if (!p) return;
+        const operation = nextStatus === 'Inactivo' ? 'desactivar' : p.status === 'Inactivo' ? 'reactivar' : 'activar';
+        if (nextStatus === 'Activo') {
+          const missing = activationChecks(p).filter(c => !c.met);
+          if (missing.length) {
+            state.modal = { type: 'blocked', operation, missing };
+            state.modalReturn = trigger;
+            renderModal();
+            return;
+          }
+        }
+        state.modal = { type: 'confirm', operation, nextStatus };
+        state.modalReturn = trigger;
+        renderModal();
+      }
+
+      function renderModal() {
+        const p = currentProduct();
+        if (!state.modal || !p) { modalRoot.innerHTML = ''; return; }
+        if (state.modal.type === 'blocked') {
+          modalRoot.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description"><h2 id="modal-title" tabindex="-1">No se puede ${state.modal.operation} el producto</h2><p id="modal-description">Revisa los siguientes requisitos antes de continuar:</p><ul>${state.modal.missing.map(item => `<li>${escapeHtml(item.label)}</li>`).join('')}</ul><div class="modal-actions"><button class="btn btn-primary" type="button" data-action="close-modal">Entendido</button></div></section></div>`;
+        } else {
+          const op = state.modal.operation;
+          const content = op === 'desactivar' ? {
+            title: 'Desactivar producto', text: 'El producto dejará de estar disponible para nuevas ventas. Su registro y el historial de pedidos se conservarán.', action: 'Desactivar producto'
+          } : op === 'reactivar' ? {
+            title: 'Reactivar producto', text: 'El producto volverá a estar disponible para los canales de venta.', action: 'Reactivar producto'
+          } : { title: 'Activar producto', text: 'El producto será visible y estará disponible para los canales de venta.', action: 'Activar producto' };
+          modalRoot.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description"><h2 id="modal-title" tabindex="-1">${content.title}</h2><p id="modal-description">${content.text}</p><div class="notice" style="margin-top:18px"><span class="notice-icon" aria-hidden="true">i</span><div><p class="notice-title">${escapeHtml(p.name)}</p><p class="muted mono">${escapeHtml(p.sku)}</p></div></div><div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Cancelar</button><button class="btn ${op === 'desactivar' ? 'btn-danger' : 'btn-primary'}" type="button" data-action="confirm-status">${content.action}</button></div></section></div>`;
+        }
+        window.setTimeout(() => document.getElementById('modal-title')?.focus(), 0);
+      }
+
+      function closeModal() {
+        state.modal = null;
+        modalRoot.innerHTML = '';
+        state.modalReturn?.focus?.();
+      }
+
+      function confirmStatus() {
+        const p = currentProduct();
+        if (!p || !state.modal) return;
+        p.status = state.modal.nextStatus;
+        p.updated = '17/09/2026, 14:26';
+        const message = p.status === 'Activo' ? 'Producto activo y disponible para los canales de venta.' : 'Producto desactivado. Su historial se conserva.';
+        closeModal(); renderDetail(); main.focus(); toast(message); announce(message);
+      }
+
+      function renderNotFound() {
+        main.innerHTML = `${breadcrumbs([{ label: 'Productos', action: 'back-list' }, { label: 'Producto no encontrado' }])}<section class="global-state"><div class="empty-symbol" aria-hidden="true">?</div><h1>Producto no encontrado</h1><p>El producto pudo haber cambiado o ya no estar disponible.</p><div class="button-row" style="justify-content:center"><button class="btn btn-primary" type="button" data-action="back-list">Volver a productos</button></div></section>`;
+      }
+
+      function renderNoPermission() {
+        main.innerHTML = `<section class="global-state" aria-labelledby="permission-title"><div class="empty-symbol" aria-hidden="true">!</div><h1 id="permission-title">No tienes permiso para realizar esta acción</h1><p>Tu sesión no permite modificar productos. Puedes volver al listado administrativo.</p><button class="btn btn-primary" type="button" data-action="back-list">Volver a productos</button></section>`;
+      }
+
+      function renderSessionExpired() {
+        main.innerHTML = `<section class="global-state" aria-labelledby="session-title"><div class="empty-symbol" aria-hidden="true">!</div><h1 id="session-title">Tu sesión expiró</h1><p>Inicia sesión nuevamente para continuar. Intentaremos devolverte al producto que estabas consultando.</p><button class="btn btn-primary" type="button" data-action="login">Iniciar sesión</button></section>`;
+      }
+
+      function renderConflict() {
+        const p = currentProduct() || state.products[0];
+        main.innerHTML = `${breadcrumbs([{ label: 'Productos', action: 'back-list' }, { label: p.name, action: 'view-current' }, { label: 'Datos actualizados' }])}${pageHeading('El producto cambió mientras lo editabas', 'Recarga la información vigente antes de volver a guardar.')}<section class="panel"><div class="notice"><span class="notice-icon" aria-hidden="true">!</span><div><p class="notice-title">Tus cambios no se guardaron</p><p class="muted">Otra actualización modificó este producto. La versión vigente se conserva.</p></div></div><div class="actions-bar"><button class="btn" type="button" data-action="back-list">Volver a productos</button><button class="btn btn-primary" type="button" data-action="reload-product">Recargar producto</button></div></section>`;
+      }
+
+      function render() {
+        modalRoot.innerHTML = '';
+        if (state.screen === 'list') renderList();
+        else if (state.screen === 'create') renderForm('create');
+        else if (state.screen === 'edit') renderForm('edit');
+        else if (state.screen === 'detail') renderDetail();
+        else if (state.screen === 'no-permission') renderNoPermission();
+        else if (state.screen === 'session-expired') renderSessionExpired();
+        else if (state.screen === 'conflict') renderConflict();
+        else renderNotFound();
+      }
+
+      function parseHash() {
+        const hash = location.hash.replace('#','');
+        if (hash === 'no-permission') state.screen = 'no-permission';
+        else if (hash === 'session-expired') state.screen = 'session-expired';
+        else if (hash === 'list-loading') { state.screen = 'list'; state.listMode = 'loading'; }
+        else if (hash === 'list-error') { state.screen = 'list'; state.listMode = 'error'; }
+        else if (hash === 'list-empty') { state.screen = 'list'; state.products = []; state.listMode = 'normal'; }
+        else if (hash === 'conflict') { state.screen = 'conflict'; state.selectedId = 'p-001'; }
+        else if (hash === 'producto-nuevo') state.screen = 'create';
+        else {
+          const match = hash.match(/^producto-(p-\d+)-(detail|edit)$/);
+          if (match) { state.selectedId = match[1]; state.screen = match[2]; }
+          else { state.screen = 'list'; state.listMode = 'normal'; }
+        }
+        render();
+      }
+
+      document.addEventListener('click', event => {
+        const el = event.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.dataset.action;
+        if (action === 'new-product') { state.formMode = 'create'; state.formDirty = false; navigate('create'); }
+        else if (action === 'view-product') navigate('detail', el.dataset.id);
+        else if (action === 'edit-product') { state.formDirty = false; navigate('edit', el.dataset.id); }
+        else if (action === 'edit-current') { state.formDirty = false; navigate('edit', state.selectedId); }
+        else if (action === 'back-list') navigate('list');
+        else if (action === 'view-current') navigate('detail', state.selectedId);
+        else if (action === 'clear-filters') { state.filters = { category: '', brand: '', status: '' }; renderList(); announce(`${state.products.length} productos.`); }
+        else if (action === 'retry-list') { state.listMode = 'loading'; renderList(); window.setTimeout(() => { state.listMode = 'normal'; renderList(); announce('Productos cargados.'); }, 600); }
+        else if (action === 'cancel-form') {
+          if (state.formDirty) { state.modal = { type: 'discard' }; state.modalReturn = el; modalRoot.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title" tabindex="-1">¿Descartar cambios?</h2><p>Los datos que ingresaste no se guardarán.</p><div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Seguir editando</button><button class="btn btn-primary" type="button" data-action="discard-form">Descartar cambios</button></div></section></div>`; window.setTimeout(() => document.getElementById('modal-title')?.focus(),0); }
+          else navigate(state.screen === 'edit' ? 'detail' : 'list', state.selectedId);
+        }
+        else if (action === 'discard-form') { const target = state.screen === 'edit' ? 'detail' : 'list'; state.formDirty = false; navigate(target, state.selectedId); }
+        else if (action === 'request-status') requestStatus(el.dataset.status, el);
+        else if (action === 'close-modal') closeModal();
+        else if (action === 'confirm-status') confirmStatus();
+        else if (action === 'manage-variants') toast('Abriendo la gestión de variantes de este producto.');
+        else if (action === 'reload-product') navigate('detail', state.selectedId);
+        else if (action === 'login') toast('Redirigiendo al inicio de sesión.');
+      });
+
+      document.addEventListener('change', event => {
+        if (event.target.matches('[data-filter]')) {
+          state.filters[event.target.dataset.filter] = event.target.value;
+          renderList();
+          announce(`${filteredProducts().length} productos encontrados.`);
+        } else if (event.target.id === 'image-input') {
+          const preview = document.getElementById('image-name');
+          const file = event.target.files?.[0];
+          if (file && preview) { preview.hidden = false; preview.lastElementChild.textContent = file.name; }
+          state.formDirty = true;
+        } else if (event.target.closest('#product-form')) state.formDirty = true;
+      });
+
+      document.addEventListener('input', event => { if (event.target.closest('#product-form')) state.formDirty = true; });
+
+      document.addEventListener('submit', event => {
+        if (event.target.id !== 'product-form') return;
+        event.preventDefault(); saveForm(event.target);
+      });
+
+      document.addEventListener('keydown', event => {
+        const modal = modalRoot.querySelector('.modal');
+        if (!modal) return;
+        if (event.key === 'Escape') { event.preventDefault(); closeModal(); return; }
+        if (event.key === 'Tab') {
+          const items = [...modal.querySelectorAll('button:not(:disabled),a[href],[tabindex]:not([tabindex="-1"])')];
+          if (!items.length) return;
+          const first = items[0], last = items[items.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }
+      });
+
+      window.addEventListener('online', () => { offlineBanner.hidden = true; announce('Conexión recuperada.'); });
+      window.addEventListener('offline', () => { offlineBanner.hidden = false; announce('Sin conexión.'); });
+      window.addEventListener('hashchange', parseHash);
+      offlineBanner.hidden = navigator.onLine;
+      parseHash();
+    })();
+  </script>
+</body>
+</html>
