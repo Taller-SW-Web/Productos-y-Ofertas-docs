@@ -23,7 +23,8 @@
 | **CA-05** | **Consulta de Precio Histórico (As-Of):** Provee el endpoint `GET /api/v1/pricing/skus/{sku}/price?at={timestamp}` para retornar el precio oficial que tenía un producto en una fecha y hora determinada del pasado basándose en la tabla de vigencias temporales. |
 | **CA-06** | **Carga Masiva Atómica por Defecto (All-or-Nothing):** Permite subir archivos CSV o XLSX con cabeceras obligatorias `sku`, `precio_regular`, `motivo_cambio` y opcional `precio_oferta`. Si al menos una fila contiene errores de validación o SKUs inexistentes, todo el lote es descartado en rollback, respondiendo HTTP `422 Unprocessable Entity` con el reporte de errores. |
 | **CA-07** | **Modo Tolerante Opcional en Carga Masiva:** Si la solicitud de carga masiva incluye el parámetro explícito `allow_partial=true`, el sistema persiste todas las filas válidas en una única transacción, descarta las filas inválidas, responde HTTP `207 Multi-Status` y entrega un reporte descargable con las filas rechazadas y su motivo de error. |
-| **CA-08** | **Delimitación frente a Promociones:** El precio regular y de oferta son los precios base/lista del catálogo. Las promociones, cupones y combos aplican descuentos sobre estos valores sin sobrescribir la configuración maestra del producto. |
+| **CA-08** | **Delimitación frente a Promociones:** El precio regular y de oferta son precios base/lista. Promociones, cupones y combos aplican descuentos sin sobrescribirlos. |
+| **CA-09** | **Precio efectivo por SKU:** el producto define el precio base; una variante puede tener override propio. Si no existe override, hereda el precio vigente del producto. Un producto simple utiliza su `sku_base` como SKU vendible. |
 
 ---
 
@@ -84,7 +85,7 @@
 
 ---
 
-## 6. Reglas de Negocio Pendientes de Definición
+## 6. Reglas de Negocio Resueltas
 
 - [x] **Política de carga masiva:** Resuelta. Por defecto opera en modo atómico estricto (*All-or-Nothing*); solo permite actualización parcial si se provee el parámetro explícito `allow_partial=true`.
 - [x] **Motivo de cambio:** Resuelto. El motivo es formalmente obligatorio en actualizaciones individuales y como columna requerida en cargas masivas.

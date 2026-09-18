@@ -70,7 +70,7 @@ El sistema DEBE asegurar que los registros de auditoría sean estrictamente de s
 
 ## 5. Requisitos no funcionales
 - Rendimiento: La captura y persistencia del log de auditoría no debe añadir más de 50 ms a la operación de precios (arquitectura orientada a eventos vía Kafka o colas asíncronas). La consulta paginada debe responder en menos de 800 ms.
-- Seguridad: Extracción certera de la IP cliente considerando capas de reverse proxy, CDN o API Gateway (revisión obligatoria de `X-Forwarded-For` y `X-Real-IP`). Acceso restringido exclusivamente a roles `ADMINISTRADOR` o `AUDITOR_COMERCIAL`.
+- Seguridad: Extracción certera de la IP cliente considerando capas de reverse proxy, CDN o API Gateway (revisión obligatoria de `X-Forwarded-For` y `X-Real-IP`). Acceso restringido exclusivamente a roles `ADMIN_SISTEMA` o `AUDITOR_COMERCIAL`.
 - Integridad: Conexión de base de datos del servicio de auditoría configurada con permisos exclusivos de `INSERT` y `SELECT` sobre la tabla de auditoría.
 - Política de Retención: Conservación en caliente en la base de datos operativa por un periodo fijo de 24 meses. Pasado este lapso, un proceso automático por lotes exporta las particiones a almacenamiento en frío (Amazon S3 / Google Cloud Storage) en formato Parquet, reteniéndolas por 5 años adicionales para fines regulatorios.
 

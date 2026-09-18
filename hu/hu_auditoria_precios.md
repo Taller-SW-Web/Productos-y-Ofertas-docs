@@ -82,7 +82,7 @@
 
 ---
 
-## 6. Reglas de Negocio Pendientes de Definición
+## 6. Reglas de Negocio Resueltas
 
 - [x] **Contrato completo homologado:** Resuelto. Se capturan mandatoriamente `canal_origen`, `motivo_cambio`, `batch_id` y `variacion_porcentual`.
 - [x] **Formatos de exportación:** Resuelto. CSV habilitado hasta 100,000 registros y PDF limitado a 500 filas para reportes ejecutivos.
