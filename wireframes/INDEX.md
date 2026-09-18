@@ -48,8 +48,8 @@ responsable cree sus artefactos sin duplicar numeración.
 | WF-012 | Gestión de SEO y metadatos | `lopez` | Leonardo Lopez | [Spec](../specs/spec_seo_metadatos.md) | [HU](../hu/hu_seo_metadatos.md) | [Flow](flows/WF-012-seo-metadatos.md) | [Prototipo](prototipos/WF-012-seo-metadatos/index.html) | Borrador |
 | WF-013 | Gestión de precios individuales y masivos | `vera` | Leonardo Vera Rodríguez | [Spec](../specs/spec_gestion_precios.md) | [HU](../hu/hu_gestion_precios.md) | `flows/WF-013-gestion-precios.md` | `prototipos/WF-013-gestion-precios/index.html` | Pendiente |
 | WF-014 | Historial de auditoría de precios | `vera` | Leonardo Vera Rodríguez | [Spec](../specs/spec_auditoria_precios.md) | [HU](../hu/hu_auditoria_precios.md) | `flows/WF-014-auditoria-precios.md` | `prototipos/WF-014-auditoria-precios/index.html` | Pendiente |
-| WF-015 | Gestión de inventario (control de stock) | `taco` | Miguel Ángel Taco Zavala | [Spec](../specs/spec_gestion_inventario.md) | [HU](../hu/hu_gestion_inventario.md) | `flows/WF-015-gestion-inventario.md` | `prototipos/WF-015-gestion-inventario/index.html` | Pendiente |
-| WF-016 | Dashboard analítico y alertas de stock | `taco` | Miguel Ángel Taco Zavala | [Spec](../specs/spec_dashboard_alertas_stock.md) | [HU](../hu/hu_dashboard_alertas_stock.md) | `flows/WF-016-dashboard-alertas-stock.md` | `prototipos/WF-016-dashboard-alertas-stock/index.html` | Pendiente |
+| WF-015 | Gestión de inventario (control de stock) | `taco` | Miguel Ángel Taco Zavala | [Spec](../specs/spec_gestion_inventario.md) | [HU](../hu/hu_gestion_inventario.md) | [Flow](flows/WF-015-gestion-inventario.md) | [Prototipo](prototipos/WF-015-gestion-inventario/index.html) | Borrador |
+| WF-016 | Dashboard analítico y alertas de stock | `taco` | Miguel Ángel Taco Zavala | [Spec](../specs/spec_dashboard_alertas_stock.md) | [HU](../hu/hu_dashboard_alertas_stock.md) | [Flow](flows/WF-016-dashboard-alertas-stock.md) | [Prototipo](prototipos/WF-016-dashboard-alertas-stock/index.html) | Borrador |
 
 ## Evidencia resumida por rama
 
