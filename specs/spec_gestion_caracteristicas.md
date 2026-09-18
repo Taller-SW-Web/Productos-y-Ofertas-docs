@@ -10,6 +10,7 @@ Permitir al gestor mantener el catálogo de características, asociarlas bajo re
 - CRUD de Características (Texto, Número, Lista).
 - Módulo de Marcas completo (CRUD, activación, duplicidad).
 - Asociación Categoría-Característica (herencia, obligatoriedad, límites).
+- El detalle completo de Marcas y de la Asociación se rige por sus especificaciones dedicadas (ver sección 6).
 
 ## 4. Requisitos
 
@@ -37,3 +38,8 @@ El sistema DEBE gestionar cómo las características aplican a las categorías.
 ## 5. Requisitos no funcionales
 - Consistencia por ID para permitir renombre de valores sin romper histórico.
 - Respuestas de API < 500ms al listar características y marcas.
+
+## 6. Referencias a especificaciones dedicadas
+El detalle completo de las siguientes capacidades se rige por sus documentos dedicados; los requisitos de este documento son un resumen:
+- **Módulo de Marcas:** `spec_gestion_marcas.md` (HU `hu_gestion_marcas.md`).
+- **Asociación Categoría-Característica:** `spec_asociacion_categoria_caracteristica.md` (HU `hu_asociacion_categoria_caracteristica.md`).

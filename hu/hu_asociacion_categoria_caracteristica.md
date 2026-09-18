@@ -66,8 +66,9 @@
 | **Gestión de categorías y subcategorías** | Identificador y estado (activo/inactivo) de la categoría a la que se asocian las características. |
 | **Gestión de características y sus valores** | Identificador y estado (activo/inactivo) de la característica a asociar. |
 
-## Reglas pendientes de acordar
+## Reglas resueltas (antes pendientes)
 
-* **Herencia en subcategorías:** si una característica está asociada a una categoría padre, ¿aplica automáticamente a sus subcategorías o debe asociarse explícitamente a cada una?
-* **Cambio de obligatoriedad:** si se cambia una característica de "opcional" a "obligatoria" en una categoría que ya tiene productos sin ese dato, ¿qué ocurre con esos productos existentes?
-* **Límite de características por categoría:** ¿existe un máximo recomendado de características asociadas a una sola categoría, por temas de usabilidad del formulario en Catálogo Core?
+Las siguientes reglas estuvieron pendientes de acordar y fueron formalizadas en la capacidad "Gestión de características":
+* **Herencia en subcategorías:** si una característica está asociada a una categoría padre, se hereda obligatoriamente a todas sus subcategorías.
+* **Cambio de obligatoriedad:** si se cambia una característica de "opcional" a "obligatoria" en una categoría que ya tiene productos sin ese dato, los productos preexistentes NO se invalidan de inmediato; la obligatoriedad se exigirá en la próxima edición/guardado de cada producto.
+* **Límite de características por categoría:** existe un máximo estricto de 20 características asociadas a una sola categoría.

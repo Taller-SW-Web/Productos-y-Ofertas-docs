@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WF-008 — Gestión de categorías y subcategorías</title>
+  <style>
+    :root{
+      --surface:#fff;
+      --neutral-10:#f3f4f6;
+      --neutral-20:#e5e7eb;
+      --neutral-30:#d1d5db;
+      --neutral-50:#6b7280;
+      --neutral-70:#374151;
+      --neutral-90:#111827;
+      --space-xs:4px;
+      --space-sm:8px;
+      --space-md:16px;
+      --space-lg:32px;
+      --space-xl:64px;
+      --radius:4px;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--neutral-90);
+      background:var(--surface);
+    }
+    *{box-sizing:border-box}
+    html{min-width:320px}
+    body{margin:0;background:var(--surface);font-size:16px;line-height:1.5}
+    button,input,textarea,select{font:inherit;color:inherit}
+    button{min-height:44px;cursor:pointer}
+    button:disabled{cursor:not-allowed;color:var(--neutral-50);border-color:var(--neutral-30);background:var(--neutral-10)}
+    a,button,input,textarea,select{outline-offset:3px}
+    .app-shell{min-height:100vh}
+    .topbar{border-bottom:1px solid var(--neutral-30);background:var(--surface)}
+    .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700}
+    .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .crumb{color:var(--neutral-50);font-size:14px}
+    .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
+    .page-header h1{font-size:32px;line-height:1.15;margin:0 0 8px;font-weight:700}
+    .page-header p{margin:0;color:var(--neutral-50);max-width:760px}
+    h2{font-size:24px;line-height:1.2;margin:0 0 16px}
+    h3{font-size:18px;line-height:1.3;margin:0 0 12px}
+    .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
+    .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+    .btn-primary{background:var(--neutral-90);color:var(--surface)}
+    .btn-danger{background:var(--surface);border-style:double;border-width:3px}
+    .btn-quiet{border-color:var(--neutral-30);font-weight:500}
+    .button-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .button-row.end{justify-content:flex-end}
+    .card{border:1px solid var(--neutral-30);background:var(--surface);padding:24px}
+    .muted{color:var(--neutral-50)}
+    .small{font-size:14px}
+    .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--neutral-30);padding:4px 8px;border-radius:999px;background:var(--surface)}
+    .status::before{content:"";width:8px;height:8px;border:1px solid var(--neutral-90);border-radius:50%;background:var(--surface)}
+    .status.active::before{background:var(--neutral-90)}
+    .notice{border:1px solid var(--neutral-90);padding:16px;display:flex;gap:12px;align-items:flex-start;background:var(--surface);margin-bottom:16px}
+    .notice-icon{width:24px;height:24px;min-width:24px;border:1px solid var(--neutral-90);border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px}
+    .notice h3{font-size:16px;margin:0 0 4px}
+    .notice p{margin:0;color:var(--neutral-70)}
+    .notice.error{border-width:2px}
+    .toast{position:fixed;right:24px;bottom:24px;border:1px solid var(--neutral-90);background:var(--surface);padding:14px 16px;max-width:360px;z-index:80;display:none}
+    .toast.show{display:block}
+
+    .tree{border:1px solid var(--neutral-30)}
+    .tree-head, .tree-row{display:grid;grid-template-columns:minmax(0,3fr) 80px 100px 64px 150px;gap:12px;align-items:center}
+    .tree-head{padding:12px 16px;background:var(--neutral-10);font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"Roboto Mono",monospace;font-weight:600;color:var(--neutral-70)}
+    .tree-row{padding:14px 16px;border-top:1px solid var(--neutral-30)}
+    .tree-row.root{background:var(--neutral-10)}
+    .tree-row.child{padding-left:56px;background:var(--surface)}
+    .cat-name strong{display:block}
+    .cat-name span{display:block;color:var(--neutral-50);font-size:13px;margin-top:2px;max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .img-badge{width:40px;height:40px;border:1px solid var(--neutral-30);background:var(--neutral-10);display:grid;place-items:center;font-size:11px;color:var(--neutral-50)}
+    .row-actions{display:flex;gap:4px;flex-wrap:wrap}
+    .row-actions .btn{min-height:36px;padding:6px 9px;font-size:14px}
+    .mobile-tree{display:none}
+
+    .form-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:24px;align-items:start}
+    .section{border:1px solid var(--neutral-30);padding:24px;margin-bottom:16px}
+    .field{margin-bottom:16px}
+    .field:last-child{margin-bottom:0}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    input[type="text"],input[type="number"],textarea,select{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:11px 12px;border-radius:var(--radius);min-height:44px}
+    textarea{min-height:104px;resize:vertical}
+    input[aria-invalid="true"],textarea[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--neutral-90);border-width:2px}
+    .field-error{font-size:13px;font-weight:600;margin-top:6px;display:none}
+    .field-error.show{display:block}
+    .help{font-size:13px;color:var(--neutral-50);margin-top:6px}
+    .error-summary{border:2px solid var(--neutral-90);padding:16px;margin-bottom:16px;display:none}
+    .error-summary.show{display:block}
+    .error-summary h3{margin-bottom:8px;font-size:16px}
+    .error-summary ul{margin:0;padding-left:20px}
+    .form-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:24px}
+    .summary{position:sticky;top:16px}
+    .metric{border-bottom:1px solid var(--neutral-30);padding:14px 0}
+    .metric:first-of-type{padding-top:0}
+    .metric:last-of-type{border-bottom:0;padding-bottom:0}
+    .metric-label{display:block;font-size:13px;color:var(--neutral-50);margin-bottom:4px}
+    .metric-value{font-size:22px;font-weight:700;line-height:1.2}
+    .metric-detail{display:block;font-size:13px;color:var(--neutral-50);margin-top:4px}
+
+    .detail-intro{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:24px}
+    .definition-list{display:grid;grid-template-columns:180px 1fr;gap:10px 16px;margin:0}
+    .definition-list dt{color:var(--neutral-50)}
+    .definition-list dd{margin:0;font-weight:600}
+    .img-frame{width:120px;height:120px;border:1px solid var(--neutral-30);background:var(--neutral-10);display:grid;place-items:center;color:var(--neutral-50);font-size:12px}
+
+    .overlay{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:90;display:none;align-items:center;justify-content:center;padding:24px}
+    .overlay.open{display:flex}
+    .dialog{width:min(560px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--surface);border:1px solid var(--neutral-90);padding:24px}
+    .dialog-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}
+    .dialog-header h2{margin:0}
+    .icon-button{width:44px;height:44px;border:1px solid var(--neutral-90);background:var(--surface);font-size:20px;line-height:1}
+
+    .empty-state{border:1px solid var(--neutral-30);padding:48px 24px;text-align:center}
+    .empty-state .placeholder{width:64px;height:64px;border:1px solid var(--neutral-30);margin:0 auto 16px;position:relative;background:var(--neutral-10)}
+    .empty-state .placeholder::before,.empty-state .placeholder::after{content:"";position:absolute;left:5px;right:5px;top:31px;border-top:1px solid var(--neutral-50);transform:rotate(45deg)}
+    .empty-state .placeholder::after{transform:rotate(-45deg)}
+    .empty-state h2{margin-bottom:8px}
+    .empty-state p{color:var(--neutral-50);margin:0 auto 20px;max-width:520px}
+
+    .skeleton{border:1px solid var(--neutral-30);padding:16px}
+    .sk-line{height:14px;background:var(--neutral-10);margin:8px 0}
+    .sk-line.w30{width:30%}.sk-line.w50{width:50%}.sk-line.w80{width:80%}
+
+    @media (max-width:900px){
+      .form-layout{grid-template-columns:1fr}
+      .summary{position:static}
+      .desktop-tree{display:none}
+      .mobile-tree{display:block}
+      .tree-head{display:none}
+      .tree-row,.tree-row.child{display:block;padding:16px;border-top:1px solid var(--neutral-30)}
+      .tree-row{background:var(--neutral-10)}
+      .page-header{align-items:stretch}
+      .page-header .button-row{justify-content:flex-start}
+    }
+    @media (max-width:600px){
+      .topbar-inner{padding:12px 16px}
+      .crumb{display:none}
+      .page{padding:24px 16px 48px}
+      .page-header{display:block;margin-bottom:24px}
+      .page-header h1{font-size:28px}
+      .page-header .button-row{margin-top:16px}
+      .page-header .btn{width:100%}
+      .section,.card{padding:16px}
+      .row-actions,.button-row,.form-actions{display:grid;grid-template-columns:1fr;width:100%}
+      .row-actions .btn,.button-row .btn,.form-actions .btn{width:100%;min-height:44px}
+      .detail-intro{display:block}
+      .detail-intro .button-row{margin-top:16px}
+      .definition-list{grid-template-columns:1fr;gap:2px}
+      .definition-list dd{margin-bottom:10px}
+      .overlay{padding:12px;align-items:flex-end}
+      .dialog{max-height:92vh;padding:16px}
+      .toast{left:16px;right:16px;bottom:16px}
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="crumb">Productos / Categorías</div>
+    </div>
+  </header>
+  <main id="app" class="page" tabindex="-1"></main>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="deactivateOverlay" class="overlay" aria-hidden="true">
+  <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="deactivateTitle">
+    <div class="dialog-header">
+      <div>
+        <h2 id="deactivateTitle">Desactivar categoría</h2>
+        <p id="deactivateName" class="muted small"></p>
+      </div>
+      <button class="icon-button" type="button" data-close-deactivate aria-label="Cerrar">×</button>
+    </div>
+    <div class="notice">
+      <span class="notice-icon" aria-hidden="true">!</span>
+      <div><h3>La categoría dejará de mostrarse en los canales de venta.</h3><p>Se validará de forma síncrona que no tenga productos activos asociados. La categoría no se elimina: la baja es lógica.</p></div>
+    </div>
+    <div class="button-row end">
+      <button class="btn" type="button" data-close-deactivate>Cancelar</button>
+      <button id="confirmDeactivateBtn" class="btn btn-danger" type="button">Desactivar categoría</button>
+    </div>
+    <div id="deactivateStatus" class="small muted" style="margin-top:14px"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /*
+    Estados documentales de WF-008 que pueden inspeccionarse sin contaminar la UI:
+      ?state=empty
+      ?state=tree-error
+      ?state=no-permission
+      ?state=session-expired
+    No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
+  */
+
+  let categories = [
+    {id:'c-futbol', name:'Fútbol', description:'Todo lo necesario para jugar fútbol.', img:true, order:1, status:'active', parentId:null, level:1, products:12, hasCode:'FUT'},
+    {id:'c-industrial', name:'Indumentaria', description:'Camisetas y uniformes deportivos.', img:true, order:1, status:'active', parentId:'c-futbol', level:2, products:8, hasCode:'FUT-IND'},
+    {id:'c-balones', name:'Balones', description:'Balones para todas las superficies.', img:true, order:2, status:'active', parentId:'c-futbol', level:2, products:6, hasCode:'FUT-BAL'},
+    {id:'c-calzado', name:'Calzado', description:'Zapatillas y botines.', img:true, order:2, status:'active', parentId:null, level:1, products:10, hasCode:'CAL'},
+    {id:'c-zapatillas', name:'Zapatillas', description:'Zapatillas para running y uso diario.', img:true, order:1, status:'active', parentId:'c-calzado', level:2, products:7, hasCode:'CAL-ZAP'},
+    {id:'c-botines', name:'Botines', description:'Botines de fútbol por superficie.', img:true, order:2, status:'active', parentId:'c-calzado', level:2, products:0, hasCode:'CAL-BOT'},
+    {id:'c-accesorios', name:'Accesorios', description:'Accesorios deportivos sueltos.', img:true, order:3, status:'inactive', parentId:null, level:1, products:0, hasCode:'ACC'},
+    {id:'c-legacy', name:'Zapatillas Legacy', description:'Línea anterior de zapatillas.', img:false, order:4, status:'inactive', parentId:null, level:1, products:0, hasCode:'LG'},
+    {id:'c-running-legacy', name:'Running Legacy', description:'Subcategoría de la línea anterior.', img:false, order:1, status:'inactive', parentId:'c-legacy', level:2, products:0, hasCode:'LG-RUN'}
+  ];
+
+  const state = {
+    view:'tree',
+    formMode:'create',
+    currentId:null,
+    form:{name:'',description:'',order:'',image:'',parentId:''},
+    dirty:false,
+    saving:false,
+    listLoading:true,
+    deactivating:false,
+    queryState:new URLSearchParams(location.search).get('state') || ''
+  };
+
+  const app = document.getElementById('app');
+  const toast = document.getElementById('toast');
+  const deactivateOverlay = document.getElementById('deactivateOverlay');
+  const confirmDeactivateBtn = document.getElementById('confirmDeactivateBtn');
+  const deactivateStatus = document.getElementById('deactivateStatus');
+  let deactivateTargetId = null;
+  let toastTimer = null;
+
+  function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[ch])); }
+  function catById(id){ return categories.find(x=>x.id===id); }
+  function roots(){ return categories.filter(c=>c.status==='active' && c.parentId===null); }
+  function childrenOf(id){ return categories.filter(c=>c.parentId===id); }
+  function showToast(message){ clearTimeout(toastTimer); toast.textContent=message; toast.classList.add('show'); toastTimer=setTimeout(()=>toast.classList.remove('show'),2800); }
+  function focusMain(){ setTimeout(()=>app.focus(),0); }
+  function setView(view){ state.view=view; render(); focusMain(); }
+
+  function renderGlobalState(){
+    if(state.queryState==='no-permission'){
+      app.innerHTML=`<div class="page-header"><div><h1>Gestión de categorías</h1><p>Administra la jerarquía de categorías y subcategorías del catálogo.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para administrar categorías.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
+      return true;
+    }
+    if(state.queryState==='session-expired'){
+      app.innerHTML=`<div class="page-header"><div><h1>Gestión de categorías</h1><p>Administra la jerarquía de categorías y subcategorías del catálogo.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar. El sistema intentará recuperar el contexto cuando sea posible.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
+      return true;
+    }
+    return false;
+  }
+
+  function render(){
+    if(renderGlobalState()){ bindPage(); return; }
+    if(state.view==='tree') renderTree();
+    else if(state.view==='form') renderForm();
+    else if(state.view==='detail') renderDetail();
+    bindPage();
+  }
+
+  function treeRow(c){
+    const status=c.status==='active'?'active':'';
+    const img=c.img?`<div class="img-badge" aria-hidden="true">IMG</div>`:`<div class="img-badge" aria-hidden="true">—</div>`;
+    const childCount=childrenOf(c.id).length;
+    const actions=c.status==='active'
+      ? `<button class="btn btn-quiet" data-action="view" data-id="${c.id}">Ver</button><button class="btn btn-quiet" data-action="edit" data-id="${c.id}">Editar</button><button class="btn btn-quiet" data-action="deactivate" data-id="${c.id}">Desactivar</button>${c.level===1?`<button class="btn btn-quiet" data-action="create-child" data-id="${c.id}">Añadir subcategoría</button>`:''}`
+      : `<button class="btn btn-quiet" data-action="view" data-id="${c.id}">Ver</button><button class="btn btn-quiet" data-action="edit" data-id="${c.id}">Editar</button><button class="btn btn-quiet" data-action="reactivate" data-id="${c.id}">Reactivar</button>`;
+    const imgCol=c.level===2?'':img;
+    return `<div class="tree-row ${c.level===1?'root':'child'}">
+      <div class="cat-name"><div style="display:flex;align-items:center;gap:10px">${imgCol}<div><strong>${escapeHtml(c.name)}</strong><span>${escapeHtml(c.description)}</span></div></div></div>
+      <div class="mono">${escapeHtml(c.hasCode)}</div>
+      <div>${childCount||'—'}</div>
+      <div>${c.products}</div>
+      <div class="row-actions"><span class="status ${status}" style="margin-right:6px">${c.status==='active'?'Activo':'Inactivo'}</span><div class="row-actions">${actions}</div></div>
+    </div>`;
+  }
+
+  function treeCard(c){
+    const status=c.status==='active'?'active':'';
+    return `<article class="card ${c.level===2?'child-card':''}" style="margin-bottom:12px"><div class="cat-name"><div style="display:flex;align-items:center;gap:10px">${c.img?`<div class="img-badge" aria-hidden="true">IMG</div>`:''}<div><strong>${escapeHtml(c.name)}</strong><div class="small muted">${escapeHtml(c.description)}</div></div></div></div>
+      <div class="small muted" style="margin:8px 0">Código: <span class="mono">${escapeHtml(c.hasCode)}</span> · Hijos: ${childrenOf(c.id).length} · Productos: ${c.products}</div>
+      <div class="row-actions"><span class="status ${status}">${c.status==='active'?'Activo':'Inactivo'}</span>
+        <button class="btn btn-quiet" data-action="view" data-id="${c.id}">Ver</button>
+        <button class="btn btn-quiet" data-action="edit" data-id="${c.id}">Editar</button>
+        ${c.status==='active'?`<button class="btn btn-quiet" data-action="deactivate" data-id="${c.id}">Desactivar</button>`:`<button class="btn btn-quiet" data-action="reactivate" data-id="${c.id}">Reactivar</button>`}
+        ${c.level===1&&c.status==='active'?`<button class="btn btn-quiet" data-action="create-child" data-id="${c.id}">Añadir subcategoría</button>`:''}
+      </div></article>`;
+  }
+
+  function renderTree(){
+    const forced=state.queryState;
+    const header=`<div class="page-header"><div><h1>Gestión de categorías</h1><p>Crea, organiza y mantiene la jerarquía de categorías y subcategorías (máximo dos niveles).</p></div><div class="button-row"><button class="btn btn-primary" data-action="create">Crear categoría</button></div></div>`;
+    if(state.listLoading && !forced){
+      app.innerHTML=header+`<div class="skeleton" aria-label="Cargando categorías"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div>`;
+      setTimeout(()=>{state.listLoading=false;render();},450);
+      return;
+    }
+    if(forced==='empty'){
+      app.innerHTML=header+`<section class="empty-state"><div class="placeholder" aria-hidden="true"></div><h2>Aún no hay categorías.</h2><p>Crea la primera categoría para estructurar el catálogo de productos.</p><button class="btn btn-primary" data-action="create">Crear primera categoría</button></section>`;
+      return;
+    }
+    if(forced==='tree-error'){
+      app.innerHTML=header+`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar las categorías.</h3><p>Vuelve a intentarlo. No se muestran datos anteriores como si estuvieran vigentes.</p></div></div><button class="btn" data-action="retry-tree">Reintentar</button>`;
+      return;
+    }
+    const rows=categories.map(treeRow).join('');
+    const cards=categories.map(treeCard).join('');
+    app.innerHTML=header+`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Jerarquía de máximo dos niveles.</h3><p>Solo se puede crear una subcategoría sobre una categoría raíz. La baja lógica valida en tiempo real que no existan productos activos.</p></div></div>
+      <div class="desktop-tree tree"><div class="tree-head"><span>Categoría</span><span>Código</span><span>Subcategorías</span><span>Productos</span><span>Estado y acciones</span></div>${rows}</div>
+      <div class="mobile-tree">${cards}</div>`;
+  }
+
+  function resetForm(mode, cat, presetParentId){
+    state.formMode=mode; state.currentId=cat?.id||null; state.dirty=false; state.saving=false;
+    state.form=cat
+      ? {name:cat.name,description:cat.description,order:String(cat.order),image:cat.img?'Sí':'',parentId:cat.parentId||''}
+      : {name:'',description:'',order:'',image:'',parentId:presetParentId||''};
+  }
+
+  function parentOptions(currentId, presetParentId){
+    const editable=state.formMode==='edit';
+    const cat=catById(currentId);
+    let opts=roots().filter(r=>{
+      if(!editable) return true;
+      if(violates(r, cat)) return false;
+      return true;
+    });
+    if(editable && cat && cat.parentId){
+      const cur=catById(cat.parentId);
+      if(cur && !opts.some(r=>r.id===cur.id)) opts=[cur].concat(opts);
+    }
+    const optionsHtml=opts.map(r=>`<option value="${r.id}" ${r.id===state.form.parentId?'selected':''} ${r.status==='inactive'?'disabled':''}>${escapeHtml(r.name)}${r.status==='inactive'?' · inactiva':''}</option>`).join('');
+    const noneLabel=editable?'Categoría raíz (sin padre)':'Categoría raíz (sin padre)';
+    const selected=state.form.parentId||'';
+    return `<select id="catParent" aria-invalid="${parentErr()?'true':'false'}"><option value="" ${selected===''?'selected':''}>${noneLabel}</option>${optionsHtml}</select>`;
+  }
+
+  function formValidation(){
+    const f=state.form; const errors=[];
+    if(!f.name.trim()) errors.push({key:'name',msg:'Ingresa un nombre para la categoría.'});
+    if(f.parentId && f.parentId===state.currentId) errors.push({key:'parent',msg:'Una categoría no puede ser su propia categoría padre.'});
+    if(f.parentId){
+      const p=catById(f.parentId);
+      if(!p) errors.push({key:'parent',msg:'Selecciona una categoría raíz válida.'});
+      else if(p.status!=='active') errors.push({key:'parent',msg:'El padre debe estar activo para asignarlo.'});
+      else if(state.formMode==='create' && p.parentId!==null) errors.push({key:'parent',msg:'La jerarquía tiene máximo dos niveles.'});
+    }
+    return {errors,valid:errors.length===0};
+  }
+  function errorFor(v,key){return v.errors.find(e=>e.key===key)?.msg||''}
+  function parentErr(){ return errorFor(formValidation(),'parent'); }
+
+  function violates(node, cat){
+    if(!cat) return false;
+    if(node.id===cat.id) return true;
+    if(cat.level===1 && childrenOf(cat.id).length>0) return true;
+    return false;
+  }
+
+  function renderForm(){
+    const v=formValidation(); const mode=state.formMode; const title=mode==='create'?'Crear categoría':'Editar categoría';
+    const nameErr=errorFor(v,'name'); const pen=parentErr();
+    const isChildPreset=state.form.parentId?catById(state.form.parentId):null;
+    app.innerHTML=`
+      <div class="page-header"><div><h1>${title}</h1><p>${mode==='create'?(isChildPreset?`La categoría se creará como subcategoría de ${escapeHtml(isChildPreset.name)}.`:'Define los datos de la categoría raíz.'):'Actualiza los datos y la ubicación de la categoría en el árbol.'})</p></div></div>
+      <div id="formErrorSummary" class="error-summary" tabindex="-1"><h3>Revisa los datos antes de guardar.</h3><ul>${v.errors.map(e=>`<li>${escapeHtml(e.msg)}</li>`).join('')}</ul></div>
+      <form id="catForm" novalidate>
+      <div class="form-layout">
+        <div>
+          <section class="section"><h2>Datos generales</h2>
+            <div class="field"><label for="catName">Nombre</label><input id="catName" type="text" value="${escapeHtml(state.form.name)}" aria-invalid="${nameErr?'true':'false'}"><div class="help">El nombre no necesita ser único: puede repetirse en distintas ramas.</div><div class="field-error ${nameErr?'show':''}">${escapeHtml(nameErr)}</div></div>
+            <div class="field"><label for="catDesc">Descripción</label><textarea id="catDesc" aria-invalid="false">${escapeHtml(state.form.description)}</textarea></div>
+            <div class="field"><label for="catImage">Imagen</label><input id="catImage" type="text" value="${escapeHtml(state.form.image)}" placeholder="Opcional"><div class="help">En el wireframe se representa con un placeholder. Formato y tamaño pendientes.</div></div>
+            <div class="field"><label for="catOrder">Orden</label><input id="catOrder" type="number" value="${escapeHtml(state.form.order)}" placeholder="Opcional"></div>
+          </section>
+          <section class="section"><h2>Jerarquía</h2>
+            <div class="field"><label for="catParent">Categoría padre</label>${parentOptions(state.currentId)}<div class="help">Se listan solo las categorías raíz activas. Una subcategoría no genera tercer nivel.</div><div class="field-error ${pen?'show':''}">${escapeHtml(pen)}</div></div>
+          </section>
+        </div>
+        <aside class="section summary" aria-live="polite"><h2>Resultado</h2>
+          <div class="metric"><span class="metric-label">Nivel</span><span class="metric-value">${state.form.parentId?'Subcategoría':'Raíz'}</span><span class="metric-detail">Máximo dos niveles de jerarquía.</span></div>
+          <div class="metric"><span class="metric-label">Productos afectados</span><span class="metric-value">—</span><span class="metric-detail">Cambiar el padre no afecta productos ya asociados.</span></div>
+        </aside>
+      </div>
+      <div class="form-actions"><button class="btn" type="button" data-action="cancel-form">Cancelar</button><button id="saveCatBtn" class="btn btn-primary" type="submit" ${!v.valid||state.saving?'disabled':''}>${state.saving?'Guardando…':mode==='create'?'Crear categoría':'Guardar cambios'}</button></div>
+      </form>`;
+  }
+
+  function renderDetail(){
+    const c=catById(state.currentId); if(!c){state.view='tree';render();return;}
+    const children=childrenOf(c.id); const parent=c.parentId?catById(c.parentId):null;
+    let notice='';
+    if(c.status!=='active'){notice=`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Categoría inactiva.</h3><p>No se muestra en los canales de venta. Para reactivarla, su categoría padre debe estar activa.</p></div></div>`;}
+    const childLabels=children.length?children.map(x=>escapeHtml(x.name)).join(', '):'Ninguna';
+    app.innerHTML=`
+      <div class="page-header"><div><div class="small muted" style="margin-bottom:6px">Detalle de categoría</div><h1>${escapeHtml(c.name)}</h1><p>${escapeHtml(c.description)}</p></div><div class="button-row">
+        <button class="btn" data-action="edit" data-id="${c.id}">Editar categoría</button>
+        ${c.status==='active'?`<button class="btn btn-danger" data-action="deactivate" data-id="${c.id}">Desactivar</button>`:`<button class="btn" data-action="reactivate" data-id="${c.id}">Reactivar</button>`}
+        <button class="btn" data-action="back-tree">Volver a categorías</button>
+      </div></div>
+      ${notice}
+      <div class="form-layout"><div>
+        <section class="section"><div class="detail-intro"><div><span class="status ${c.status==='active'?'active':''}">${c.status==='active'?'Activo':'Inactivo'}</span><div class="small muted" style="margin-top:8px">Nivel: ${c.level===1?'Raíz':'Subcategoría'}</div></div>${c.img?`<div class="img-frame" aria-hidden="true">IMG</div>`:''}</div></section>
+        <section class="section"><h2>Datos de la categoría</h2><dl class="definition-list">
+          <dt>Nombre</dt><dd>${escapeHtml(c.name)}</dd>
+          <dt>Descripción</dt><dd>${escapeHtml(c.description)}</dd>
+          <dt>Orden</dt><dd>${c.order}</dd>
+          <dt>Código</dt><dd><span class="mono">${escapeHtml(c.hasCode)}</span></dd>
+          <dt>Categoría padre</dt><dd>${parent?`<button class="btn-link btn" data-action="view" data-id="${parent.id}" style="padding:0;min-height:auto;border:0;text-decoration:underline">${escapeHtml(parent.name)}</button>`:'Categoría raíz'}</dd>
+          <dt>Subcategorías</dt><dd>${childLabels}</dd>
+          <dt>Productos activos</dt><dd>${c.products}</dd>
+        </dl></section>
+      </div><aside class="section summary"><h2>Acciones disponibles</h2>
+        <div class="metric"><span class="metric-label">Editar</span><span class="metric-value">${'Sí'}</span><span class="metric-detail">Incluye reasignar la categoría padre.</span></div>
+        <div class="metric"><span class="metric-label">${c.status==='active'?'Desactivar':'Reactivar'}</span><span class="metric-value">${c.status==='active'?'Sí':'Requisito: padre activo'}</span><span class="metric-detail">${c.status==='active'?'La baja valida productos activos.':'Si el padre está inactivo, debe reactivarse primero.'}</span></div>
+      </aside></div>`;
+  }
+
+  function openDeactivate(id,trigger){
+    const c=catById(id);if(!c)return;
+    if(!c.status) return;
+    if(!(c.status==='active')) return;
+    deactivateTargetId=id; state.returnFocus=trigger;
+    document.getElementById('deactivateName').textContent=c.name;
+    deactivateStatus.textContent='';
+    confirmDeactivateBtn.disabled=false; confirmDeactivateBtn.textContent='Desactivar categoría';
+    deactivateOverlay.classList.add('open');deactivateOverlay.setAttribute('aria-hidden','false');
+    setTimeout(()=>confirmDeactivateBtn.focus(),0);
+  }
+  function closeDeactivate(){deactivateOverlay.classList.remove('open');deactivateOverlay.setAttribute('aria-hidden','true');state.returnFocus?.focus();}
+  function confirmDeactivate(){
+    const c=catById(deactivateTargetId); if(!c) return;
+    confirmDeactivateBtn.disabled=true; confirmDeactivateBtn.textContent='Validando…';
+    deactivateStatus.textContent='Validando de forma síncrona si existen productos activos asociados…';
+    setTimeout(()=>{
+      closeDeactivate();
+      if(c.products>0){
+        app.innerHTML=`<div class="page-header"><div><h1>Desactivación bloqueada</h1><p>La categoría no se pudo desactivar.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No se puede desactivar porque la categoría tiene productos activos asociados.</h3><p>Desactiva o reasigna los productos antes de reintentar. No se registró ningún cambio.</p></div></div><div class="button-row"><button class="btn" data-action="view" data-id="${c.id}">Ver categoría</button><button class="btn btn-primary" data-action="back-tree">Volver a categorías</button></div>`;
+        bindPage(); focusMain();
+        showToast('Baja bloqueada por productos activos.');
+      }else{
+        c.status='inactive'; render(); showToast('Categoría desactivada.');
+      }
+    },900);
+  }
+
+  function toggleStatus(id){
+    const c=catById(id); if(!c) return;
+    const parent=c.parentId?catById(c.parentId):null;
+    if(c.status==='inactive'){
+      if(parent && parent.status!=='active'){
+        app.innerHTML=`<div class="page-header"><div><h1>Reactivación no disponible</h1><p>La categoría no se pudo reactivar.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>La categoría padre está inactiva.</h3><p>Reactivando: ${escapeHtml(c.name)} requiere que primero reactives ${escapeHtml(parent.name)}.</p><p><button class="btn" data-action="view" data-id="${parent.id}" style="margin-top:10px">Ver categoría padre</button></p></div></div><div class="button-row"><button class="btn btn-primary" data-action="back-tree">Volver a categorías</button></div>`;
+        bindPage(); focusMain();
+        showToast('Primero reactiva la categoría padre.');
+        return;
+      }
+      c.status='active'; render(); showToast('Categoría reactivada.');
+    }
+  }
+
+  function submitForm(){
+    const v=formValidation();
+    if(!v.valid){renderForm();const s=document.getElementById('formErrorSummary');s.classList.add('show');s.focus();return;}
+    state.saving=true;renderForm();
+    setTimeout(()=>{
+      if(state.formMode==='create'){
+        const id='c-'+Date.now();
+        const parent=state.form.parentId?catById(state.form.parentId):null;
+        categories.push({id,name:state.form.name.trim(),description:state.form.description.trim(),order:Number(state.form.order)||99,img:state.form.image.trim()!=='',status:'active',parentId:state.form.parentId||null,level:parent?2:1,products:0,hasCode:'NEW'});
+        state.view='tree';state.saving=false;render();showToast('Categoría creada.');
+      }else{
+        const c=catById(state.currentId);
+        const parent=state.form.parentId?catById(state.form.parentId):null;
+        Object.assign(c,{name:state.form.name.trim(),description:state.form.description.trim(),order:Number(state.form.order)||99,img:state.form.image.trim()!=='',parentId:state.form.parentId||null,level:parent?2:1});
+        state.view='tree';state.saving=false;render();showToast('Cambios guardados.');
+      }
+    },650);
+  }
+
+  function bindPage(){
+    app.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',e=>{
+      const action=e.currentTarget.dataset.action,id=e.currentTarget.dataset.id;
+      if(action==='create'){resetForm('create');setView('form');}
+      else if(action==='create-child'){resetForm('create',null,id);setView('form');}
+      else if(action==='view'){state.currentId=id;setView('detail');}
+      else if(action==='edit'){const c=catById(id);if(c){resetForm('edit',c);setView('form');}}
+      else if(action==='deactivate')openDeactivate(id,e.currentTarget);
+      else if(action==='reactivate')toggleStatus(id);
+      else if(action==='back-tree'){state.queryState='';setView('tree');}
+      else if(action==='back-list'){state.queryState='';setView('tree');}
+      else if(action==='cancel-form'){state.view='tree';render();focusMain();}
+      else if(action==='retry-tree'){state.queryState='';state.listLoading=true;render();}
+      else if(action==='safe-back'){showToast('Regreso simulado al módulo de productos.');}
+      else if(action==='login'){state.queryState='';state.listLoading=true;render();showToast('Sesión recuperada para el prototipo.');}
+    }));
+
+    const form=document.getElementById('catForm');
+    if(form){
+      form.addEventListener('submit',e=>{e.preventDefault();submitForm();});
+      const name=document.getElementById('catName'), desc=document.getElementById('catDesc'), img=document.getElementById('catImage'), ord=document.getElementById('catOrder'), parent=document.getElementById('catParent');
+      name?.addEventListener('input',e=>{state.form.name=e.target.value;state.dirty=true;});
+      desc?.addEventListener('input',e=>{state.form.description=e.target.value;state.dirty=true;});
+      img?.addEventListener('input',e=>{state.form.image=e.target.value;state.dirty=true;});
+      ord?.addEventListener('input',e=>{state.form.order=e.target.value;state.dirty=true;});
+      parent?.addEventListener('change',e=>{state.form.parentId=e.target.value;state.dirty=true;});
+      [name,desc,img,ord].forEach(el=>el?.addEventListener('blur',()=>renderForm()));
+    }
+  }
+
+  document.querySelectorAll('[data-close-deactivate]').forEach(b=>b.addEventListener('click',closeDeactivate));
+  confirmDeactivateBtn.addEventListener('click',confirmDeactivate);
+  deactivateOverlay.addEventListener('click',e=>{if(e.target===deactivateOverlay)closeDeactivate();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&deactivateOverlay.classList.contains('open'))closeDeactivate();});
+
+  render();
+})();
+</script>
+</body>
+</html>
