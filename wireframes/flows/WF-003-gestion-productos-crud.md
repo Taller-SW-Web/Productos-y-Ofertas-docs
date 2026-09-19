@@ -1,5 +1,7 @@
 # WF-003 — Gestión de productos (CRUD principal)
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la gestión del ciclo de
@@ -7,8 +9,8 @@ vida de productos descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta `../../specs/spec_gestion_productos_crud.md`.
-2. Consulta `../../hu/hu_gestion_productos_crud.md`.
+1. Consulta `../../specs/SPEC-003-gestion-productos-crud.md`.
+2. Consulta `../../hu/HU-003-gestion-productos-crud.md`.
 3. Consulta `../DESIGN.md`.
 4. Consulta `../INDEX.md` para conservar el ID `WF-003`, el nombre del flujo y
    las rutas reservadas de sus artefactos.
@@ -44,7 +46,7 @@ Reglas de producción:
   referencial, `sku_base` y `tiene_variantes`; no exige imagen ni
   característica.
 - Para activar o reactivar, representa la revalidación de categoría y marca
-  activas, al menos una característica y al menos una imagen.
+  activas, todos los valores de las características obligatorias efectivas de la categoría y al menos una imagen.
 - Cuando `tiene_variantes = true`, representa además que el producto necesita
   al menos una variante activa con SKU e imagen válidos para poder activarse.
   La creación y edición de esas variantes pertenece a `WF-004`.
@@ -150,14 +152,14 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Responsable | Gabriel Poma Gutierrez |
 | Rama | `poma` |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
 | Fuente | Identificador o sección | Qué aporta al flujo |
 |---|---|---|
-| [`spec_gestion_productos_crud.md`](../../specs/spec_gestion_productos_crud.md) | Requisitos 1–4; secciones 5 y 6 | Ciclo de vida, reglas de integridad, seguridad y fuera de alcance |
-| [`hu_gestion_productos_crud.md`](../../hu/hu_gestion_productos_crud.md) | MDPYO-6; CA-01–CA-12; escenarios 1–10 | Necesidad del gestor y resultados verificables |
+| [`SPEC-003-gestion-productos-crud.md`](../../specs/SPEC-003-gestion-productos-crud.md) | Requisitos 1–4; secciones 5 y 6 | Ciclo de vida, reglas de integridad, seguridad y fuera de alcance |
+| [`HU-003-gestion-productos-crud.md`](../../hu/HU-003-gestion-productos-crud.md) | MDPYO-6; CA-01–CA-12; escenarios 1–10 | Necesidad del gestor y resultados verificables |
 | [`DESIGN.md`](../DESIGN.md) | Layout, componentes, contraste y accesibilidad | Lenguaje visual neutral de baja fidelidad |
 | [`INDEX.md`](../INDEX.md) | Fila WF-003 | ID, nombre, responsable y rutas reservadas |
 
@@ -415,7 +417,7 @@ flowchart LR
 | `A-07` | Precio base | Solo captura el valor inicial; cambios futuros pertenecen a Pricing |
 | `A-08` | `sku_base` | Es único; para producto simple también identifica el SKU vendible |
 | `A-09` | Tiene variantes | Su elección es irreversible en el alcance actual |
-| `A-10` | Imágenes/características | Indicar “necesario para activar”, no “obligatorio” al crear |
+| `A-10` | Imágenes/características | Indicar que la imagen y las características obligatorias efectivas son necesarias para activar, no para crear; si no hay obligatorias, no exigir una característica solo por activar |
 | `A-11` | Slug | Se genera por el sistema; no agregar edición manual sin contrato |
 
 ### `S-02-V` — Validación o conflicto
@@ -570,7 +572,7 @@ flowchart LR
 - [ ] Valida categoría y marca activas al crear, editar y reactivar.
 - [ ] Representa listado, filtros y detalle administrativo.
 - [ ] `tiene_variantes` es obligatorio al crear e inmutable después.
-- [ ] Activación exige imagen y característica; para productos con variantes integra la condición de WF-004.
+- [ ] Activación exige al menos una imagen y todos los valores de las características obligatorias efectivas de la categoría; si no existen obligatorias, no exige una característica solo para activar. Para productos con variantes integra la condición de WF-004.
 - [ ] Los cambios inválidos sobre un producto activo no sustituyen la última versión válida.
 - [ ] Desactivar es baja lógica, conserva historial y no ofrece eliminación.
 - [ ] Reactivar vuelve a validar las condiciones de activación.
@@ -611,11 +613,22 @@ flowchart LR
 | `Q-05` | ¿Cuál es la estrategia de concurrencia para evitar sobrescritura? | Backend | No; sí conflicto final | Abierta |
 | `D-01` | Selección de librería UI y estrategia CSS | Equipo frontend | No para wireframe; sí implementación | Pendiente |
 
+### Alineación definitiva de Productos CRUD
+
+- El producto simple utiliza su `sku_base` como único SKU vendible; Inventario es propietario de stock y lo inicializa en **0**, con `stock_version` inicial. Productos no modifica stock mediante su CRUD.
+- Si `tiene_variantes=true`, el producto padre no tiene stock y necesita al menos una variante `ACTIVA` para poder activarse. Una variante activa con padre `BORRADOR` **no** es comercialmente vendible; desactivar la última variante activa inactiva al padre.
+- La activación comercial requiere que los dominios propietarios hayan confirmado la preparación mínima de precio y registro de inventario. Mientras tanto, mostrar «Pendiente de preparación», no «Producto activo/disponible» por asumir que los eventos se entregaron al instante.
+- Al mover una categoría, Taxonomía revalida las características efectivas; un nuevo atributo obligatorio no desactiva productos existentes, pero se exige al próximo guardado según Spec de Asociación.
+
+### Selección de características identificadoras antes de crear variantes
+Si el gestor elige «Con variantes» (`tiene_variantes=true`), la pantalla permite elegir uno o más `caracteristica_id` LISTA activos y efectivos de la categoría antes de crear la primera variante; los valores específicos se eligen después en WF-004. El conjunto queda solo lectura desde la primera variante, incluso si esta termina inactiva. Cambiar categoría revalida la aplicabilidad sin regenerar ni alterar SKU históricos. Un producto simple no presenta el selector.
+
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Gabriel Poma Gutierrez | Borrador inicial del flow WF-003 | — |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ## Lista de control antes de generar el HTML
 
@@ -625,3 +638,5 @@ flowchart LR
 - [x] Los criterios CA-01–CA-12 tienen cobertura.
 - [x] Supuestos y preguntas están separados de los datos confirmados.
 - [ ] Resolver contratos, límites, permisos y concurrencia antes de implementar.
+
+---

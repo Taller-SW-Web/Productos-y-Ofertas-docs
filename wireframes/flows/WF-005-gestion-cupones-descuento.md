@@ -1,5 +1,7 @@
 # WF-005 — Gestión de cupones de descuento
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la administración de
@@ -7,8 +9,8 @@ cupones descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta `../../specs/spec_gestion_cupones_descuento.md`.
-2. Consulta `../../hu/hu_gestion_cupones_descuento.md`.
+1. Consulta `../../specs/SPEC-005-gestion-cupones-descuento.md`.
+2. Consulta `../../hu/HU-005-gestion-cupones-descuento.md`.
 3. Consulta `../DESIGN.md`.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -53,13 +55,13 @@ Reglas de producción:
 | Estado | En revisión |
 | Responsable | Axel Andree Cueva Alcalá |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | `spec_gestion_cupones_descuento.md`, secciones 3–7 | Modelo, validaciones, uso, concurrencia y alcance |
+| Spec | `SPEC-005-gestion-cupones-descuento.md`, secciones 3–7 | Modelo, validaciones, uso, concurrencia y alcance |
 | Historia de usuario | `HU-CUP-01`, CA-01 a CA-13 | Necesidad, reglas y escenarios verificables |
 | Diseño | `DESIGN.md` | Escala de grises, jerarquía, controles y accesibilidad táctil |
 
@@ -351,11 +353,19 @@ Verificar 320 px, zoom 200 %, códigos largos y mensajes de error multilínea.
 | `Q-04` | ¿Deben preservarse filtros al volver del detalle? | UX/Frontend | No | Abierta |
 | `D-01` | Selección de librería UI y estrategia CSS | Frontend | Implementación | Pendiente |
 
+### Alineación definitiva de Cupones
+
+- El selector **solo** muestra promociones de modalidad `CUPON`; mostrar nombre, vigencia y estado de la promoción en el detalle del cupón sin duplicar descuento, productos elegibles ni fechas dentro de la edición del código.
+- La evaluación compara **la misma cesta** sobre el precio regular por SKU contra oferta propia de Pricing, mejor promoción automática y cupón: solo una alternativa gana; oferta Pricing gana empates con cualquier descuento, cupón gana empate con promoción automática. La validación no consume usos; solo el cupón elegido consume en la confirmación contractual del pedido.
+- En el detalle administrativo los usos deben diferenciar «validaciones» de «usos consumidos». Anulación posterior **no repone automáticamente** el uso. Cupones protege límite e idempotencia por `order_id + cupon_id`.
+- El contrato externo de confirmación/rechazo del consumo sigue **provisional**: no simular confirmación de pago ni recuperación automática de un rechazo como si Ventas ya lo hubiera aprobado. Longitud del código y edición de asociación tras usos siguen pendientes si no se encuentran formalizados.
+
 ## 18. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Flujo inicial basado en spec, HU, prototipo y `DESIGN.md` | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ## 19. Lista de control
 
@@ -365,3 +375,5 @@ Verificar 320 px, zoom 200 %, códigos largos y mensajes de error multilínea.
 - [x] Anotaciones y documentación excluidas del HTML visible.
 - [x] Prototipo HTML disponible en la ruta asignada.
 - [ ] Resolver preguntas abiertas antes de la implementación productiva.
+
+---

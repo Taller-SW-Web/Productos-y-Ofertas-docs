@@ -1,5 +1,7 @@
 # WF-016 — Dashboard analítico y alertas de stock
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para el dashboard analítico y
@@ -7,8 +9,8 @@ las alertas de stock descritas en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_dashboard_alertas_stock.md.
-2. Consulta ../../hu/hu_dashboard_alertas_stock.md.
+1. Consulta ../../specs/SPEC-016-dashboard-alertas-stock.md.
+2. Consulta ../../hu/HU-016-dashboard-alertas-stock.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -60,8 +62,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No uses React ni dependencias del frontend productivo.
 - No requieras conexión a servicios externos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
-- Incluye las anotaciones visibles definidas en cada pantalla.
+- Implementa un diseño responsivo real para escritorio, tablet y móvil mediante CSS y cambios de viewport; no agregues controles internos de dispositivo.
+- Documenta las anotaciones A-xx fuera de la interfaz simulada; no las renderices en el prototipo.
 - Aplica el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
@@ -89,14 +91,14 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado | Borrador |
 | Responsable | Miguel Ángel Taco Zavala |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_dashboard_alertas_stock.md, secciones 1–5 | Indicadores, alertas, visualización, Top 5 y actualización |
-| Historia de usuario | hu_dashboard_alertas_stock.md, CA-01 a CA-09 | Criterios y escenarios |
+| Spec | SPEC-016-dashboard-alertas-stock.md, secciones 1–5 | Indicadores, alertas, visualización, Top 5 y actualización |
+| Historia de usuario | HU-016-dashboard-alertas-stock.md, CA-01 a CA-09 | Criterios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
@@ -462,11 +464,18 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Q-03 | ¿Los filtros por categoría y marca afectan también al Top 5? | Producto | No para wireframe base | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |
 
+### Alineación definitiva del Dashboard
+
+- Contar como unidad operativa cada **SKU vendible** (incluido `sku_base` para producto simple), sin duplicar saldo a nivel producto. El Top 5 agrupa los SKUs por `product_id` y suma **unidades vendidas confirmadas**, excluyendo ajustes, mermas y reservas.
+- Período de Top 5 **seleccionable**, por defecto **últimos 30 días**. Si no hay acuerdo sobre presets/rango libre, mostrar selector neutral de período, sin imponer presets ni filtros adicionales no normados.
+- Actualizar indicadores/alertas al recibir `inventory.stock.changed`; la UI puede reflejar una proyección eventualmente consistente, no prometer consistencia instantánea con el origen. Los datos de ventas provienen de la integración **provisional pendiente de homologación** con Ventas/Postventa.
+
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 

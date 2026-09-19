@@ -1,5 +1,7 @@
 # WF-008 — Gestión de categorías y subcategorías
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la gestión de categorías
@@ -7,8 +9,8 @@ y subcategorías descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_categorias.md.
-2. Consulta ../../hu/hu_gestion_categorias.md.
+1. Consulta ../../specs/SPEC-008-gestion-categorias.md.
+2. Consulta ../../hu/HU-008-gestion-categorias.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -33,7 +35,7 @@ Reglas de producción:
 - `categoria_padre_id` SIEMPRE es editable al actualizar una categoría.
 - Al cambiar el padre, valida que el nuevo padre esté activo y que no se
   superen los dos niveles.
-- La desactivación es baja lógica y solo se completa si la validación síncrona
+- La desactivación es baja lógica y solo se completa si la verificación asíncrona correlacionada
   confirma que no hay productos activos asociados.
 - La reactivación exige que el padre (si lo hay) esté activo.
 - NUNCA muestres eliminación física de una categoría.
@@ -54,8 +56,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No uses React ni dependencias del frontend productivo.
 - No requieras conexión a servicios externos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
-- Incluye las anotaciones visibles definidas en cada pantalla.
+- Implementa un diseño responsivo real para escritorio, tablet y móvil mediante CSS y cambios de viewport; no agregues controles internos de dispositivo.
+- Documenta las anotaciones A-xx fuera de la interfaz simulada; no las renderices en el prototipo.
 - Aplica el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
@@ -82,14 +84,14 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado | Borrador |
 | Responsable | Leonardo Lopez |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_categorias.md, secciones 1–9 | Alcance, requisitos y reglas de baja/reactivación |
-| Historia de usuario | hu_gestion_categorias.md, CA-01 a CA-09 | Criterios de aceptación y escenarios |
+| Spec | SPEC-008-gestion-categorias.md, secciones 1–9 | Alcance, requisitos y reglas de baja/reactivación |
+| Historia de usuario | HU-008-gestion-categorias.md, CA-01 a CA-09 | Criterios de aceptación y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
@@ -100,7 +102,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Crear una subcategoría vinculada a una raíz.
 - Editar nombre, descripción, imagen, orden y `categoria_padre_id`.
 - Validar los dos niveles máximos y la referencia circular.
-- Desactivar (baja lógica) con validación síncrona de productos activos.
+- Desactivar (baja lógica) con verificación asíncrona correlacionada de productos activos.
 - Reactivar una categoría exigiendo padre activo.
 - Exponer el árbol jerárquico completo para canales externos.
 
@@ -228,7 +230,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 1. El gestor selecciona Desactivar desde S-01.
 2. S-04 explica que la categoría dejará de mostrarse en los canales.
 3. El gestor confirma.
-4. El sistema realiza la validación síncrona de productos activos.
+4. El sistema realiza la verificación asíncrona correlacionada de productos activos.
 5. Si no hay productos activos, la categoría pasa a inactiva y S-01 lo refleja.
 6. Si hay productos activos, S-04-B explica que la baja fue bloqueada.
 
@@ -249,7 +251,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 | ALT-04 | Asignar un padre a una categoría que ya es raíz de subcategorías | Rechazar para no exceder los dos niveles | S-03 |
 | ALT-05 | Intentar añadir una subcategoría a una subcategoría | Bloquear la acción: no hay tercer nivel | S-01 |
 | ALT-06 | Desactivar con productos activos | Bloquear la baja y explicar el requisito | S-04-B |
-| ALT-07 | Timeout en la validación síncrona de productos | No asumir resultado; bloquear baja y permitir reintento | S-04-E |
+| ALT-07 | Sin confirmación de verificación asíncrona de productos | No asumir resultado; bloquear baja y permitir reintento | S-04-E |
 | ALT-08 | Reactivar con padre inactivo | Error explicando el orden de reactivación | S-05-R |
 | ALT-09 | Error al cargar el árbol | Mostrar estado no disponible con reintento | S-01-E |
 | ALT-10 | Usuario sin permiso | Ocultar o deshabilitar acción y explicar acceso insuficiente | Estado global |
@@ -264,7 +266,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 | S-03 | Editar categoría | Actualizar todos los campos, incluido `categoria_padre_id` | Ruta propuesta /productos/categorias/:id/editar | Sí |
 | S-04 | Confirmar desactivación | Evitar bajas accidentales y explicar el efecto | Diálogo modal | Sí |
 | S-04-B | Desactivación bloqueada | Explicar que existen productos activos asociados | Variante de S-04 | Sí |
-| S-04-E | Validación indisponible | No asumir resultado ante timeout en la validación síncrona | Variante de S-04 | Sí |
+| S-04-E | Validación indisponible | No asumir resultado ante ausencia de respuesta en verificación asíncrona correlacionada | Variante de S-04 | Sí |
 | S-05 | Detalle de categoría | Consultar datos, padre, estado y acciones | /productos/categorias/:id propuesta | Sí |
 | S-05-R | Reactivación con padre inactivo | Explicar que primero debe activarse el padre | Variante de S-05 | Sí |
 
@@ -478,7 +480,7 @@ Evitar una baja accidental y explicar su efecto comercial.
 
 - Foco contenido dentro del diálogo.
 - Escape o Cancelar cierra sin cambios.
-- Al confirmar se ejecuta la validación síncrona con indicador de espera.
+- Al confirmar se ejecuta la verificación asíncrona correlacionada con indicador de espera.
 - Al cerrar sin confirmar, el foco vuelve al activador.
 
 #### Anotaciones
@@ -486,7 +488,7 @@ Evitar una baja accidental y explicar su efecto comercial.
 | ID | Elemento | Anotación |
 |---|---|---|
 | A-17 | Advertencia | Efecto comercial; no se elimina la categoría |
-| A-18 | Validación | Se consulta síncronamente si existen productos activos |
+| A-18 | Validación | Se consulta por mensajes correlacionados si existen productos activos |
 | A-19 | No Eliminar | No existe acción de eliminación permanente |
 
 ### S-04-B — Desactivación bloqueada
@@ -593,7 +595,7 @@ Consultar el estado, los datos y las acciones de una categoría.
 | Guardando | Sí | Acción deshabilitada | Evitar duplicado | Esperar |
 | Guardado exitoso | Sí | Confirmación + árbol | Continuar | N/A |
 | Error de guardado | Sí | Mensaje sin perder datos | Reintentar | Repetir envío seguro |
-| Validación síncrona en curso | Sí | Indicador de espera no bloqueante al árbol | Esperar | Tiempo de espera |
+| Verificación asíncrona en curso | Sí | Indicador de espera no bloqueante al árbol | Esperar | Tiempo de espera |
 | Baja bloqueada | Sí | S-04-B con productos activos | Volver | Resolver productos |
 | Validación indisponible | Sí | S-04-E | Reintentar | Nueva consulta |
 | Nodo activo | Sí | Estado Activo | Editar/desactivar | N/A |
@@ -604,8 +606,8 @@ Consultar el estado, los datos y las acciones de una categoría.
 ### Reglas para datos remotos
 
 - Consultar el árbol vigente al cargar y refrescarlo después de guardar.
-- La validación de productos activos es síncrona y bloqueante; no asumir
-  resultado ante timeout.
+- La desactivación queda pendiente de verificación asíncrona y se confirma solo tras respuesta válida; no asumir
+  resultado ante falta de confirmación.
 - No aplicar guardado optimista a creación, edición, baja ni reactivación.
 - Distinguir ausencia de categorías de fallo de carga.
 - Conservar el formulario ante errores recuperables.
@@ -692,7 +694,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | HTTP | Crear categoría; método/ruta pendientes | Actualiza S-01 |
 | HTTP | Editar categoría (con `categoria_padre_id`); pendiente | Actualiza S-01 |
 | HTTP | Desactivar/reactivar; método/ruta pendientes | Actualiza S-01 |
-| Síncrono | Validar productos activos con Catálogo Core | Bloquea la baja |
+| EDA | Verificar productos activos con Catálogo mediante comando/resultado correlacionado | Bloquea la baja |
 | Permiso | Consultar categorías; código pendiente | Acceso a S-01/S-05 |
 | Permiso | Crear/editar/desactivar/reactivar; código pendiente | Acciones del árbol |
 
@@ -704,7 +706,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - No exponer stack traces, nombres de servicios ni tablas técnicas.
 - Confirmar la baja lógica.
 - Validar en servidor la referencia circular, el estado del padre y los niveles.
-- No asumir “sin productos” ante un timeout de la validación síncrona.
+- No asumir “sin productos” ante ausencia de confirmación de la verificación asíncrona correlacionada.
 - El documento no exige reautenticación para estas acciones.
 
 ## 16. Criterios de aceptación del wireframe
@@ -719,7 +721,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] La baja lógica se confirma solo sin productos activos.
 - [ ] La reactivación exige padre activo.
 - [ ] No existe eliminación física.
-- [ ] Representa el árbol completo para canales.
+- [ ] Representa el árbol completo para administración y limita el árbol consumido por canales/Catálogo a categorías activas.
 - [ ] No incluye controles SEO, de características ni de marcas.
 - [ ] Incluye carga, vacío, error, conflicto, permisos y sesión.
 - [ ] Funciona con teclado y no depende del color.
@@ -755,22 +757,29 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 | ID | Pregunta o decisión | Responsable | Bloquea wireframe | Estado |
 |---|---|---|---|---|
-| Q-01 | ¿Desactivar una raíz inactiva automáticamente a sus subcategorías? | Producto | Sí para estados del árbol | Abierta |
+| Q-01 | Resuelto: una raíz con subcategorías activas no puede desactivarse; no hay baja en cascada automática. | Spec/HU Categorías definitivos | No | Resuelta |
 | Q-02 | ¿Reactivar una raíz reactiva a sus subcategorías? | Producto | Sí para estados del árbol | Abierta |
 | Q-03 | ¿El orden es obligatorio o solo de presentación y qué valores admite? | Producto | No para flujo base | Abierta |
 | Q-04 | ¿Formato y tamaño máximo de la imagen de categoría? | Producto | No para wireframe | Abierta |
-| Q-05 | ¿Se permite reasignar una raíz a un padre (dejar de ser raíz) y viceversa? | Producto | Sí para S-03 | Abierta |
+| Q-05 | Resuelto: `categoria_padre_id` es editable, incluso de raíz a hija o viceversa, sujeto a padre activo, dos niveles y comprobación de características efectivas. | Specs/HU definitivos | No | Resuelta |
 | Q-06 | ¿Debe advertirse al salir del formulario con cambios sin guardar? | Producto/UX | No | Abierta |
-| Q-07 | ¿El árbol público incluye solo activas o el árbol completo? | Producto | No para administración | Abierta |
-| Q-08 | ¿La validación síncrona de productos activos tiene timeout definido? | Backend | Sí para S-04-E | Abierta |
+| Q-07 | Resuelto: el árbol administrativo puede mostrar activas e inactivas según permisos; Catálogo Core y canales consumen únicamente categorías activas. | Specs/HU definitivos | No | Resuelta |
+| Q-08 | Resuelto: no se presupone un timeout HTTP; sin confirmación correlacionada se rechaza la baja de forma segura. Plazo operativo por definir en contrato. | Specs/HU definitivos | No para flujo | Resuelta en negocio; SLA pendiente |
 | Q-09 | ¿Existe búsqueda, filtros, orden o paginación del árbol? | Producto | No para flujo base | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |
+
+### Alineación definitiva de Categorías: baja y jerarquía
+
+- Para desactivar, mostrar **Solicitud recibida → Verificando dependencias → Desactivación confirmada / Rechazada**. Taxonomía coordina mensajes `taxonomy.master.deactivation.check.requested` y `catalog.master.deactivation.checked` con `operation_id`, versión y barrera de escrituras en Catálogo. Si hay productos activos, subcategorías activas o no se obtiene confirmación confiable, **no confirmar la baja**. No simular respuesta HTTP directa entre microservicios.
+- Si se edita `categoria_padre_id`, mostrar validación de padre activo, máximo dos niveles, ausencia de ciclo y recálculo de características efectivas (**directas + heredadas, máximo 20**) sobre la categoría y descendientes afectados. Productos existentes no pierden estado automáticamente por una nueva obligatoriedad heredada; se exige en siguiente guardado.
+- La interfaz administrativa no garantiza desactivación comercial instantánea en canales: señalar estado pendiente hasta confirmación, y actualizarlo con el resultado. No inventar el plazo del mensaje ni el canal de notificación.
 
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -787,3 +796,5 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Confirmar el ID WF-008 contra INDEX.md.
 - [ ] Resolver Q-01, Q-02, Q-05 y Q-08 antes del diseño definitivo.
 - [ ] Confirmar rutas y permisos antes de implementar el frontend.
+
+---

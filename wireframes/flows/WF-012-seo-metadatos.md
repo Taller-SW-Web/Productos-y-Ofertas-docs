@@ -1,5 +1,7 @@
 # WF-012 — Gestión de SEO y metadatos
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la gestión de SEO y
@@ -7,8 +9,8 @@ metadatos descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_seo_metadatos.md.
-2. Consulta ../../hu/hu_seo_metadatos.md.
+1. Consulta ../../specs/SPEC-012-seo-metadatos.md.
+2. Consulta ../../hu/HU-012-seo-metadatos.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -52,7 +54,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No uses React ni dependencias del frontend productivo.
 - No requieras conexión a servicios externos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
+- Implementa un diseño responsivo real para escritorio, tablet y móvil mediante CSS y cambios de viewport; no agregues controles internos de dispositivo.
 - Aplica el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
@@ -80,14 +82,14 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado | Borrador |
 | Responsable | Leonardo Lopez |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_seo_metadatos.md, secciones 1–5 | Alcance, requisitos y criterio de completitud |
-| Historia de usuario | hu_seo_metadatos.md, CA-01 a CA-06 | Criterios y escenarios |
+| Spec | SPEC-012-seo-metadatos.md, secciones 1–5 | Alcance, requisitos y criterio de completitud |
+| Historia de usuario | HU-012-seo-metadatos.md, CA-01 a CA-06 | Criterios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
@@ -488,7 +490,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Título | Superaste el límite recomendado de 70 caracteres. | Requisito 1 |
 | Descripción | Superaste el límite recomendado de 160 caracteres. | Requisito 1 |
 | Cambio de slug | Se registró la redirección 301 del slug anterior. | Requisito 3 |
-| Endpoint | Endpoint público por slug activo. | Requisito 5 / CA-06 |
+| Endpoint | Endpoint público por slug activo. | Requisito 4 / CA-06 |
 
 ## 14. Restricciones técnicas relevantes
 
@@ -560,11 +562,16 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Q-04 | ¿Debe advertirse al salir con cambios sin guardar? | Producto/UX | No | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |
 
+### Alineación definitiva de SEO
+
+- Se conserva el flujo de SEO descrito por `SPEC-012-seo-metadatos.md` y `HU-012-seo-metadatos.md`, que no necesitaron cambios funcionales en la consolidación definitiva. Los identificadores, unicidad de slug y tratamiento de URLs anteriores deben seguir la especificación SEO; no inferir reglas nuevas de una pantalla de Categorías o Productos.
+
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -581,3 +588,5 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Confirmar el ID WF-012 contra INDEX.md.
 - [ ] Resolver Q-01 antes de implementar el frontend.
 - [ ] Confirmar rutas y permisos antes de implementar el frontend.
+
+---

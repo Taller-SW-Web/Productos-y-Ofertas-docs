@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Carga y exportación masiva de productos</title>
+  <title>WF-001 — Carga y exportación masiva de productos</title>
   <style>
     :root {
       --surface: #ffffff;
       --neutral-10: #f3f4f6;
+      --neutral-20: #e5e7eb;
       --neutral-30: #d1d5db;
       --neutral-50: #6b7280;
+      --neutral-70: #374151;
       --neutral-90: #111827;
       --space-xs: 4px;
       --space-sm: 8px;
@@ -19,10 +21,11 @@
       --gutter: 24px;
       --radius-sm: 4px;
       --radius-md: 8px;
-      --content: 1180px;
+      --content: 1200px;
     }
 
     * { box-sizing: border-box; }
+    input[type="checkbox"], input[type="radio"] { accent-color: var(--neutral-90); }
     html { color-scheme: light; }
     body {
       margin: 0;
@@ -448,9 +451,9 @@
 <body>
   <header class="app-header">
     <div class="header-inner">
-      <div class="brand" aria-label="Administración de productos">
-        <div class="brand-mark" aria-hidden="true">P</div>
-        <span class="brand-text">Productos y Ofertas</span>
+      <div class="brand" aria-label="PO Productos y ofertas">
+        <div class="brand-mark" aria-hidden="true">PO</div>
+        <span class="brand-text">PO Productos y ofertas</span>
       </div>
       <nav class="header-nav" aria-label="Navegación principal">
         <span class="optional">Catálogo</span>

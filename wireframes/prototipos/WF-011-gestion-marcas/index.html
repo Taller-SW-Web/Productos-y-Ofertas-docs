@@ -25,6 +25,8 @@
     button{min-height:44px;cursor:pointer}
     button:disabled{cursor:not-allowed;color:var(--neutral-50);border-color:var(--neutral-30);background:var(--neutral-10)}
     a,button,input,select,textarea{outline-offset:3px}
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible{outline:3px solid var(--neutral-90);outline-offset:2px}
+    input[type="checkbox"], input[type="radio"]{accent-color:var(--neutral-90)}
     .app-shell{min-height:100vh}
     .topbar{border-bottom:1px solid var(--neutral-30);background:var(--surface)}
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -33,12 +35,12 @@
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
-    .page-header h1{font-size:32px;line-height:1.15;margin:0 0 8px;font-weight:700}
+    .page-header h1{font-size:clamp(24px, 4vw, 32px);line-height:1.15;margin:0 0 8px;font-weight:700}
     .page-header p{margin:0;color:var(--neutral-50);max-width:760px}
     h2{font-size:24px;line-height:1.2;margin:0 0 16px}
     h3{font-size:18px;line-height:1.3;margin:0 0 12px}
     .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
-    .ann{display:inline-block;color:var(--neutral-50);border-left:2px solid var(--neutral-30);padding-left:8px;margin-top:10px;font-size:12px}
+    .ann{display:none !important}
     .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
     .btn-primary{background:var(--neutral-90);color:var(--surface)}
     .btn-danger{background:var(--surface);border-style:double;border-width:3px}
@@ -85,7 +87,7 @@
     .hint{display:block;font-size:13px;color:var(--neutral-50);margin-top:5px}
     input[type="text"],textarea{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:11px 12px;border-radius:var(--radius);min-height:44px}
     textarea{min-height:96px;resize:vertical}
-    .field-error{display:block;color:#b45309;background:#fef3c7;border:1px solid #f59e0b;padding:8px 10px;margin-top:8px;font-size:14px}
+    .field-error{display:block;color:var(--neutral-90);background:var(--neutral-10);border:1px solid var(--neutral-90);padding:8px 10px;margin-top:8px;font-size:13px;font-weight:600}
     .logo-box{border:1px dashed var(--neutral-50);padding:20px;text-align:center;background:var(--neutral-10)}
     .logo-preview{width:64px;height:64px;border:1px solid var(--neutral-90);margin:0 auto 12px;display:grid;place-items:center;overflow:hidden;background:var(--surface)}
     .logo-preview img{max-width:100%;max-height:100%;display:block}
@@ -334,7 +336,7 @@
           <input type="text" id="brandName" value="${escapeHtml(fname)}" required>
           <span class="hint">Debe ser único entre las marcas activas, ignorando mayúsculas y minúsculas.</span>
           <span id="nameError" class="field-error" style="display:none"></span>
-          <span id="nameOk" class="hint" style="color:#15803d;display:none">El nombre está disponible.</span>
+          <span id="nameOk" class="hint" style="color:var(--neutral-90);font-weight:600;display:none">El nombre está disponible.</span>
         </div>
         <div class="field">
           <label for="brandDesc">Descripción</label>

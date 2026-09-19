@@ -1,5 +1,7 @@
 # WF-002 — Gestión de combos de productos
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la gestión de combos de
@@ -7,8 +9,8 @@ productos descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_combos_productos.md.
-2. Consulta ../../hu/hu_gestion_combos_productos.md.
+1. Consulta ../../specs/SPEC-002-gestion-combos-productos.md.
+2. Consulta ../../hu/HU-002-gestion-combos-productos.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -28,13 +30,12 @@ Reglas de producción:
 - No agregues campos, permisos, endpoints ni reglas no documentadas.
 - Solo permite componentes que sean SKU/variantes o productos simples.
 - Nunca permita seleccionar un combo como componente de otro combo.
-- Exige al menos dos componentes; la interpretación exacta de componentes
-  distintos está señalada como decisión pendiente.
+- Exige al menos dos SKUs vendibles distintos, según el Spec y la HU; no hay decisión pendiente sobre este límite.
 - La cantidad de cada componente debe ser un entero positivo.
 - El precio del combo debe ser mayor que cero y estrictamente menor que la suma
-  vigente de los componentes.
+  de los precios regulares vigentes de sus SKUs multiplicados por sus cantidades.
 - No permitas guardar mientras exista un error bloqueante.
-- No conviertas los eventos order.created, order.cancelled, order.returned o
+- No conviertas los eventos order.confirmed, order.cancelled, order.returned o
   catalog.sku.deactivated en acciones manuales de esta interfaz.
 - No muestres controles de stock editables dentro del combo.
 - No elijas una librería de UI ni una estrategia CSS.
@@ -53,8 +54,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No uses React ni dependencias del frontend productivo.
 - No requieras conexión a servicios externos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
-- Incluye las anotaciones visibles definidas en cada pantalla.
+- Implementa un diseño responsivo real para escritorio, tablet y móvil mediante CSS y cambios de viewport; no agregues controles internos de dispositivo.
+- Documenta las anotaciones A-xx fuera de la interfaz simulada; no las renderices en el prototipo.
 - Aplica el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
@@ -64,7 +65,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 3. Selección de SKU/variantes sin anidamiento.
 4. Configuración de cantidades.
 5. Cálculo y validación visible del precio.
-6. Disponibilidad dinámica del combo.
+6. Disponibilidad calculada del combo, informativa y sujeta a revalidación al confirmar consumo.
 7. Desactivación manual con confirmación.
 8. Variante de desactivación automática por componente inactivo.
 9. Estados de carga, vacío, error, permisos y conflicto.
@@ -82,14 +83,14 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado | Borrador |
 | Responsable | Por asignar |
 | Fecha | 2026-09-16 |
-| Última actualización | 2026-09-16 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_combos_productos.md, secciones 1–6 | Alcance, reglas, eventos, disponibilidad y restricciones |
-| Historia de usuario | hu_gestion_combos_productos.md, CA-01 a CA-10 | Permisos, datos obligatorios y escenarios |
+| Spec | SPEC-002-gestion-combos-productos.md, secciones 1–6 | Alcance, reglas, eventos, disponibilidad y restricciones |
+| Historia de usuario | HU-002-gestion-combos-productos.md, CA-01 a CA-10 | Permisos, datos obligatorios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
@@ -136,7 +137,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 ## 4. Objetivo del flujo
 
 El gestor comercial debe poder crear, consultar, modificar y desactivar combos
-compuestos por al menos dos SKU/variantes o productos simples, asignar
+compuestos por al menos dos SKUs vendibles distintos, asignar
 cantidades y un precio promocional válido, y comprender su disponibilidad
 calculada.
 
@@ -208,12 +209,12 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 4. En S-03 busca y selecciona productos simples o SKU/variantes elegibles.
 5. El sistema impide incluir combos.
 6. El gestor define una cantidad entera positiva para cada componente.
-7. Al existir al menos dos componentes, el sistema muestra la suma de precios
+7. Al existir al menos dos SKUs vendibles distintos, el sistema muestra la suma de precios
    regulares y calcula la disponibilidad proporcional.
 8. El gestor ingresa un precio de combo mayor que cero.
 9. El sistema valida que el precio sea estrictamente menor que la suma.
 10. El gestor selecciona Crear combo.
-11. El sistema vuelve a validar con precios y stock vigentes.
+11. El sistema revalida reglas de creación y precios con la proyección conocida; la confirmación de venta se valida exclusivamente en Inventario.
 12. El combo se registra activo y se muestra S-05.
 
 ### Flujo C — Editar combo
@@ -246,14 +247,14 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 
 | ID | Condición | Comportamiento esperado | Retorno |
 |---|---|---|---|
-| ALT-01 | Menos de dos componentes | Mostrar error y bloquear guardado | S-02 |
+| ALT-01 | Menos de dos SKUs distintos | Mostrar error y bloquear guardado | S-02 |
 | ALT-02 | Cantidad vacía, cero, negativa o decimal | Error en la fila y bloqueo de guardado | S-02 |
 | ALT-03 | Intento de añadir otro combo | Impedir selección y explicar prohibición de anidamiento | S-03 |
 | ALT-04 | Precio menor o igual a cero | Error en precio y bloqueo de guardado | S-02 |
 | ALT-05 | Precio igual o superior a la suma | Error con límite vigente y bloqueo de guardado | S-02 |
 | ALT-06 | Un componente queda agotado | Disponibilidad calculada pasa a 0; el combo se muestra agotado | S-05 |
 | ALT-07 | Precio de un componente cambia antes de guardar | Recalcular y solicitar corrección si el precio deja de ser válido | S-02-C |
-| ALT-08 | Stock o estado cambia antes de guardar | Revalidar; informar conflicto y evitar datos obsoletos | S-02-C |
+| ALT-08 | Proyección de stock o estado cambia antes de guardar | Revalidar estado, refrescar estimación y evitar presentar saldos desactualizados | S-02-C |
 | ALT-09 | Un componente se desactiva | Inhabilitar combo y notificar | S-05-A |
 | ALT-10 | Error al guardar | Conservar datos y mostrar recuperación | S-02-E |
 | ALT-11 | Error al cargar disponibilidad | Mostrar estado no disponible sin asumir stock 0 | S-05-E |
@@ -328,7 +329,7 @@ Dar acceso a consulta, creación, edición y desactivación según permisos.
 | Nombre | Combo | Texto | Alta | No debe faltar |
 | Precio del combo | Pricing/Combo | Moneda | Alta | Mostrar no disponible |
 | Componentes | Combo | Cantidad de componentes | Media | Mostrar error de integridad |
-| Disponibilidad | Cálculo dinámico | Entero o No disponible | Alta | No asumir cero |
+| Disponibilidad | Proyección eventual | Estimación o No verificable | Alta | No asumir cero |
 | Estado | Combo/catálogo | Texto | Alta | Mostrar No disponible |
 
 No agregar búsqueda, filtros, ordenamiento o paginación al prototipo hasta que
@@ -346,7 +347,7 @@ la necesidad y reglas estén confirmadas.
 | ID | Elemento | Anotación |
 |---|---|---|
 | A-01 | Crear combo | Visible solo con permiso de creación |
-| A-02 | Disponibilidad | Se calcula en tiempo real; error técnico no equivale a stock 0 |
+| A-02 | Disponibilidad | Estimación desde proyección de stock; mostrar fecha de cálculo y estado, nunca prometer disponibilidad garantizada |
 | A-03 | Estado | Activo/Inactivo/Agotado debe expresarse con texto |
 | A-04 | Acciones | No incluir eliminación permanente ni reactivación |
 | A-05 | Componente total | Representa filas de componentes, no suma de unidades |
@@ -393,7 +394,7 @@ precio y disponibilidad antes de guardar.
 | Región | Componente | Contenido | Comportamiento |
 |---|---|---|---|
 | Datos generales | Campos | Nombre, descripción | Ambos obligatorios según CA-02 |
-| Componentes | Tabla/lista editable | SKU, producto/variante, precio, stock, cantidad, disponibilidad proporcional | Mínimo dos filas |
+| Componentes | Tabla/lista editable | SKU, producto/variante, precio, stock, cantidad, disponibilidad proporcional | Mínimo dos SKUs distintos |
 | Selección | Botón | Añadir componentes | Abre S-03 |
 | Precio | Resumen + campo | Suma regular vigente y precio del combo | Validación bloqueante |
 | Disponibilidad | Resultado calculado | Unidades disponibles del combo y componente limitante | Solo lectura |
@@ -413,11 +414,11 @@ precio y disponibilidad antes de guardar.
 |---|---|---|---|
 | SKU | Código del SKU o producto simple | No | Debe ser componente directo |
 | Producto/variante | Nombre descriptivo | No | No puede ser combo |
-| Precio regular | Precio vigente | No | Participa en la suma multiplicado por cantidad |
-| Stock | Existencia actual | No | Dato de referencia |
+| Precio regular | Precio regular vigente por SKU | No | Participa en la suma multiplicado por cantidad |
+| Stock | Último saldo conocido en proyección y fecha de cálculo | No | Dato informativo, no reserva ni garantía |
 | Cantidad | Unidades requeridas por combo | Sí | Entero mayor que 0 |
 | Aporte de disponibilidad | floor(stock/cantidad) | No | Determina el mínimo |
-| Acción | Quitar | Sí | No permitir guardar con menos de dos |
+| Acción | Quitar | Sí | No permitir guardar con menos de dos SKUs distintos |
 
 La suma de componentes se calcula como la suma de precio_regular por cantidad.
 La disponibilidad del combo es el mínimo entero de stock dividido entre la
@@ -438,7 +439,7 @@ Resultado: 7 combos disponibles, limitados por SKU-MED-W.
 - Recalcular suma y disponibilidad al añadir/quitar un componente o cambiar
   una cantidad.
 - Validar el precio después de cada cambio relevante.
-- Volver a validar precio, estado y stock vigente en servidor al guardar.
+- Revalidar precio y estado en servidor al guardar; mostrar stock proyectado como información, sin garantía de consumo.
 - Evitar envíos duplicados mientras la solicitud está en curso.
 - Conservar datos después de un error recuperable.
 - Llevar el foco al primer error o al resumen de errores.
@@ -459,12 +460,12 @@ Resultado: 7 combos disponibles, limitados por SKU-MED-W.
 | A-08 | Nombre y descripción | Ambos son obligatorios; límites pendientes |
 | A-09 | Añadir componentes | Solo SKU/variantes o productos simples |
 | A-10 | Cantidad | Entero positivo por componente |
-| A-11 | Precio regular | Usar valor vigente y multiplicarlo por cantidad |
+| A-11 | Precio regular | Usar precio regular vigente del SKU y multiplicarlo por cantidad |
 | A-12 | Suma regular | Se recalcula ante cambios de componentes, cantidades o precios |
 | A-13 | Precio del combo | Debe cumplir 0 < precio_combo < suma_componentes |
 | A-14 | Disponibilidad | min(floor(stock_i/cantidad_i)) |
 | A-15 | Componente limitante | Identificar qué SKU determina la disponibilidad |
-| A-16 | Guardar | Bloqueado con menos de dos componentes o cualquier error |
+| A-16 | Guardar | Bloqueado con menos de dos SKUs distintos o cualquier error |
 
 ### S-02-C — Conflicto con datos vigentes
 
@@ -656,7 +657,7 @@ S-05-E — Disponibilidad no consultable:
 | ID | Elemento | Anotación |
 |---|---|---|
 | A-28 | Precio | Comparar precio del combo con suma vigente |
-| A-29 | Disponibilidad | Calcular en tiempo real, objetivo técnico menor a 200 ms |
+| A-29 | Disponibilidad | Leer proyección informativa con objetivo < 200 ms; incluir calculated_at y estado, sin reserva |
 | A-30 | Agotado | Si un componente tiene stock 0, el combo tiene disponibilidad 0 |
 | A-31 | Componentes | Mostrar cantidades requeridas por cada combo |
 | A-32 | Baja automática | Identificar causa sin exponer el nombre técnico del evento |
@@ -671,7 +672,7 @@ S-05-E — Disponibilidad no consultable:
 | Listado con datos | Sí | Tabla/tarjetas | Ver, editar, desactivar | N/A |
 | Formulario inicial | Sí | Campos vacíos y componentes vacíos | Completar/cancelar | N/A |
 | Edición cargando | Sí | Estructura de formulario bloqueada | Cancelar según contrato | Reintentar |
-| Menos de dos componentes | Sí | Error y guardado bloqueado | Añadir componentes | Corregir |
+| Menos de dos SKUs distintos | Sí | Error y guardado bloqueado | Añadir componentes | Corregir |
 | Cantidad inválida | Sí | Error asociado a fila | Corregir | Corregir |
 | Precio inválido | Sí | Error con suma vigente | Corregir precio | Corregir |
 | Selección de combo anidado | Sí | Control bloqueado + explicación | Elegir SKU directo | Corregir |
@@ -689,7 +690,7 @@ S-05-E — Disponibilidad no consultable:
 
 ### Reglas para datos remotos
 
-- Consultar precios y stock vigentes al cargar y antes de guardar.
+- Consultar precios y proyección de stock al cargar y antes de guardar; el débito definitivo se valida solo con `order.confirmed` en Inventario.
 - No aplicar guardado optimista a creación, edición ni desactivación.
 - Recalcular en cliente para feedback inmediato, pero validar en servidor.
 - Invalidar/refrescar lista, detalle, precio y disponibilidad después de guardar.
@@ -783,7 +784,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - Formularios: React Hook Form y Zod.
 - Validación monetaria y cantidades: reglas compartidas con el backend.
 - Contratos HTTP: OpenAPI/Swagger.
-- Eventos: AsyncAPI para order.created, order.cancelled, order.returned y
+- Eventos: AsyncAPI para order.confirmed, order.cancelled, order.returned y
   catalog.sku.deactivated.
 - La librería de componentes y estrategia CSS están pendientes.
 - El prototipo es HTML/CSS/JS estático y no prescribe la implementación.
@@ -799,7 +800,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | HTTP | Crear combo; método/ruta pendientes | Confirma S-05 |
 | HTTP | Editar combo; método/ruta pendientes | Actualiza S-05 |
 | HTTP | Desactivar combo; método/ruta pendientes | Actualiza S-05-I |
-| Evento | order.created | Descuento atómico; no es acción UI |
+| Evento | order.confirmed | Descuento atómico; no es acción UI |
 | Evento | order.cancelled | Compensación atómica; no es acción UI |
 | Evento | order.returned | Reposición integral; no es acción UI |
 | Evento | catalog.sku.deactivated | Desactiva combo y genera alerta |
@@ -826,7 +827,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Solo usuarios autorizados ven o ejecutan cada acción.
 - [ ] Permite consultar, crear, editar y desactivar combos.
 - [ ] Nombre y descripción son obligatorios.
-- [ ] Exige al menos dos componentes.
+- [ ] Exige al menos dos SKUs vendibles distintos.
 - [ ] Cada componente tiene una cantidad entera positiva.
 - [ ] Solo permite SKU/variantes o productos simples directos.
 - [ ] Bloquea combos como componentes.
@@ -866,7 +867,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 | ID | Supuesto | Motivo | Impacto si es incorrecto | Validar |
 |---|---|---|---|---|
-| SUP-01 | WF-002 es un identificador disponible | No se proporcionó INDEX.md | Renombrar archivo/referencias | Sí |
+| SUP-01 | WF-002 es el identificador en este consolidado | Archivo incluido en consolidado de 16 WF | Renombrar archivo/referencias | Sí |
 | SUP-02 | La ruta será /productos/combos | No se entregó mapa de navegación | Cambiar rutas/entrada | Sí |
 | SUP-03 | Escritorio es el dispositivo principal | Configuración de múltiples componentes | Cambiar prioridad responsive | Sí |
 | SUP-04 | La moneda visible será PEN/S/ | Ejemplos de la spec usan S/ | Ajustar formato/multimoneda | Sí |
@@ -878,9 +879,9 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | ID | Pregunta o decisión | Responsable | Bloquea wireframe | Estado |
 |---|---|---|---|---|
 | Q-01 | ¿Cuáles son longitud, formato y unicidad de nombre y descripción? | Producto/Backend | Sí para validaciones definitivas | Abierta |
-| Q-02 | ¿El mínimo exige dos SKU distintos o basta una composición cuya suma de cantidades sea dos? | Producto | Sí para regla exacta | Abierta |
-| Q-03 | ¿Se permite crear un combo con un componente activo pero actualmente sin stock? | Producto | Sí para elegibilidad en S-03 | Abierta |
-| Q-04 | ¿Un SKU duplicado se bloquea o se combina aumentando su cantidad? | Producto/UX | Sí para selector | Abierta |
+| Q-02 | Resuelto: al menos dos SKUs distintos; suma de cantidades no sustituye esta regla. | Specs/HU definitivos | No | Resuelta |
+| Q-03 | Creación activa descrita en Spec/HU usa SKUs con stock; si un SKU queda en 0 posteriormente, el combo se muestra agotado. La creación de combos agotados no está autorizada por el escenario de alta. | Specs/HU definitivos | No | Resuelta para alcance actual |
+| Q-04 | No se permiten filas duplicadas de un SKU; la cantidad se edita en una única fila por SKU. | Decisión de representación sin duplicar componentes | No | Resuelta para wireframe |
 | Q-05 | ¿El sistema usa una sola moneda o debe soportar multimoneda? | Producto/Pricing | Sí para formato | Abierta |
 | Q-06 | ¿Cómo se redondean precios y qué precisión decimal se admite? | Pricing | Sí para validación | Abierta |
 | Q-07 | ¿Puede editarse un combo inactivo y bajo qué condición vuelve a activarse? | Producto | Sí para S-05-A/S-05-I | Abierta |
@@ -891,11 +892,22 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Q-12 | ¿Qué debe hacer el gestor si falla una operación atómica de stock durante una venta? | Ventas/Inventario/Producto | No para gestión; sí para canal de venta | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |
 
+### Alineación definitiva de Combos (Specs/HU definitivos)
+
+- Dos o más **SKUs vendibles distintos**, cantidades enteras positivas y ningún combo anidado. Precio de comparación = suma de **precios regulares vigentes por SKU × cantidad** (incluye override de variante resuelto por Pricing), estrictamente superior al precio del combo. El precio del combo no se acumula con promociones, cupones ni precio de oferta de Pricing.
+- Solo `order.confirmed` de Ventas/Postventa inicia el débito definitivo **en Inventario**. `order.created` no genera reserva ni consumo. La confirmación/rechazo del consumo es provisional y se debe homologar con Ventas; el wireframe de administración nunca confirma ni descuenta una venta.
+- Disponibilidad mostrada es una lectura informativa, potencialmente atrasada si usa eventos: **no prometer stock garantizado hasta el débito atómico**. Tras `catalog.sku.deactivated` la baja comercial se refleja por eventos y puede tener latencia de propagación; evitar «instantáneamente» como garantía temporal.
+- La reactivación de un combo no está definida por sus fuentes y no se agrega un botón. Las preguntas genuinas de diseño y condiciones no normadas permanecen señaladas como pendientes.
+
+### Precisión vinculante de disponibilidad (revisión 0.4)
+La cifra y el componente limitante se calculan con la última proyección recibida, no mediante una transacción de Inventario al consultar. Mostrar «Estimación», `calculated_at` y aviso de que la compra se confirma según existencias verificadas; si la proyección está ausente u obsoleta, mostrar «Disponibilidad no verificable» y no «Agotado». El objetivo de 200 ms se refiere a la consulta informativa. Inventario verifica en `order.confirmed`; crear combo con proyección positiva no reserva unidades.
+
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-16 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -912,3 +924,5 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Confirmar el ID WF-002 contra INDEX.md.
 - [ ] Resolver Q-02, Q-03, Q-04, Q-06 y Q-07 antes del diseño definitivo.
 - [ ] Confirmar rutas y permisos antes de implementar el frontend.
+
+---
