@@ -7,8 +7,8 @@ Categoría-Característica descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_asociacion_categoria_caracteristica.md.
-2. Consulta ../../hu/hu_asociacion_categoria_caracteristica.md.
+1. Consulta ../../specs/SPEC-010-asociacion-categoria-caracteristica.md.
+2. Consulta ../../hu/HU-010-asociacion-categoria-caracteristica.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -88,8 +88,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_asociacion_categoria_caracteristica.md, secciones 1–6 | Requisitos y reglas confirmadas |
-| Historia de usuario | hu_asociacion_categoria_caracteristica.md, CA-01 a CA-05 | Criterios y escenarios |
+| Spec | SPEC-010-asociacion-categoria-caracteristica.md, secciones 1–6 | Requisitos y reglas confirmadas |
+| Historia de usuario | HU-010-asociacion-categoria-caracteristica.md, CA-01 a CA-05 | Criterios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 

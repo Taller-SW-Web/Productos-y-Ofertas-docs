@@ -7,8 +7,8 @@ cupones descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta `../../specs/spec_gestion_cupones_descuento.md`.
-2. Consulta `../../hu/hu_gestion_cupones_descuento.md`.
+1. Consulta `../../specs/SPEC-005-gestion-cupones-descuento.md`.
+2. Consulta `../../hu/HU-005-gestion-cupones-descuento.md`.
 3. Consulta `../DESIGN.md`.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -59,7 +59,7 @@ Reglas de producción:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | `spec_gestion_cupones_descuento.md`, secciones 3–7 | Modelo, validaciones, uso, concurrencia y alcance |
+| Spec | `SPEC-005-gestion-cupones-descuento.md`, secciones 3–7 | Modelo, validaciones, uso, concurrencia y alcance |
 | Historia de usuario | `HU-CUP-01`, CA-01 a CA-13 | Necesidad, reglas y escenarios verificables |
 | Diseño | `DESIGN.md` | Escala de grises, jerarquía, controles y accesibilidad táctil |
 

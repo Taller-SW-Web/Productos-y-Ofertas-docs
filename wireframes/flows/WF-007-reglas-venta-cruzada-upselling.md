@@ -7,8 +7,8 @@ Cross-sell y Upsell descritas en este archivo.
 
 Antes de diseñar:
 
-1. Consulta `../../specs/spec_reglas_venta_cruzada_upselling.md`.
-2. Consulta `../../hu/hu_reglas_venta_cruzada_upsell.md`.
+1. Consulta `../../specs/SPEC-007-reglas-venta-cruzada-upselling.md`.
+2. Consulta `../../hu/HU-007-reglas-venta-cruzada-upselling.md`.
 3. Consulta `../DESIGN.md`.
 4. Usa este documento para composición, interacción y estados.
 
@@ -56,7 +56,7 @@ Reglas de producción:
 
 | Fuente | Identificador o sección | Aporte |
 |---|---|---|
-| Spec | `spec_reglas_venta_cruzada_upselling.md`, secciones 3–7 | Modelo, prioridad, orden, filtros y alcance |
+| Spec | `SPEC-007-reglas-venta-cruzada-upselling.md`, secciones 3–7 | Modelo, prioridad, orden, filtros y alcance |
 | Historia de usuario | `HU-REC-01`, CA-01 a CA-12 | Necesidad y escenarios verificables |
 | Diseño | `DESIGN.md` | Jerarquía y representación de baja fidelidad |
 

@@ -7,8 +7,8 @@ metadatos descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_seo_metadatos.md.
-2. Consulta ../../hu/hu_seo_metadatos.md.
+1. Consulta ../../specs/SPEC-012-seo-metadatos.md.
+2. Consulta ../../hu/HU-012-seo-metadatos.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -86,8 +86,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_seo_metadatos.md, secciones 1–5 | Alcance, requisitos y criterio de completitud |
-| Historia de usuario | hu_seo_metadatos.md, CA-01 a CA-06 | Criterios y escenarios |
+| Spec | SPEC-012-seo-metadatos.md, secciones 1–5 | Alcance, requisitos y criterio de completitud |
+| Historia de usuario | HU-012-seo-metadatos.md, CA-01 a CA-06 | Criterios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 

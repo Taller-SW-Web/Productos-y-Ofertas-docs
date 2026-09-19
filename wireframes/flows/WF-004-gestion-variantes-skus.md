@@ -7,8 +7,8 @@ variantes y SKUs descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta `../../specs/spec_gestion_variantes_skus.md`.
-2. Consulta `../../hu/hu_gestion_variantes_skus.md`.
+1. Consulta `../../specs/SPEC-004-gestion-variantes-skus.md`.
+2. Consulta `../../hu/HU-004-gestion-variantes-skus.md`.
 3. Consulta `../DESIGN.md`.
 4. Consulta `../INDEX.md` para conservar el ID `WF-004`, el nombre del flujo y
    las rutas reservadas de sus artefactos.
@@ -178,8 +178,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Qué aporta al flujo |
 |---|---|---|
-| [`spec_gestion_variantes_skus.md`](../../specs/spec_gestion_variantes_skus.md) | Requisitos 1–5; secciones 5 y 6 | Creación, SKU, imagen, edición, consulta y baja lógica |
-| [`hu_gestion_variantes_skus.md`](../../hu/hu_gestion_variantes_skus.md) | CA-01–CA-14; escenarios 1–10 | Permisos, integración y resultados esperados |
+| [`SPEC-004-gestion-variantes-skus.md`](../../specs/SPEC-004-gestion-variantes-skus.md) | Requisitos 1–5; secciones 5 y 6 | Creación, SKU, imagen, edición, consulta y baja lógica |
+| [`HU-004-gestion-variantes-skus.md`](../../hu/HU-004-gestion-variantes-skus.md) | CA-01–CA-14; escenarios 1–10 | Permisos, integración y resultados esperados |
 | [`DESIGN.md`](../DESIGN.md) | Layout, componentes, contraste y accesibilidad | Lenguaje visual neutral |
 | [`INDEX.md`](../INDEX.md) | Fila WF-004 | ID, nombre, responsable y rutas reservadas |
 | [`WF-003`](WF-003-gestion-productos-crud.md) | Detalle y activación del producto padre | Entrada y dependencia del ciclo de vida |

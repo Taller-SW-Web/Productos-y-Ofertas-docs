@@ -7,8 +7,8 @@ productos descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_combos_productos.md.
-2. Consulta ../../hu/hu_gestion_combos_productos.md.
+1. Consulta ../../specs/SPEC-002-gestion-combos-productos.md.
+2. Consulta ../../hu/HU-002-gestion-combos-productos.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -88,8 +88,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_combos_productos.md, secciones 1–6 | Alcance, reglas, eventos, disponibilidad y restricciones |
-| Historia de usuario | hu_gestion_combos_productos.md, CA-01 a CA-10 | Permisos, datos obligatorios y escenarios |
+| Spec | SPEC-002-gestion-combos-productos.md, secciones 1–6 | Alcance, reglas, eventos, disponibilidad y restricciones |
+| Historia de usuario | HU-002-gestion-combos-productos.md, CA-01 a CA-10 | Permisos, datos obligatorios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
