@@ -32,6 +32,7 @@
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
     .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
@@ -40,7 +41,6 @@
     h2{font-size:24px;line-height:1.2;margin:0 0 16px}
     h3{font-size:18px;line-height:1.3;margin:0 0 12px}
     .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
-    .ann{display:none !important}
     .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
     .btn-primary{background:var(--neutral-90);color:var(--surface)}
     .btn-quiet{border-color:var(--neutral-30);font-weight:500}
@@ -135,7 +135,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span class="brand-text">PO Productos y ofertas</span></div>
       <div class="crumb">Productos / Inventario / Dashboard</div>
     </div>
   </header>
@@ -282,12 +282,10 @@
           <div class="kpi"><div class="kpi-label">Stock bajo</div><div class="kpi-value">${kpis.low}</div><div class="kpi-sub">0 &lt; stock &le; umbral por SKU</div></div>
           <div class="kpi"><div class="kpi-label">Agotados</div><div class="kpi-value">${kpis.out}</div><div class="kpi-sub">Sin unidades disponibles</div></div>
         </div>
-        <p class="ann">A-01 · Indicadores a nivel de SKU vendible · A-02 · Estado calculado con stock y umbral por SKU</p>
       </div>
       <div class="section">
         <div class="section-head"><div><h2>Alertas de stock</h2><p class="small muted">Solo se alerta a SKUs en estado Stock bajo o Agotado.</p></div></div>
         ${alertsBody || (emptyInventory?'':`<div class="empty-state"><h2>Sin alertas.</h2><p>Todos los SKUs del filtro se encuentran disponibles.</p></div>`)}
-        <p class="ann">A-03 · Alertas solo para Stock bajo y Agotado · A-04 · Se recalculan con inventory.stock.changed · A-08 · La ausencia de SKUs no es un error</p>
       </div>
       <div class="section">
         <div class="section-head">
@@ -295,7 +293,6 @@
           ${periodSelect()}
         </div>
         ${topBody}
-        <p class="ann">A-05 · Top 5 de productos con ventas confirmadas · A-06 · Período seleccionable; 30 días por defecto</p>
       </div>`;
     bindControls();
     bindPage();
