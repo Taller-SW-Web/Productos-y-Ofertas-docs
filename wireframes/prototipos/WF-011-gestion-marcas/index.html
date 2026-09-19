@@ -473,7 +473,7 @@
     deactivateBody.innerHTML=`
       <div class="notice">
         <span class="notice-icon" aria-hidden="true">!</span>
-        <div><h3>La marca dejará de mostrarse en los filtros de los canales.</h3><p>Antes de desactivar validaremos de forma síncrona que no tenga productos activos asociados.</p></div>
+        <div><h3>La marca dejará de mostrarse en los filtros de los canales.</h3><p>Antes de desactivar comprobaremos que no tenga productos activos asociados.</p></div>
       </div>
       <div class="button-row end">
         <button class="btn" type="button" data-deact-cancel>Cancelar</button>
@@ -492,15 +492,15 @@
     deactivateBody.innerHTML=`
       <div class="notice" style="margin-bottom:12px">
         <span class="spin" aria-hidden="true"></span>
-        <div><h3>Validando productos activos…</h3><p>Consultamos Catálogo Core para confirmar que la marca no tenga productos activos.</p></div>
+        <div><h3>Validando productos activos…</h3><p>Comprobando que la marca no tenga productos activos asignados...</p></div>
       </div>
-      <p class="prog-text" id="progText">0 s / ${SIMULATED_TIMEOUT_SEC} s · timeout simulado (en producción: 15 s)</p>`;
+      <p class="prog-text" id="progText">Comprobando productos asociados...</p>`;
     const prog=document.getElementById('progText');
     let t=0;
-    prog.textContent=`${t} s / ${SIMULATED_TIMEOUT_SEC} s · timeout simulado (en producción: 15 s)`;
+    prog.textContent=`Comprobando productos asociados (${t} s)...`;
     const timer=setInterval(()=>{
       t+=1;
-      prog.textContent=`${t} s / ${SIMULATED_TIMEOUT_SEC} s · timeout simulado (en producción: 15 s)`;
+      prog.textContent=`Comprobando productos asociados (${t} s)...`;
       if(t>=SIMULATED_TIMEOUT_SEC){
         clearInterval(timer);
         if(b.validate==='timeout'){ showTimeoutResult(); }
@@ -529,7 +529,7 @@
     deactivateBody.innerHTML=`
       <div class="notice error">
         <span class="notice-icon" aria-hidden="true">!</span>
-        <div><h3>No pudimos validar los productos asociados.</h3><p>Catálogo Core no respondió dentro del tiempo límite (15 s). No asumimos que la marca esté libre de productos, por lo que la desactivación no se completó.</p></div>
+        <div><h3>No pudimos validar los productos asociados.</h3><p>El servicio no respondió a tiempo. No se completó la desactivación; por favor intente nuevamente.</p></div>
       </div>
       <div class="button-row end">
         <button class="btn" type="button" data-deact-cancel>Cerrar</button>
@@ -551,8 +551,8 @@
       else if(action==='view'){ state.view='detail'; state.selectedId=id; render(); }
       else if(action==='deactivate'){ openDeactivate(brandById(id),'deactivate'); }
       else if(action==='reactivate'){ openDeactivate(brandById(id),'reactivate'); }
-      else if(action==='safe-back'){ showToast('Regreso simulado al módulo de productos.'); }
-      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión recuperada para el prototipo.'); }
+      else if(action==='safe-back'){ showToast('Redirigiendo al catálogo de productos...'); }
+      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión restaurada correctamente.'); }
     }));
   }
 

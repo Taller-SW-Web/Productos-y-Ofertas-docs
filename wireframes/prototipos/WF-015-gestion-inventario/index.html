@@ -243,7 +243,7 @@
   }
   function eventFeed(){
     if(!events.length) return '';
-    return `<div class="event-feed"><h3>Evento inventory.stock.changed</h3>${events.map(e=>`<div class="event-item">${escapeHtml(e)}</div>`).join('')}</div>`;
+    return `<div class="event-feed"><h3>Historial de sincronización de existencias</h3>${events.map(e=>`<div class="event-item">${escapeHtml(e)}</div>`).join('')}</div>`;
   }
 
   function renderGlobalState(){
@@ -418,7 +418,7 @@
     if(st==='conflicto'){
       return `<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Conflicto de concurrencia detectado.</h3><p>Otra operación se aplicó primero sobre el saldo. Esta operación se rechaza sin bloqueo global y el stock nunca queda negativo.</p></div></div>`;
     }
-    return `<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Consumo confirmado aplicado al stock.</h3><p>El débito se originó en un evento externo <span class="mono">order.confirmed</span>. Esta pantalla solo consulta el resultado; no registra ventas ni reenvía el evento.</p></div></div>`;
+    return `<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Salida de stock por pedido confirmado</h3><p>Las existencias se actualizaron automáticamente por órdenes confirmadas desde el canal de ventas.</p></div></div>`;
   }
   function resultBodyMarkup(s){
     const r=s.result;
@@ -426,7 +426,7 @@
       <dl>
         <div class="kv"><dt class="kv-label">Pedido</dt><dd class="kv-value" style="margin:0">${escapeHtml(r.pedido)}</dd></div>
         <div class="kv"><dt class="kv-label">Variante/SKU</dt><dd class="kv-value" style="margin:0">${escapeHtml(s.sku)}</dd></div>
-        <div class="kv"><dt class="kv-label">Cantidad del evento</dt><dd class="kv-value" style="margin:0">${r.cantidad} unidad(es)</dd></div>
+        <div class="kv"><dt class="kv-label">Unidades descontadas</dt><dd class="kv-value" style="margin:0">${r.cantidad} unidad(es)</dd></div>
         <div class="kv"><dt class="kv-label">Resultado</dt><dd class="kv-value" style="margin:0">${resultLabel(r)}</dd></div>
         <div class="kv"><dt class="kv-label">Stock disponible</dt><dd class="kv-value" style="margin:0">${s.stock}</dd></div>
       </dl>
@@ -439,12 +439,12 @@
   }
   function openResult(s){
     resultTarget=s;
-    resultMeta.textContent=`${s.sku} · ${s.product} · Último resultado del evento`;
+    resultMeta.textContent=`${s.sku} · ${s.product} · Última sincronización de stock`;
     resultBody.innerHTML=resultBodyMarkup(s);
     resultOverlay.classList.add('open'); resultOverlay.setAttribute('aria-hidden','false');
     const back=resultOverlay.querySelector('[data-result-back]');
     back.addEventListener('click',closeResult);
-    document.getElementById('refreshResult').addEventListener('click',()=>{ showToast('Lectura actualizada desde el servicio de consumo. El evento no se reenvía.'); });
+    document.getElementById('refreshResult').addEventListener('click',()=>{ showToast('Existencias actualizadas correctamente.'); });
   }
   function closeResult(){ resultOverlay.classList.remove('open'); resultOverlay.setAttribute('aria-hidden','true'); resultTarget=null; }
 
@@ -492,8 +492,8 @@
       else if(action==='umbral'){ openUmbral(skuById(id)); }
       else if(action==='retry'){ state.queryState=''; state.loading=true; render(); }
       else if(action==='clear-filters'){ state.filter='all'; state.search=''; render(); }
-      else if(action==='safe-back'){ showToast('Regreso simulado al módulo de productos.'); }
-      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión recuperada para el prototipo.'); }
+      else if(action==='safe-back'){ showToast('Redirigiendo al catálogo de productos...'); }
+      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión restaurada correctamente.'); }
     }));
   }
 

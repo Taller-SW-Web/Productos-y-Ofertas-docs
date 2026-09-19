@@ -182,7 +182,7 @@
     </div>
     <div class="notice" id="deactivateIntro">
       <span class="notice-icon" aria-hidden="true">!</span>
-      <div><h3>La categoría dejará de mostrarse en los canales de venta.</h3><p>Se validará de forma síncrona que no tenga productos activos asociados. La categoría no se elimina: la baja es lógica.</p></div>
+      <div><h3>La categoría dejará de mostrarse en los canales de venta.</h3><p>Se comprobará que no tenga productos activos asociados antes de proceder con la desactivación.</p></div>
     </div>
     <div class="button-row end">
       <button class="btn" type="button" data-close-deactivate>Cancelar</button>
@@ -191,7 +191,7 @@
     <div id="deactivateStatus" class="small muted" style="margin-top:14px"></div>
     <div id="deactivateError" class="notice error" style="display:none;margin-top:14px" role="alert">
       <span class="notice-icon" aria-hidden="true">!</span>
-      <div><h3>No pudimos validar los productos asociados.</h3><p>Catálogo Core no respondió. No asumimos que la categoría esté libre de productos, por lo que la desactivación no se completó.</p></div>
+      <div><h3>No pudimos validar los productos asociados.</h3><p>No fue posible verificar los productos asociados a la categoría. La desactivación no se completó; inténtelo nuevamente.</p></div>
     </div>
   </section>
 </div>
@@ -317,7 +317,7 @@
     }
     const rows=categories.map(treeRow).join('');
     const cards=categories.map(treeCard).join('');
-    app.innerHTML=header+`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Jerarquía de máximo dos niveles.</h3><p>Solo se puede crear una subcategoría sobre una categoría raíz. La baja lógica valida en tiempo real que no existan productos activos.</p></div></div>
+    app.innerHTML=header+`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Jerarquía de máximo dos niveles.</h3><p>Solo se puede crear una subcategoría sobre una categoría raíz. La desactivación requiere que la categoría no cuente con productos activos asociados.</p></div></div>
       <div class="desktop-tree tree"><div class="tree-head"><span>Categoría</span><span>Código</span><span>Subcategorías</span><span>Productos</span><span>Estado y acciones</span></div>${rows}</div>
       <div class="mobile-tree">${cards}</div>`;
   }
@@ -382,7 +382,7 @@
           <section class="section"><h2>Datos generales</h2>
             <div class="field"><label for="catName">Nombre</label><input id="catName" type="text" value="${escapeHtml(state.form.name)}" aria-invalid="${nameErr?'true':'false'}"><div class="help">El nombre no necesita ser único: puede repetirse en distintas ramas.</div><div class="field-error ${nameErr?'show':''}">${escapeHtml(nameErr)}</div></div>
             <div class="field"><label for="catDesc">Descripción</label><textarea id="catDesc" aria-invalid="false">${escapeHtml(state.form.description)}</textarea></div>
-            <div class="field"><label for="catImage">Imagen</label><input id="catImage" type="text" value="${escapeHtml(state.form.image)}" placeholder="Opcional"><div class="help">En el wireframe se representa con un placeholder. Formato y tamaño pendientes.</div></div>
+            <div class="field"><label for="catImage">Imagen</label><input id="catImage" type="text" value="${escapeHtml(state.form.image)}" placeholder="Opcional"><div class="help">Formatos admitidos: JPG o PNG. Tamaño máximo recomendado: 2 MB.</div></div>
             <div class="field"><label for="catOrder">Orden</label><input id="catOrder" type="number" value="${escapeHtml(state.form.order)}" placeholder="Opcional"></div>
           </section>
           <section class="section"><h2>Jerarquía</h2>
@@ -445,7 +445,7 @@
   function confirmDeactivate(){
     const c=catById(deactivateTargetId); if(!c) return;
     confirmDeactivateBtn.disabled=true; confirmDeactivateBtn.textContent='Validando…';
-    deactivateStatus.textContent='Validando de forma síncrona si existen productos activos asociados…';
+    deactivateStatus.textContent='Verificando productos asociados a la categoría…';
     setTimeout(()=>{
       if(state.queryState==='s04e'){
         state.queryState='';
@@ -512,8 +512,8 @@
       else if(action==='back-list'){state.queryState='';setView('tree');}
       else if(action==='cancel-form'){state.view='tree';render();focusMain();}
       else if(action==='retry-tree'){state.queryState='';state.listLoading=true;render();}
-      else if(action==='safe-back'){showToast('Regreso simulado al módulo de productos.');}
-      else if(action==='login'){state.queryState='';state.listLoading=true;render();showToast('Sesión recuperada para el prototipo.');}
+      else if(action==='safe-back'){showToast('Redirigiendo al catálogo de productos...');}
+      else if(action==='login'){state.queryState='';state.listLoading=true;render();showToast('Sesión restaurada correctamente.');}
     }));
 
     const form=document.getElementById('catForm');

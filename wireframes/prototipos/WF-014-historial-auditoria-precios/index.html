@@ -705,16 +705,7 @@
         </div>
       </div>
 
-      <!-- Panel de Demostración de Casos -->
-      <div class="card" style="padding:12px 18px; background:var(--neutral-10); border-style:dashed; margin-bottom:18px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <span class="small"><strong>Demostración de criterios y límites:</strong></span>
-          <div class="button-row">
-            <button class="btn btn-quiet small" id="demo-filter-empty" type="button">Filtro sin resultados (S-01-V)</button>
-            <button class="btn btn-quiet small" id="demo-filter-pdf-limit" type="button">Simular >500 registros para PDF (S-04-R)</button>
-            <button class="btn btn-quiet small" id="demo-filter-reset" type="button">Restablecer vista normal</button>
-          </div>
-        </div>
+      
       </div>
 
       <!-- Panel de Filtros -->
@@ -830,7 +821,7 @@
     document.getElementById('demo-filter-pdf-limit')?.addEventListener('click', () => {
       state.simulatedTotalCount = 842; // supera 500 para probar S-04-R
       render();
-      showToast('Simulando búsqueda con 842 registros (> 500). Abre "Exportar a PDF" para ver el rechazo.');
+      
     });
     document.getElementById('demo-filter-reset')?.addEventListener('click', () => {
       state.filters = { sku: '', desde: '', hasta: '', usuario: '', canal: 'Todos', batch_id: '' };
