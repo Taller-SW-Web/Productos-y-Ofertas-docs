@@ -37,6 +37,7 @@
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
     .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
@@ -162,7 +163,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div>
       <div class="crumb">Productos / Categorías</div>
     </div>
   </header>
@@ -179,7 +180,7 @@
       </div>
       <button class="icon-button" type="button" data-close-deactivate aria-label="Cerrar">×</button>
     </div>
-    <div class="notice">
+    <div class="notice" id="deactivateIntro">
       <span class="notice-icon" aria-hidden="true">!</span>
       <div><h3>La categoría dejará de mostrarse en los canales de venta.</h3><p>Se validará de forma síncrona que no tenga productos activos asociados. La categoría no se elimina: la baja es lógica.</p></div>
     </div>
@@ -188,6 +189,10 @@
       <button id="confirmDeactivateBtn" class="btn btn-danger" type="button">Desactivar categoría</button>
     </div>
     <div id="deactivateStatus" class="small muted" style="margin-top:14px"></div>
+    <div id="deactivateError" class="notice error" style="display:none;margin-top:14px" role="alert">
+      <span class="notice-icon" aria-hidden="true">!</span>
+      <div><h3>No pudimos validar los productos asociados.</h3><p>Catálogo Core no respondió. No asumimos que la categoría esté libre de productos, por lo que la desactivación no se completó.</p></div>
+    </div>
   </section>
 </div>
 
@@ -199,6 +204,7 @@
     Estados documentales de WF-008 que pueden inspeccionarse sin contaminar la UI:
       ?state=empty
       ?state=tree-error
+      ?state=s04e          -> validación indisponible al desactivar (S-04-E)
       ?state=no-permission
       ?state=session-expired
     No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
@@ -429,6 +435,8 @@
     deactivateTargetId=id; state.returnFocus=trigger;
     document.getElementById('deactivateName').textContent=c.name;
     deactivateStatus.textContent='';
+    document.getElementById('deactivateError').style.display='none';
+    document.getElementById('deactivateIntro').style.display='';
     confirmDeactivateBtn.disabled=false; confirmDeactivateBtn.textContent='Desactivar categoría';
     deactivateOverlay.classList.add('open');deactivateOverlay.setAttribute('aria-hidden','false');
     setTimeout(()=>confirmDeactivateBtn.focus(),0);
@@ -439,6 +447,14 @@
     confirmDeactivateBtn.disabled=true; confirmDeactivateBtn.textContent='Validando…';
     deactivateStatus.textContent='Validando de forma síncrona si existen productos activos asociados…';
     setTimeout(()=>{
+      if(state.queryState==='s04e'){
+        state.queryState='';
+        document.getElementById('deactivateIntro').style.display='none';
+        document.getElementById('deactivateError').style.display='flex';
+        deactivateStatus.textContent='';
+        confirmDeactivateBtn.disabled=false; confirmDeactivateBtn.textContent='Reintentar';
+        return;
+      }
       closeDeactivate();
       if(c.products>0){
         app.innerHTML=`<div class="page-header"><div><h1>Desactivación bloqueada</h1><p>La categoría no se pudo desactivar.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No se puede desactivar porque la categoría tiene productos activos asociados.</h3><p>Desactiva o reasigna los productos antes de reintentar. No se registró ningún cambio.</p></div></div><div class="button-row"><button class="btn" data-action="view" data-id="${c.id}">Ver categoría</button><button class="btn btn-primary" data-action="back-tree">Volver a categorías</button></div>`;
