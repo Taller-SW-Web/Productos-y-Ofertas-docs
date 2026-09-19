@@ -37,6 +37,7 @@
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
     .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
@@ -201,7 +202,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span class="brand-text">PO Productos y ofertas</span></div>
       <div class="crumb">Productos / Combos</div>
     </div>
   </header>
@@ -261,6 +262,7 @@
     Estados documentales de WF-002 que pueden inspeccionarse sin contaminar la UI:
       ?state=empty
       ?state=list-error
+      ?state=save-error       -> fallo al guardar combo (S-02-E), conserva datos y permite reintento
       ?state=no-permission
       ?state=session-expired
     No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
@@ -321,9 +323,11 @@
     selectedIds:new Set(),
     returnFocus:null,
     saving:false,
+    saveErrorShown:false,
     listLoading:true,
     queryState:new URLSearchParams(location.search).get('state') || ''
   };
+  state.saveError = state.queryState === 'save-error';
 
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
@@ -439,6 +443,7 @@
     if(!f.name.trim()) errors.push({key:'name',msg:'Ingresa un nombre para el combo.'});
     if(!f.description.trim()) errors.push({key:'description',msg:'Ingresa una descripción.'});
     if(f.components.length<2) errors.push({key:'components',msg:'Añade al menos 2 componentes.'});
+    if(f.components.length>20) errors.push({key:'components',msg:'Un combo no puede tener más de 20 componentes.'});
     f.components.forEach((c,i)=>{const q=Number(c.qty);if(!Number.isInteger(q)||q<=0) errors.push({key:`qty-${i}`,msg:'Ingresa una cantidad entera mayor que cero.'});});
     const p=Number(f.price);
     if(!Number.isFinite(p)||p<=0||p>=calc.sum) errors.push({key:'price',msg:'El precio debe ser mayor que cero y menor que la suma de los componentes.'});
@@ -465,9 +470,10 @@
     const v=formValidation(); const mode=state.formMode; const title=mode==='create'?'Crear combo':'Editar combo';
     const pErr=errorFor(v,'price'); const nameErr=errorFor(v,'name'); const descErr=errorFor(v,'description'); const compErr=errorFor(v,'components');
     const limiter=v.calc.limiter;
-    const errorSummary=extraNotice?`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div>${extraNotice}</div></div>`:'';
+    const saveErrNotice=state.saveErrorShown?`<div class="notice error" role="alert"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos guardar el combo.</h3><p>Se produjo un error de comunicación al persistir los cambios. Se conservaron tus datos; revisa la conexión e intenta guardar nuevamente.</p></div></div>`:'';
+    const errorSummary=extraNotice?`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div>${extraNotice}</div></div>`:saveErrNotice;
     app.innerHTML=`
-      <div class="page-header"><div><h1>${title}</h1><p>Configura componentes directos, cantidades y un precio promocional válido.</p></div></div>
+      <div class="page-header"><div><h1>${title}</h1><p>Configura componentes directos (máximo 20), cantidades y un precio promocional válido.</p></div></div>
       ${errorSummary}
       <div id="formErrorSummary" class="error-summary" tabindex="-1"><h3>Revisa los datos antes de guardar.</h3><ul>${v.errors.map(e=>`<li>${escapeHtml(e.msg)}</li>`).join('')}</ul></div>
       <form id="comboForm" novalidate>
@@ -478,7 +484,7 @@
             <div class="field"><label for="comboDescription">Descripción</label><textarea id="comboDescription" aria-invalid="${descErr?'true':'false'}">${escapeHtml(state.form.description)}</textarea><div class="field-error ${descErr?'show':''}">${escapeHtml(descErr)}</div></div>
           </section>
           <section class="section">
-            <div class="section-head"><div><h2>Componentes</h2><p class="muted small">Cada componente debe ser un SKU vendible directo (variante o producto simple con SKU base).</p></div><button class="btn" type="button" data-action="add-components">Añadir componentes</button></div>
+            <div class="section-head"><div><h2>Componentes</h2><p class="muted small">Cada componente debe ser un SKU vendible directo (variante o producto simple con SKU base). Máximo 20 componentes por combo.</p></div><button class="btn" type="button" data-action="add-components">Añadir componentes</button></div>
             <div class="field-error ${compErr?'show':''}" style="margin-bottom:12px">${escapeHtml(compErr)}</div>
             <div class="component-table table-wrap"><table><thead><tr><th>SKU</th><th>Producto / variante</th><th>Precio regular</th><th>Stock</th><th>Cantidad</th><th>Aporte</th><th>Acción</th></tr></thead><tbody>${componentRows(v)}</tbody></table></div>
             <div class="component-mobile">${componentCards(v)}</div>
@@ -490,7 +496,7 @@
         <aside class="section summary" aria-live="polite"><h2>Resumen</h2>
           <div class="metric"><span class="metric-label">Suma regular vigente</span><span class="metric-value">${money(v.calc.sum)}</span><span class="metric-detail">Precio regular × cantidad de cada componente.</span></div>
           <div class="metric"><span class="metric-label">Disponibilidad calculada</span><span class="metric-value">${v.calc.availability==null?'—':v.calc.availability}</span><span class="metric-detail">${limiter?`Limitada por ${escapeHtml(limiter.name)} (${escapeHtml(limiter.sku)}).`:'Añade componentes válidos para calcularla.'}</span></div>
-          <div class="metric"><span class="metric-label">Componentes</span><span class="metric-value">${state.form.components.length}</span></div>
+          <div class="metric"><span class="metric-label">Componentes</span><span class="metric-value">${state.form.components.length} / 20</span></div>
         </aside>
       </div>
       <div class="form-actions"><button class="btn" type="button" data-action="cancel-form">Cancelar</button><button id="saveComboBtn" class="btn btn-primary" type="submit" ${!v.valid||state.saving?'disabled':''}>${state.saving?'Guardando…':mode==='create'?'Crear combo':'Guardar cambios'}</button></div>
@@ -524,17 +530,36 @@
   function closeSelector(){selectorOverlay.classList.remove('open');selectorOverlay.setAttribute('aria-hidden','true');state.returnFocus?.focus();}
   function renderSelectorResults(query){
     const q=query.trim().toLowerCase(); const existing=new Set(state.form.components.map(c=>c.catalogId));
+    const currentTotal=state.form.components.length;
     const items=catalog.filter(item=>!q||[item.sku,item.name,item.variant,item.type].join(' ').toLowerCase().includes(q));
     if(!items.length){selectorResults.innerHTML=`<div class="empty-state" style="border:0;padding:28px 16px"><h3>Sin resultados</h3><p>Cambia la búsqueda e inténtalo nuevamente.</p></div>`;updateSelectorCount();return;}
     selectorResults.innerHTML=items.map(item=>{
-      const blocked=item.isCombo||!item.active||existing.has(item.id); const reason=item.isCombo?'No se permiten combos dentro de otros combos.':!item.active?'Componente inactivo.':existing.has(item.id)?'Ya añadido al combo.':'';
+      const isLimit=currentTotal>=20;
+      const blocked=item.isCombo||!item.active||existing.has(item.id)||(isLimit&&!state.selectedIds.has(item.id));
+      const reason=item.isCombo?'No se permiten combos dentro de otros combos.':!item.active?'Componente inactivo.':existing.has(item.id)?'Ya añadido al combo.':isLimit?'Límite de 20 componentes alcanzado en el combo.':'';
       return `<div class="result-item ${blocked?'disabled':''}"><input class="checkbox" type="checkbox" data-select-catalog="${item.id}" ${blocked?'disabled':''} ${state.selectedIds.has(item.id)?'checked':''} aria-label="Seleccionar ${escapeHtml(item.name)}"><div><div class="result-title">${escapeHtml(item.name)} <span class="mono">${escapeHtml(item.sku)}</span></div><div class="result-meta">${escapeHtml(item.type)} · ${escapeHtml(item.variant)} · ${money(item.price)} · Stock ${item.stock??'—'}</div>${reason?`<div class="small" style="margin-top:4px;font-weight:600">${escapeHtml(reason)}</div>`:''}</div><span class="status ${item.active&&!item.isCombo?'active':''}">${item.active?'Activo':'Inactivo'}</span></div>`;
     }).join('');
     selectorResults.querySelectorAll('[data-select-catalog]').forEach(cb=>cb.addEventListener('change',e=>{const id=e.target.dataset.selectCatalog;e.target.checked?state.selectedIds.add(id):state.selectedIds.delete(id);updateSelectorCount();}));
     updateSelectorCount();
   }
-  function updateSelectorCount(){selectorCount.textContent=`${state.selectedIds.size} seleccionado${state.selectedIds.size===1?'':'s'}`;addSelectedBtn.disabled=state.selectedIds.size===0;}
-  function addSelected(){state.selectedIds.forEach(id=>state.form.components.push({catalogId:id,qty:1}));state.dirty=true;closeSelector();render();showToast('Componentes añadidos.');}
+  function updateSelectorCount(){
+    const total=state.form.components.length+state.selectedIds.size;
+    const overLimit=total>20;
+    if(overLimit){
+      selectorCount.innerHTML=`<span style="font-weight:600;color:var(--neutral-90)">${state.selectedIds.size} seleccionados (supera el límite de 20)</span>`;
+      addSelectedBtn.disabled=true;
+    }else{
+      selectorCount.textContent=`${state.selectedIds.size} seleccionado${state.selectedIds.size===1?'':'s'} (máx. 20)`;
+      addSelectedBtn.disabled=state.selectedIds.size===0;
+    }
+  }
+  function addSelected(){
+    if(state.form.components.length+state.selectedIds.size>20){
+      showToast('No puedes exceder el límite de 20 componentes.');
+      return;
+    }
+    state.selectedIds.forEach(id=>state.form.components.push({catalogId:id,qty:1}));state.dirty=true;closeSelector();render();showToast('Componentes añadidos.');
+  }
 
   function openDeactivate(id,trigger){
     const c=comboById(id);if(!c)return;deactivateTargetId=id;state.returnFocus=trigger;document.getElementById('deactivateName').textContent=c.name;confirmDeactivateBtn.disabled=false;confirmDeactivateBtn.textContent='Desactivar combo';deactivateOverlay.classList.add('open');deactivateOverlay.setAttribute('aria-hidden','false');setTimeout(()=>confirmDeactivateBtn.focus(),0);
@@ -550,6 +575,15 @@
     if(!v.valid){renderForm();const s=document.getElementById('formErrorSummary');s.classList.add('show');s.focus();return;}
     state.saving=true;renderForm();
     setTimeout(()=>{
+      if(state.saveError){
+        state.saveError=false;
+        state.saveErrorShown=true;
+        state.saving=false;
+        renderForm();
+        showToast('No se pudo guardar. Se conservaron tus datos.');
+        return;
+      }
+      state.saveErrorShown=false;
       if(state.formMode==='edit' && state.currentComboId==='combo-2' && !state.form._conflictResolved){
         const item=catalogItem('sku-pel');item.price=32.00;state.form._conflictResolved=true;state.saving=false;
         renderForm(`<h3>Los datos de un componente cambiaron.</h3><p>Pelotas de tenis ahora cuesta ${money(item.price)}. Actualizamos la suma y la disponibilidad con los valores vigentes. Revisa el precio del combo antes de guardar.</p>`);
