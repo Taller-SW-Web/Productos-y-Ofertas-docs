@@ -32,6 +32,7 @@
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
     .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
@@ -161,7 +162,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div>
       <div class="crumb">Productos / Características / Asociaciones</div>
     </div>
   </header>
@@ -247,7 +248,8 @@
 
   /*
     Estados documentales de WF-010 que pueden inspeccionarse sin contaminar la UI:
-      ?state=error
+      ?state=error          -> error de carga de asociaciones (S-01-E)
+      ?state=save-error     -> fallo al guardar asociación (S-02-E), conserva selección
       ?state=no-permission
       ?state=session-expired
     No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
@@ -289,6 +291,7 @@
     saving:false,
     queryState:new URLSearchParams(location.search).get('state') || ''
   };
+  state.saveError = state.queryState==='save-error';
 
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
@@ -343,6 +346,11 @@
   function render(){
     if(renderGlobalState()){ bindPage(); return; }
     const header=`<div class="page-header"><div><h1>Asociaciones por categoría</h1><p>Selecciona una categoría para ver qué características le aplican. Las heredadas provienen de la categoría padre.</p></div><div class="button-row"><button class="btn btn-primary" data-action="associate" id="topAssociateBtn">Asociar característica</button></div></div>`;
+    if(state.queryState==='error'){
+      app.innerHTML=header+`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar las asociaciones.</h3><p>Vuelve a intentarlo. No se muestran datos anteriores como si estuvieran vigentes.</p></div></div><button class="btn" data-action="retry-load">Reintentar</button>`;
+      bindPage();
+      return;
+    }
     if(state.loading){
       app.innerHTML=header+`<div class="layout"><div class="tree-nav"><h2>Categorías</h2><div class="skeleton"><div class="sk-line w80"></div><div class="sk-line w50"></div></div></div><div class="skeleton" aria-label="Cargando asociaciones"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div></div>`;
       setTimeout(()=>{state.loading=false;render();},450);
@@ -421,6 +429,11 @@
     if(directAssocs(cat.id).length>=MAX_DIRECT){associateNotice.innerHTML=`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Límite de ${MAX_DIRECT} alcanzado.</h3><p>Desasocia una característica directa para poder asociar otra.</p></div></div>`;return;}
     if(directAssocs(cat.id).some(a=>a.charId===charId)){associateNotice.innerHTML=`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Ya está asociada.</h3><p>La característica ya forma parte de esta categoría.</p></div></div>`;return;}
     const condition=associateOverlay.querySelector('input[name="cond"]:checked').value;
+    if(state.saveError){
+      state.saveError=false;
+      associateNotice.innerHTML=`<div class="notice error" role="alert"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos guardar la asociación.</h3><p>Se conservaron la característica y la condición seleccionadas. Reintenta; no se registraron duplicados.</p></div></div>`;
+      return;
+    }
     associations.push({catId:cat.id,charId,condition});
     closeAssociate(); render(); showToast('Característica asociada.');
   }
@@ -461,6 +474,7 @@
       if(action==='associate')openAssociate(e.currentTarget);
       else if(action==='condition')openCondition(id,e.currentTarget);
       else if(action==='dissociate')openDissociate(id,e.currentTarget);
+      else if(action==='retry-load'){state.queryState='';state.loading=true;render();}
       else if(action==='safe-back'){showToast('Regreso simulado al módulo de productos.');}
       else if(action==='login'){state.queryState='';state.loading=true;render();showToast('Sesión recuperada para el prototipo.');}
     }));

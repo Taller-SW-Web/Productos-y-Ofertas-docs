@@ -32,6 +32,7 @@
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
     .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
@@ -40,7 +41,6 @@
     h2{font-size:24px;line-height:1.2;margin:0 0 16px}
     h3{font-size:18px;line-height:1.3;margin:0 0 12px}
     .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
-    .ann{display:none !important}
     .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
     .btn-primary{background:var(--neutral-90);color:var(--surface)}
     .btn-danger{background:var(--surface);border-style:double;border-width:3px}
@@ -134,7 +134,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div>
       <div class="crumb">Productos / SEO</div>
     </div>
   </header>
@@ -150,6 +150,7 @@
     Estados documentales de WF-012 que pueden inspeccionarse sin contaminar la UI:
       ?state=empty            -> listado vacío (S-01-E)
       ?state=list-error       -> error de carga (S-01-E)
+      ?state=save-error       -> fallo al guardar (S-02-E), conserva datos y permite reintento
       ?state=no-permission    -> usuario sin permiso
       ?state=session-expired  -> sesión expirada
     No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
@@ -174,8 +175,10 @@
     historyId:null,
     loading:true,
     saving:false,
+    saveErrorShown:false,
     queryState:new URLSearchParams(location.search).get('state') || ''
   };
+  state.saveError = state.queryState==='save-error';
 
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
@@ -257,8 +260,7 @@
         <thead><tr><th>Categoría</th><th>Slug</th><th>Meta-título</th><th>Configuración</th><th>Acciones</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
-      <div class="mobile-list">${cards}</div>
-      <p class="ann">A-01 · Estado Configurado/Pendiente · A-03 · El slug es activo y único por categoría</p>`;
+      <div class="mobile-list">${cards}</div>`;
     bindPage();
   }
 
@@ -277,9 +279,13 @@
     const slugNote=state.form?.autoSuffixed
       ?`<div class="notice" style="margin-top:10px"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Se aplicó un sufijo.</h3><p>El slug generado ya estaba en uso, por lo que se guardó como <strong>${escapeHtml(state.form.slug)}</strong>.</p></div></div>`
       :'';
+    const saveErr=state.saveErrorShown
+      ?`<div class="notice error" role="alert"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos guardar la configuración SEO.</h3><p>Se conservaron los datos del formulario. Revisa la conexión y reintenta; no se registraron duplicados.</p></div></div>`
+      :'';
     app.innerHTML=`<div class="page-header">${backBtn('list')}<div style="flex:1"></div><div style="text-align:right">${statusBadge(c.configured)}</div></div>
       <h1>${escapeHtml(c.name)}</h1>
       <form id="seoForm" class="section" style="margin-top:0" novalidate>
+        ${saveErr}
         <div class="field">
           <label for="seoSlug">Slug</label>
           <input type="text" id="seoSlug" value="${escapeHtml(slugVal)}" placeholder="ej. calzado-deportivo">
@@ -315,7 +321,6 @@
             <div class="preview-desc">${escapeHtml(descVal.slice(0,160))}</div>
           </div>
         </div>
-        <p class="ann">A-06 · Slug normalizado · A-07 · Auto-generación: duplicado con sufijo silencioso · A-08 · Edición manual: duplicado rechazado · A-09 · 70/160 permiten guardar · A-10 · Cambio de slug genera historial + 301 · A-11 · Snippet simulado</p>
         <div class="button-row end">
           <button class="btn" type="button" data-action="list">Cancelar</button>
           <button class="btn btn-primary" type="submit" id="saveSeoBtn">Guardar</button>
@@ -391,6 +396,17 @@
       showToast('Guardando…');
       setTimeout(()=>{
         state.saving=false;
+        if(state.saveError){
+          state.saveError=false;
+          state.saveErrorShown=true;
+          state.form.slug=slugEl.value.trim();
+          state.form.title=titleEl.value;
+          state.form.desc=descEl.value;
+          renderEditor();
+          bindEditor(c);
+          showToast('No se pudo guardar. Se conservaron tus datos.');
+          return;
+        }
         c.slug=manual;
         c.title=titleEl.value;
         c.desc=descEl.value;
@@ -422,7 +438,6 @@
       <div class="section" style="margin-top:0">
         <div class="kv" style="border-top:0"><span class="mono muted">Slug actual</span><div class="slug-cell" style="font-size:16px;margin-top:4px">${c.configured?escapeHtml(c.slug):'<span class="muted">Pendiente</span>'}</div></div>
         ${histMarkup}
-        <p class="ann">A-12 · Cada slug anterior queda como redirección 301 al slug actual</p>
       </div>
       <section class="section">
         <h2>Endpoint público de metadatos</h2>
@@ -432,7 +447,6 @@
           <input type="text" id="endpointSlug" value="${c.configured?escapeHtml(c.slug):''}" placeholder="escribe un slug">
           <button class="btn btn-primary" type="button" id="endpointBtn">Consultar</button>
         </div>
-        <p class="ann">A-13 · Endpoint público: retorna título y descripción por slug activo</p>
         <div id="endpointResult" style="margin-top:16px">
           <div class="codebox" id="endpointJson">Esperando consulta…</div>
         </div>

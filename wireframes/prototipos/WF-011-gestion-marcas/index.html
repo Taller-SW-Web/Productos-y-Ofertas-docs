@@ -32,6 +32,7 @@
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
     .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
@@ -40,7 +41,6 @@
     h2{font-size:24px;line-height:1.2;margin:0 0 16px}
     h3{font-size:18px;line-height:1.3;margin:0 0 12px}
     .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
-    .ann{display:none !important}
     .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
     .btn-primary{background:var(--neutral-90);color:var(--surface)}
     .btn-danger{background:var(--surface);border-style:double;border-width:3px}
@@ -147,7 +147,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div>
       <div class="crumb">Productos / Marcas</div>
     </div>
   </header>
@@ -173,6 +173,7 @@
     Estados documentales de WF-011 que pueden inspeccionarse sin contaminar la UI:
       ?state=empty            -> listado vacío (S-01-E)
       ?state=list-error       -> error de carga (S-01-E)
+      ?state=save-error       -> fallo al guardar (S-02-E), conserva datos y permite reintento
       ?state=no-permission    -> usuario sin permiso
       ?state=session-expired  -> sesión expirada
     No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
@@ -195,8 +196,10 @@
     selectedId:null,
     loading:true,
     saving:false,
+    saveErrorShown:false,
     queryState:new URLSearchParams(location.search).get('state') || ''
   };
+  state.saveError = state.queryState==='save-error';
 
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
@@ -278,8 +281,7 @@
         <thead><tr><th>Logo</th><th>Nombre</th><th>País</th><th>Productos activos</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
-      <div class="mobile-brands">${cards}</div>
-      <p class="ann">A-04 · Las acciones no incluyen eliminación física · A-06 · Solo las marcas activas llegan a los filtros de los canales</p>`;
+      <div class="mobile-brands">${cards}</div>`;
     bindPage();
   }
 
@@ -303,7 +305,6 @@
           <div class="kv"><dt class="kv-label">País de origen</dt><dd class="kv-value" style="margin:0">${b.country?escapeHtml(b.country):'<span class="muted">Sin país</span>'}</dd></div>
           <div class="kv"><dt class="kv-label">Productos activos</dt><dd class="kv-value" style="margin:0">${b.active?String(b.products):'<span class="muted">—</span>'}</dd></div>
         </dl>
-        <p class="ann">A-21 · El detalle muestra el efecto en canales · A-22 · Reactivar no exige validación adicional</p>
       </div>
       <div class="button-row">
         <button class="btn" data-action="list">Volver a marcas</button>
@@ -328,9 +329,13 @@
     const hasLogo=state.form?.hasLogo??(b?!!b.logo:false);
     const heading=isNew?'Crear marca':'Editar marca';
     const idAttr=`id="${isNew?'createForm':'editForm'}"`;
+    const saveErr=state.saveErrorShown
+      ?`<div class="notice error" role="alert"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos guardar la marca.</h3><p>Se conservaron tus datos. Revisa la conexión y reintenta; no se registraron duplicados.</p></div></div>`
+      :'';
     app.innerHTML=`<div class="page-header">${backBtn('list')}<div style="flex:1"></div></div>
       <h1>${heading}</h1>
       <form ${idAttr} class="section" style="margin-top:0" novalidate>
+        ${saveErr}
         <div class="field">
           <label for="brandName">Nombre *</label>
           <input type="text" id="brandName" value="${escapeHtml(fname)}" required>
@@ -357,9 +362,6 @@
           <input type="text" id="brandCountry" value="${escapeHtml(fcountry)}">
           <span class="hint">Opcional.</span>
         </div>
-        <p class="ann">${isNew
-          ?'A-09 · Unicidad ignorando mayúsculas/minúsculas · A-10 · Logo máximo 5 MB con rechazo y motivo · A-12 · La marca se registra Activa'
-          :'A-13 · El reemplazo de logo valida el tamaño · A-14 · Al guardar se actualiza updated_at · A-15 · Cambiar datos no afecta productos asociados'}</p>
         <div class="button-row end">
           <button class="btn" type="button" data-action="list">Cancelar</button>
           <button class="btn btn-primary" type="submit" id="saveBrandBtn">${isNew?'Crear marca':'Guardar cambios'}</button>
@@ -423,6 +425,14 @@
         state.form.name=v;
         state.form.desc=document.getElementById('brandDesc').value.trim();
         state.form.country=document.getElementById('brandCountry').value.trim();
+        if(state.saveError){
+          state.saveError=false;
+          state.saveErrorShown=true;
+          renderForm();
+          bindForm(isNew, b);
+          showToast('No se pudo guardar. Se conservaron tus datos.');
+          return;
+        }
         if(isNew){
           brands.push({id:'nb-'+Date.now(), name:v, desc:state.form.desc, country:state.form.country, logo:state.form.logoDataUrl||null, active:true, products:0, validate:'ok'});
           showToast('Marca creada.');
@@ -465,7 +475,6 @@
         <span class="notice-icon" aria-hidden="true">!</span>
         <div><h3>La marca dejará de mostrarse en los filtros de los canales.</h3><p>Antes de desactivar validaremos de forma síncrona que no tenga productos activos asociados.</p></div>
       </div>
-      <p class="ann">A-16 · Retiro de los filtros de canales · A-17 · Validación síncrona con Catálogo Core, timeout 15 s · A-18 · No existe acción de eliminación física</p>
       <div class="button-row end">
         <button class="btn" type="button" data-deact-cancel>Cancelar</button>
         <button class="btn btn-danger" type="button" id="doDeactivate">Desactivar</button>
@@ -511,7 +520,6 @@
         <span class="notice-icon" aria-hidden="true">!</span>
         <div><h3>No se puede desactivar la marca.</h3><p>Tiene <strong>${b.products} productos activos</strong> asociados. Desactiva o reasigna esos productos antes de reintentar.</p></div>
       </div>
-      <p class="ann">A-19 · El bloqueo evita productos sin marca válida en los canales</p>
       <div class="button-row end"><button class="btn" type="button" data-deact-cancel>Cerrar</button></div>`;
     const cancel=deactivateOverlay.querySelector('[data-deact-cancel]');
     cancel.addEventListener('click',closeDeactivate);
@@ -523,7 +531,6 @@
         <span class="notice-icon" aria-hidden="true">!</span>
         <div><h3>No pudimos validar los productos asociados.</h3><p>Catálogo Core no respondió dentro del tiempo límite (15 s). No asumimos que la marca esté libre de productos, por lo que la desactivación no se completó.</p></div>
       </div>
-      <p class="ann">A-20 · Sin respuesta en 15 s: se rechaza la baja, sin asumir “sin productos”</p>
       <div class="button-row end">
         <button class="btn" type="button" data-deact-cancel>Cerrar</button>
         <button class="btn btn-danger" type="button" id="doDeactivate">Reintentar</button>
