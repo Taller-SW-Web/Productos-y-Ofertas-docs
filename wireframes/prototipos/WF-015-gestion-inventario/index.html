@@ -32,6 +32,7 @@
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
     .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
@@ -40,7 +41,6 @@
     h2{font-size:24px;line-height:1.2;margin:0 0 16px}
     h3{font-size:18px;line-height:1.3;margin:0 0 12px}
     .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
-    .ann{display:none !important}
     .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
     .btn-primary{background:var(--neutral-90);color:var(--surface)}
     .btn-danger{background:var(--surface);border-style:double;border-width:3px}
@@ -144,7 +144,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span class="brand-text">PO Productos y ofertas</span></div>
       <div class="crumb">Productos / Inventario</div>
     </div>
   </header>
@@ -152,13 +152,13 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<div id="consumeOverlay" class="overlay" aria-hidden="true">
-  <section class="dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="consumeTitle">
+<div id="resultOverlay" class="overlay" aria-hidden="true">
+  <section class="dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
     <div class="dialog-header">
-      <div><h2 id="consumeTitle">Registrar consumo</h2><p id="consumeMeta" class="muted small"></p></div>
-      <button class="icon-button" type="button" id="consumeCloseTop" aria-label="Cerrar">×</button>
+      <div><h2 id="resultTitle">Resultado de consumo</h2><p id="resultMeta" class="muted small"></p></div>
+      <button class="icon-button" type="button" id="resultCloseTop" aria-label="Cerrar">×</button>
     </div>
-    <div id="consumeBody"></div>
+    <div id="resultBody"></div>
   </section>
 </div>
 
@@ -192,12 +192,12 @@
   }
 
   let skus = [
-    {id:'sk-nk-blk40', product:'Nike Air Max', sku:'NK-AM-BLK-40', attrs:'Negro / Talla 40', stock:10, umbral:5},
-    {id:'sk-nk-blk41', product:'Nike Air Max', sku:'NK-AM-BLK-41', attrs:'Negro / Talla 41', stock:3, umbral:5},
-    {id:'sk-nk-wht40', product:'Nike Air Max', sku:'NK-AM-WHT-40', attrs:'Blanco / Talla 40', stock:0, umbral:5},
-    {id:'sk-ad-pred42', product:'Adidas Predator', sku:'AD-PR-42-RD', attrs:'Rojo / Talla 42', stock:15, umbral:6},
-    {id:'sk-ad-pred43', product:'Adidas Predator', sku:'AD-PR-43-RD', attrs:'Rojo / Talla 43', stock:5, umbral:6},
-    {id:'sk-pum-ft40', product:'Puma Future', sku:'PM-FT-40-BK', attrs:'Negro / Talla 40', stock:0, umbral:4}
+    {id:'sk-nk-blk40', product:'Nike Air Max', sku:'NK-AM-BLK-40', attrs:'Negro / Talla 40', stock:10, umbral:5, result:{pedido:'PED-1238', cantidad:3, estado:'aceptado'}},
+    {id:'sk-nk-blk41', product:'Nike Air Max', sku:'NK-AM-BLK-41', attrs:'Negro / Talla 41', stock:3, umbral:5, result:{pedido:'PED-1240', cantidad:6, estado:'rechazado'}},
+    {id:'sk-nk-wht40', product:'Nike Air Max', sku:'NK-AM-WHT-40', attrs:'Blanco / Talla 40', stock:0, umbral:5, result:{pedido:'PED-1241', cantidad:1, estado:'conflicto'}},
+    {id:'sk-ad-pred42', product:'Adidas Predator', sku:'AD-PR-42-RD', attrs:'Rojo / Talla 42', stock:15, umbral:6, result:{pedido:'PED-1245', cantidad:2, estado:'aceptado'}},
+    {id:'sk-ad-pred43', product:'Adidas Predator', sku:'AD-PR-43-RD', attrs:'Rojo / Talla 43', stock:5, umbral:6, result:{pedido:'PED-1247', cantidad:2, estado:'aceptado'}},
+    {id:'sk-pum-ft40', product:'Puma Future', sku:'PM-FT-40-BK', attrs:'Negro / Talla 40', stock:0, umbral:4, result:{pedido:'PED-1250', cantidad:1, estado:'conflicto'}}
   ];
 
   const state = {
@@ -209,26 +209,24 @@
     filter:'all',
     queryState:new URLSearchParams(location.search).get('state') || ''
   };
-  const events = [];
-  let consumedThisSession = 0;
+  const events = ['PED-1245 · AD-PR-42-RD · stock: 17 → 15 · estado: Disponible'];
 
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
-  const consumeOverlay = document.getElementById('consumeOverlay');
-  const consumeMeta = document.getElementById('consumeMeta');
-  const consumeBody = document.getElementById('consumeBody');
-  const consumeCloseTop = document.getElementById('consumeCloseTop');
+  const resultOverlay = document.getElementById('resultOverlay');
+  const resultMeta = document.getElementById('resultMeta');
+  const resultBody = document.getElementById('resultBody');
+  const resultCloseTop = document.getElementById('resultCloseTop');
   const umbralOverlay = document.getElementById('umbralOverlay');
   const umbralMeta = document.getElementById('umbralMeta');
   const umbralBody = document.getElementById('umbralBody');
   const umbralCloseTop = document.getElementById('umbralCloseTop');
-  let consumeTarget = null;
+  let resultTarget = null;
   let umbralTarget = null;
   let toastTimer = null;
 
   function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[ch])); }
   function skuById(id){ return skus.find(s=>s.id===id); }
-  function skuByCode(code){ return skus.find(s=>s.sku.toLowerCase()===String(code||'').trim().toLowerCase()); }
   function showToast(message){ clearTimeout(toastTimer); toast.textContent=message; toast.classList.add('show'); toastTimer=setTimeout(()=>toast.classList.remove('show'),3200); }
   function labelOf(status){
     if(status==='avail') return 'Disponible';
@@ -245,16 +243,16 @@
   }
   function eventFeed(){
     if(!events.length) return '';
-    return `<div class="event-feed"><h3>Evento inventory.stock.changed</h3>${events.map(e=>`<div class="event-item">${escapeHtml(e)}</div>`).join('')}<p class="ann">A-05 · Cada cambio de stock se notifica con inventory.stock.changed</p></div>`;
+    return `<div class="event-feed"><h3>Evento inventory.stock.changed</h3>${events.map(e=>`<div class="event-item">${escapeHtml(e)}</div>`).join('')}</div>`;
   }
 
   function renderGlobalState(){
     if(state.queryState==='no-permission'){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta la disponibilidad de los SKUs vendibles y registra consumos.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para administrar el inventario.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
+      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta la disponibilidad de los SKUs vendibles y el resultado de los consumos confirmados.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para administrar el inventario.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
       return true;
     }
     if(state.queryState==='session-expired'){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta la disponibilidad de los SKUs vendibles y registra consumos.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
+      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta la disponibilidad de los SKUs vendibles y el resultado de los consumos confirmados.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
       return true;
     }
     return false;
@@ -288,14 +286,14 @@
     const rows=visibleSkus();
     const hasData=rows.length>0;
     if(!hasData && state.filter!=='all'){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible.</p></div><div class="button-row"><button class="btn btn-primary" data-action="create">Registrar consumo</button></div></div><div class="toolbar">${toolbar()}</div>
+      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="toolbar">${toolbar()}</div>
       <div class="empty-state"><h2>Sin resultados con el filtro actual.</h2><p>No hay SKUs en el estado seleccionado con el término buscado.</p><button class="btn" data-action="clear-filters">Limpiar filtros</button></div>${eventFeed()}`;
       bindControls();
       bindPage();
       return;
     }
     if(rows.length===0){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible.</p></div><div class="button-row"><button class="btn btn-primary" data-action="create">Registrar consumo</button></div></div><div class="toolbar">${toolbar()}</div>
+      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="toolbar">${toolbar()}</div>
       <div class="empty-state"><h2>Sin resultados.</h2><p>Ninguna variante coincide con la búsqueda.</p><button class="btn" data-action="clear-filters">Limpiar filtros</button></div>${eventFeed()}`;
       bindControls();
       bindPage();
@@ -312,7 +310,7 @@
         <td>${statusBadge(s)}</td>
         <td><div class="row-actions">
           <button class="btn btn-quiet" data-action="view" data-id="${s.id}">Ver</button>
-          <button class="btn btn-quiet" data-action="consume" data-id="${s.id}">Registrar consumo</button>
+          <button class="btn btn-quiet" data-action="result" data-id="${s.id}">Ver resultado de consumo</button>
           <button class="btn btn-quiet" data-action="umbral" data-id="${s.id}">Umbral</button>
         </div></td>
       </tr>`;
@@ -331,14 +329,13 @@
         <div class="small" style="margin:10px 0">Stock: ${s.stock} · Umbral: ${s.umbral}</div>
         <div class="row-actions">
           <button class="btn btn-quiet" data-action="view" data-id="${s.id}">Ver</button>
-          <button class="btn btn-quiet" data-action="consume" data-id="${s.id}">Registrar consumo</button>
+          <button class="btn btn-quiet" data-action="result" data-id="${s.id}">Ver resultado de consumo</button>
           <button class="btn btn-quiet" data-action="umbral" data-id="${s.id}">Umbral</button>
         </div>
       </article>`;
     }).join('');
     app.innerHTML=`<div class="page-header">
         <div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible. Un producto simple usa su sku_base; un producto con variantes usa el SKU de cada variante.</p></div>
-        <div class="button-row"><button class="btn btn-primary" data-action="create">Registrar consumo</button></div>
       </div>
       <div class="toolbar">${toolbar()}</div>
       <div class="desktop-table table-wrap"><table>
@@ -346,7 +343,6 @@
         <tbody>${trs}</tbody>
       </table></div>
       <div class="mobile-list">${cards}</div>
-      <p class="ann">A-01 · Unidad de inventario: SKU vendible · A-02 · Estado segmentado por stock y umbral · A-03 · Umbral configurable por SKU · A-05 · inventory.stock.changed en cada cambio</p>
       ${eventFeed()}`;
     bindControls();
     bindPage();
@@ -394,126 +390,63 @@
           <div class="kv"><dt class="kv-label">Umbral de stock bajo</dt><dd class="kv-value" style="margin:0">${s.umbral}</dd></div>
           <div class="kv"><dt class="kv-label">Estado</dt><dd class="kv-value" style="margin:0">${labelOf(st)}</dd></div>
         </dl>
-        <p class="ann">A-08 · Estado recalculado tras cada cambio de stock · A-09 · Umbral solo afecta este SKU · A-10 · Canales consultan por Variante/SKU</p>
       </div>
       <div class="button-row">
         <button class="btn" data-action="list">Volver a inventario</button>
-        <button class="btn" data-action="consume" data-id="${s.id}">Registrar consumo</button>
+        <button class="btn" data-action="result" data-id="${s.id}">Ver resultado de consumo</button>
         <button class="btn btn-quiet" data-action="umbral" data-id="${s.id}">Editar umbral</button>
       </div>`;
     bindPage();
   }
 
-  function openConsume(s){
-    consumeTarget=s;
-    document.getElementById('consumeTitle').textContent='Registrar consumo';
-    consumeMeta.textContent=`${s.sku} · ${s.product} · Stock disponible: ${s.stock}`;
-    consumeBody.innerHTML=`
-      ${consumeForm(s)}
-      <div class="notice" style="margin-top:16px">
-        <span class="notice-icon" aria-hidden="true">i</span>
-        <div><h3>El consumo definitivo corresponde a una venta confirmada (order.confirmed).</h3><p>order.created no reserva ni descuenta. El descuento se aplica mediante una actualización condicional sobre el stock.</p></div>
-      </div>
-      <p class="ann">A-13 · Actualización condicional: se aplica solo si el stock alcanza al momento de aplicar · A-14 · Mismo control optimista de las operaciones masivas · A-15 · Sin stock negativo</p>`;
-    consumeOverlay.classList.add('open'); consumeOverlay.setAttribute('aria-hidden','false');
-    bindConsumeForm();
+  function resultState(r){
+    if(r.estado==='rechazado') return 'rechazado';
+    if(r.estado==='conflicto') return 'conflicto';
+    return 'aceptado';
   }
-
-  function consumeForm(s){
-    const skuVal=s?escapeHtml(s.sku):'';
-    return `<form id="consumeForm" class="section" style="margin-top:0" novalidate>
-      <div class="field">
-        <label for="consumeSku">Variante/SKU *</label>
-        <input type="text" id="consumeSku" value="${skuVal}" placeholder="Ej. NK-AM-BLK-40" ${s?'readonly':''}>
-        <span class="hint">El SKU vendible de la variante.</span>
-        <span id="skuError" class="field-error" style="display:none"></span>
-      </div>
-      <div class="field">
-        <label for="consumeQty">Cantidad *</label>
-        <input type="number" id="consumeQty" min="1" step="1" value="1">
-        <span class="hint">Unidades a consumir; debe ser mayor a 0 y no superar el stock disponible.</span>
-        <span id="qtyError" class="field-error" style="display:none"></span>
-      </div>
+  function resultLabel(r){
+    const st=resultState(r);
+    if(st==='rechazado') return 'Consumo rechazado';
+    if(st==='conflicto') return 'Conflicto de concurrencia';
+    return 'Consumo aceptado';
+  }
+  function resultNotice(s,r){
+    const st=resultState(r);
+    if(st==='rechazado'){
+      return `<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>El consumo se rechazó por stock insuficiente.</h3><p>La cantidad solicitada supera la disponibilidad al momento de aplicar la actualización condicional. No se descuenta nada; la resolución corresponde a Ventas/Postventa.</p></div></div>`;
+    }
+    if(st==='conflicto'){
+      return `<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Conflicto de concurrencia detectado.</h3><p>Otra operación se aplicó primero sobre el saldo. Esta operación se rechaza sin bloqueo global y el stock nunca queda negativo.</p></div></div>`;
+    }
+    return `<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Consumo confirmado aplicado al stock.</h3><p>El débito se originó en un evento externo <span class="mono">order.confirmed</span>. Esta pantalla solo consulta el resultado; no registra ventas ni reenvía el evento.</p></div></div>`;
+  }
+  function resultBodyMarkup(s){
+    const r=s.result;
+    return `<div class="section" style="margin-top:0">
+      <dl>
+        <div class="kv"><dt class="kv-label">Pedido</dt><dd class="kv-value" style="margin:0">${escapeHtml(r.pedido)}</dd></div>
+        <div class="kv"><dt class="kv-label">Variante/SKU</dt><dd class="kv-value" style="margin:0">${escapeHtml(s.sku)}</dd></div>
+        <div class="kv"><dt class="kv-label">Cantidad del evento</dt><dd class="kv-value" style="margin:0">${r.cantidad} unidad(es)</dd></div>
+        <div class="kv"><dt class="kv-label">Resultado</dt><dd class="kv-value" style="margin:0">${resultLabel(r)}</dd></div>
+        <div class="kv"><dt class="kv-label">Stock disponible</dt><dd class="kv-value" style="margin:0">${s.stock}</dd></div>
+      </dl>
+      ${resultNotice(s,r)}
       <div class="button-row end">
-        <button class="btn" type="button" data-consume-cancel>Cancelar</button>
-        <button class="btn btn-primary" type="submit" id="confirmConsume">Confirmar consumo</button>
+        <button class="btn" type="button" data-result-back>Volver al SKU</button>
+        <button class="btn btn-quiet" type="button" id="refreshResult">Actualizar consulta</button>
       </div>
-    </form>`;
+    </div>`;
   }
-
-  function bindConsumeForm(){
-    const form=document.getElementById('consumeForm');
-    const skuEl=document.getElementById('consumeSku');
-    const qtyEl=document.getElementById('consumeQty');
-    const consumeCancel=consumeOverlay.querySelector('[data-consume-cancel]');
-    let confirmedOnThisSku=0;
-    consumeCancel.addEventListener('click',closeConsume);
-    form.addEventListener('submit',(e)=>{
-      e.preventDefault();
-      const code=skuEl.value.trim();
-      const qty=parseInt(qtyEl.value,10);
-      const sku=skuByCode(code);
-      const skuError=document.getElementById('skuError');
-      const qtyError=document.getElementById('qtyError');
-      skuError.style.display='none'; qtyError.style.display='none';
-      if(!sku){ skuError.textContent='El SKU no existe.'; skuError.style.display='block'; skuEl.focus(); return; }
-      if(!qty || qty<=0 || !Number.isInteger(qty)){ qtyError.textContent='La cantidad debe ser un número entero mayor a 0.'; qtyError.style.display='block'; qtyEl.focus(); return; }
-      // Proceso simulado
-      consumeBody.innerHTML=`
-        <div class="notice" style="margin-bottom:12px">
-          <span class="spin" aria-hidden="true"></span>
-          <div><h3>Validando y aplicando la actualización condicional…</h3><p>Verificamos el saldo al momento de aplicar el descuento.</p></div>
-        </div><p class="prog-text" id="progText">Aplicando actualización condicional…</p>`;
-      setTimeout(()=>{
-        const fresh=skuByCode(code);
-        if(!fresh){
-          consumeBody.innerHTML=`
-            <div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>El SKU no existe.</h3><p>No se aplicó ningún descuento.</p></div></div>
-            <div class="button-row end"><button class="btn" type="button" data-consume-cancel>Cerrar</button></div>`;
-          const c=consumeOverlay.querySelector('[data-consume-cancel]');
-          c.addEventListener('click',closeConsume);
-          return;
-        }
-        if(qty>fresh.stock){
-          const isConflict=confirmedOnThisSku>0;
-          fresh.stock = Math.max(0, fresh.stock - Math.min(confirmedOnThisSku, fresh.stock)); // demo: la otra operación tomó unidades
-          if(isConflict){
-            consumeBody.innerHTML=`
-              <div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>El stock ya no alcanza para este consumo.</h3><p>Otra operación se aplicó primero sobre el saldo (actualización condicional). Esta operación se rechaza y el stock nunca queda negativo.</p></div></div>
-              <p class="ann">A-18 · Optimista: un consumo se acepta y el otro se rechaza sin bloqueo global</p>
-              <div class="button-row end">
-                <button class="btn" type="button" data-consume-cancel>Cerrar</button>
-                <button class="btn btn-quiet" type="button" id="reloadStock">Consultar stock vigente</button>
-              </div>`;
-            const c=consumeOverlay.querySelector('[data-consume-cancel]');
-            c.addEventListener('click',closeConsume);
-            document.getElementById('reloadStock').addEventListener('click',()=>{ closeConsume(); showToast('Stock vigente consultado.'); });
-            render();
-            return;
-          }
-          consumeBody.innerHTML=`
-            <div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No hay stock suficiente.</h3><p>No se descuenta nada y el stock se conserva en ${fresh.stock} unidades.</p></div></div>
-            <div class="button-row end">
-              <button class="btn" type="button" data-consume-cancel>Cerrar</button>
-            </div>`;
-          const c=consumeOverlay.querySelector('[data-consume-cancel]');
-          c.addEventListener('click',closeConsume);
-          render();
-          return;
-        }
-        // Éxito: descuento
-        fresh.stock-=qty;
-        confirmedOnThisSku+=qty;
-        consumedThisSession++;
-        pushEvent(`${fresh.sku} · stock: ${fresh.stock+qty} → ${fresh.stock} · estado: ${labelOf(estadoOf(fresh.stock+qty,fresh.umbral))} → ${labelOf(estadoOf(fresh.stock,fresh.umbral))}`);
-        closeConsume();
-        render();
-        showToast(`Consumo aceptado · ${fresh.sku} → ${fresh.stock} · inventory.stock.changed`);
-      },900);
-    });
+  function openResult(s){
+    resultTarget=s;
+    resultMeta.textContent=`${s.sku} · ${s.product} · Último resultado del evento`;
+    resultBody.innerHTML=resultBodyMarkup(s);
+    resultOverlay.classList.add('open'); resultOverlay.setAttribute('aria-hidden','false');
+    const back=resultOverlay.querySelector('[data-result-back]');
+    back.addEventListener('click',closeResult);
+    document.getElementById('refreshResult').addEventListener('click',()=>{ showToast('Lectura actualizada desde el servicio de consumo. El evento no se reenvía.'); });
   }
-
-  function closeConsume(){ consumeOverlay.classList.remove('open'); consumeOverlay.setAttribute('aria-hidden','true'); consumeTarget=null; }
+  function closeResult(){ resultOverlay.classList.remove('open'); resultOverlay.setAttribute('aria-hidden','true'); resultTarget=null; }
 
   function openUmbral(s){
     umbralTarget=s;
@@ -526,7 +459,6 @@
           <span class="hint">Por debajo o igual a este valor el SKU se considera Stock bajo. Se aplica solo a este SKU.</span>
           <span id="umbralError" class="field-error" style="display:none"></span>
         </div>
-        <p class="ann">A-11 · Umbral configurable por SKU, sin valor global · A-12 · El estado se recalcula con el nuevo umbral</p>
         <div class="button-row end">
           <button class="btn" type="button" data-umbral-cancel>Cancelar</button>
           <button class="btn btn-primary" type="submit" id="saveUmbral">Guardar umbral</button>
@@ -556,8 +488,7 @@
       const action=e.currentTarget.dataset.action, id=e.currentTarget.dataset.id;
       if(action==='list'){ state.view='list'; state.editingId=null; state.selectedId=null; render(); }
       else if(action==='view'){ state.view='detail'; state.selectedId=id; render(); }
-      else if(action==='create'){ openConsume(null); }
-      else if(action==='consume'){ openConsume(skuById(id)); }
+      else if(action==='result'){ openResult(skuById(id)); }
       else if(action==='umbral'){ openUmbral(skuById(id)); }
       else if(action==='retry'){ state.queryState=''; state.loading=true; render(); }
       else if(action==='clear-filters'){ state.filter='all'; state.search=''; render(); }
@@ -566,12 +497,12 @@
     }));
   }
 
-  consumeCloseTop.addEventListener('click',closeConsume);
-  consumeOverlay.addEventListener('click',e=>{ if(e.target===consumeOverlay) closeConsume(); });
+  resultCloseTop.addEventListener('click',closeResult);
+  resultOverlay.addEventListener('click',e=>{ if(e.target===resultOverlay) closeResult(); });
   umbralCloseTop.addEventListener('click',closeUmbral);
   umbralOverlay.addEventListener('click',e=>{ if(e.target===umbralOverlay) closeUmbral(); });
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'&&consumeOverlay.classList.contains('open')) closeConsume();
+    if(e.key==='Escape'&&resultOverlay.classList.contains('open')) closeResult();
     if(e.key==='Escape'&&umbralOverlay.classList.contains('open')) closeUmbral();
   });
 
