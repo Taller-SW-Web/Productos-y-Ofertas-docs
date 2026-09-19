@@ -9,10 +9,10 @@ Registrar automáticamente y de forma inmutable cada modificación de precio apl
 ## 3. Alcance
 Incluye:
 - Intercepción y consumo desacoplado de eventos ante actualizaciones individuales o masivas de precios.
-- Captura de contrato de auditoría completo: `id_auditoria`, `sku`, `product_id`, `tipo_precio`, `precio_anterior`, `precio_nuevo`, `variacion_porcentual`, `canal_origen`, `motivo_cambio`, `batch_id`, `usuario_id`, `usuario_email`, `ip_origen` y `timestamp` en UTC.
+- Captura de contrato de auditoría completo: `id_auditoria`, `sku`, `product_id`, `tipo_precio`, `precio_anterior` (nullable si `tipo_operacion=CREACION`), `precio_nuevo` (nullable si `tipo_operacion=RETIRO_OFERTA`), `variacion_porcentual` (nullable si `tipo_operacion=CREACION|RETIRO_OFERTA`), `tipo_operacion`, `canal_origen`, `motivo_cambio`, `batch_id`, `usuario_id`, `usuario_email`, `ip_origen` y `timestamp` en UTC.
 - Consulta paginada y filtrado del log por SKU, rango de fechas, usuario responsable, canal y lote.
 - Exportación de registros de auditoría en formato CSV (hasta 100,000 filas para análisis masivo) y PDF (hasta 500 filas para reportes ejecutivos de control).
-- Política de ciclo de vida de datos: retención en base de datos operativa de 24 meses exactos y archivado posterior en frío por 5 años adicionales.
+- Política de ciclo de vida: al menos 24 meses completos en base operativa; archivado mensual verificado de datos que ya cumplieron ese plazo, seguido de cinco años en frío contados desde el archivado.
 - Inmutabilidad estricta (patrón Append-Only; prohibición de `PUT`, `PATCH`, `DELETE`).
 
 ## 4. Requisitos
@@ -68,11 +68,25 @@ El sistema DEBE asegurar que los registros de auditoría sean estrictamente de s
 - CUANDO el servidor recibe la solicitud
 - ENTONCES el sistema deniega la operación con código HTTP 405 (Method Not Allowed) o 403 (Forbidden), garantizando que ningún registro histórico pueda ser alterado o removido.
 
+### Requisito 4: Precio inicial, integridad e idempotencia
+El primer precio regular o primera oferta es `CREACION` con `precio_anterior=null` y variación `null`. Una modificación entre importes existentes es `MODIFICACION` y calcula la variación. El retiro explícito de una oferta usa `RETIRO_OFERTA` con `precio_nuevo=null` y variación `null`, según Requisito 6. `event_id` es único por registro de evento procesado; si llega un duplicado, no se crea otro asiento. Auditoría nunca ejecuta comandos para modificar precios.
+
+### Requisito 5: Archivo verificable
+Cada ejecución mensual selecciona solo registros con antigüedad mayor o igual a 24 meses completos. Exporta Parquet, verifica conteo/checksum y recuperabilidad antes de retirar registros del almacenamiento caliente mediante credenciales de mantenimiento aisladas. La conexión habitual de Auditoría conserva permisos INSERT/SELECT y nunca borra ni actualiza asientos; una exportación fallida conserva los registros originales. En frío se retienen cinco años desde el archivado. El plazo operativo puede exceder 24 meses hasta la siguiente ejecución mensual, nunca ser inferior.
+
+### Requisito 6: Auditar alta y retiro de oferta sin inventar importes
+El alta del **primer** precio regular o de una **nueva** oferta de Pricing registra `tipo_operacion=CREACION`, `precio_anterior=null` y `variacion_porcentual=null`, con `precio_nuevo` positivo. Cuando Pricing retira expresamente una oferta con `accion_precio_oferta=ELIMINAR`, emite `pricing.price.changed` tras el commit con `tipo_precio=OFERTA`, `tipo_operacion=RETIRO_OFERTA`, `precio_anterior` igual a la oferta retirada, `precio_nuevo=null` y `variacion_porcentual=null`: un precio inexistente no equivale a cero y no admite variación porcentual comercial. Toda modificación entre importes existentes utiliza `tipo_operacion=MODIFICACION`, `precio_anterior`/`precio_nuevo` no nulos y variación calculada. La consulta y exportación representan importes nulos como «Sin oferta» o vacío tipado, nunca `0`. Los eventos se deduplican por `event_id` y su auditoría sigue siendo append-only.
+
+#### Escenario: Retiro explícito de oferta
+- DADO un SKU con `precio_oferta=170` y un cambio autorizado que usa `accion_precio_oferta=ELIMINAR`
+- CUANDO Pricing confirma la retirada
+- ENTONCES Auditoría registra un único evento `OFERTA/RETIRO_OFERTA`, `precio_anterior=170`, `precio_nuevo=null` y variación `null`; no elimina ni modifica registros anteriores.
+
 ## 5. Requisitos no funcionales
-- Rendimiento: La captura y persistencia del log de auditoría no debe añadir más de 50 ms a la operación de precios (arquitectura orientada a eventos vía Kafka o colas asíncronas). La consulta paginada debe responder en menos de 800 ms.
+- Rendimiento: La captura y persistencia del log de auditoría no debe añadir más de 50 ms a la operación de precios (arquitectura orientada a eventos mediante el broker acordado y Outbox). La consulta paginada debe responder en menos de 800 ms.
 - Seguridad: Extracción certera de la IP cliente considerando capas de reverse proxy, CDN o API Gateway (revisión obligatoria de `X-Forwarded-For` y `X-Real-IP`). Acceso restringido exclusivamente a roles `ADMIN_SISTEMA` o `AUDITOR_COMERCIAL`.
 - Integridad: Conexión de base de datos del servicio de auditoría configurada con permisos exclusivos de `INSERT` y `SELECT` sobre la tabla de auditoría.
-- Política de Retención: Conservación en caliente en la base de datos operativa por un periodo fijo de 24 meses. Pasado este lapso, un proceso automático por lotes exporta las particiones a almacenamiento en frío (Amazon S3 / Google Cloud Storage) en formato Parquet, reteniéndolas por 5 años adicionales para fines regulatorios.
+- Política de Retención: cada registro permanece al menos 24 meses completos en caliente. Un proceso mensual archiva únicamente registros ya elegibles, verifica integridad y recuperabilidad del Parquet antes de retirar su copia caliente, y conserva el archivo cinco años adicionales desde el archivado. No se afirma cumplimiento de una ley específica sin validación legal.
 
 ## 6. Fuera de alcance
 - Auditoría de inicios de sesión o autenticación de usuarios — responsabilidad del módulo de identidad y seguridad.
@@ -85,3 +99,5 @@ La capacidad se considera correctamente implementada cuando:
 - El contrato completo de eventos se encuentra homologado y persistido.
 - La política de retención de 24 meses y archivado posterior está configurada.
 - No se han incorporado funcionalidades fuera de alcance.
+
+---

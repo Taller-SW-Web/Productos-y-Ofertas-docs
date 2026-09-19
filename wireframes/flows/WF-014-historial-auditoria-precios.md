@@ -1,5 +1,7 @@
 # WF-014 — Historial de auditoría de precios
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable del flujo descrito en este\
@@ -100,7 +102,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado               | Borrador                                     |
 | Responsable          | Por asignar                                  |
 | Fecha                | 2026-09-17                                    |
-| Última actualización | 2026-09-17                                    |
+| Última actualización | 2026-09-18                                    |
 
 ## 2. Trazabilidad
 
@@ -141,7 +143,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Aspecto               | Definición                                                                                    |
 | ----------------------- | ------------------------------------------------------------------------------------------------- |
 | Persona               | Auditor interno o gestor comercial responsable del control de precios                          |
-| Rol en el sistema     | `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA` (ver contradicción de roles en Q-01)                      |
+| Rol en el sistema     | `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA`                      |
 | Nivel técnico         | No especificado; diseñar para uso operativo básico/intermedio                                   |
 | Contexto de uso       | Investigación de reclamos, control interno, auditorías periódicas y cumplimiento normativo       |
 | Necesidad principal   | Reconstruir quién, cuándo y por qué cambió un precio, y exportar evidencia estructurada          |
@@ -186,8 +188,7 @@ lo supera, bloquea la exportación con un mensaje explícito.
 ### Precondiciones
 
 - El usuario tiene una sesión válida.
-- El usuario posee el rol `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA` (o\
-  `ADMINISTRADOR`, según la fuente; ver Q-01).
+- El usuario posee el rol `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA`.
 - Existen registros de auditoría generados previamente por el flujo de\
   gestión de precios (WF-013); este flujo no los crea.
 
@@ -732,7 +733,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 - Datos sensibles visibles: dirección IP de origen y correo electrónico del\
   usuario que realizó el cambio; visibles solo para roles autorizados.
 - Los endpoints requieren token JWT con rol `AUDITOR_COMERCIAL` o\
-  `ADMIN_SISTEMA`/`ADMINISTRADOR` (ver Q-01); una petición sin autorización\
+  `ADMIN_SISTEMA`; una petición sin autorización\
   se rechaza y la interfaz lo refleja como estado "Sin permisos".
 - El almacén de auditoría es estrictamente Append-Only: la interfaz nunca\
   ofrece edición, corrección o borrado de un registro, ni una acción que lo\
@@ -798,7 +799,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 | ID   | Pregunta o decisión                                                                                                   | Responsable          | Bloquea wireframe                        | Estado    |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------- | ---------- |
-| Q-01 | La HU exige el rol `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA` (CA-08), mientras que la spec exige `ADMINISTRADOR` o `AUDITOR_COMERCIAL` (NFR de seguridad). ¿Cuál es el nombre de rol correcto? | Backend/Seguridad     | No para estructura; sí para el texto exacto del estado "Sin permisos" | Abierta |
+| Q-01 | Resuelto: roles `AUDITOR_COMERCIAL` y `ADMIN_SISTEMA`; `ADMINISTRADOR` no es rol normativo aquí. | Specs/HU definitivos | No | Resuelta |
 | Q-02 | ¿Cuál es la ruta exacta y la ubicación en navegación del historial de auditoría?                                                | Frontend               | No para estructura                            | Abierta    |
 | Q-03 | ¿El filtro por SKU admite búsqueda parcial (contiene) o solo coincidencia exacta?                                              | Backend/Producto      | No                                              | Abierta    |
 | Q-04 | ¿El filtro por usuario acepta simultáneamente ID y email, o son dos campos distintos?                                          | Backend/Producto      | No                                              | Abierta    |
@@ -808,11 +809,22 @@ Aplicar DESIGN.md como fuente de representación visual.
 | Q-08 | ¿Qué canal notifica al usuario que una exportación asíncrona (CSV) está lista?                                                 | Producto/Frontend      | No                                              | Abierta    |
 | D-01 | Selección de librería UI y estrategia CSS                                                                                      | Frontend                | No para wireframe; sí para implementación       | Pendiente  |
 
+### Alineación definitiva de Auditoría de Precios
+
+- Los roles aprobados para consulta/exportación son `ADMIN_SISTEMA` y `AUDITOR_COMERCIAL`; la asignación concreta de claims de Seguridad se verificará con el equipo externo.
+- Si el registro es de **CREACION** del primer precio, mostrar `precio_anterior: «Sin precio anterior»` y `variacion_porcentual: «No aplicable»`; ambos campos son `null` en el contrato, no cero. En modificaciones normales se muestra la variación existente.
+- La captura de `pricing.price.changed` es **posterior al commit** de Pricing y asíncrona; la interfaz consulta registros efectivamente guardados, no promete visibilidad inmediata tras pulsar Guardar precio.
+- Retención interna: **al menos 24 meses** en caliente, archivado mensual verificable y cinco años adicionales en frío desde archivado. Esto no equivale a mostrar una fecha de eliminación exacta de 24 meses.
+
+### Registro de retiro de oferta (caso adicional)
+Cuando se elimina expresamente una oferta de Pricing, el historial conserva una fila `OFERTA / RETIRO_OFERTA` con importe anterior existente, «Sin oferta» como precio nuevo y variación «No aplica» (ambos `null` en contrato). No mostrar 0 ni un porcentaje de caída ficticio. Las altas iniciales de precio regular/oferta muestran `CREACION` y precio anterior/variación «No aplica». El registro histórico no se puede editar o borrar.
+
 ## 19. Registro de revisiones
 
 | Versión | Fecha      | Autor     | Cambio                                                                                  | Aprobado por |
 | ------- | ---------- | --------- | ---------------------------------------------------------------------------------------- | ------------ |
 | 0.1     | 2026-09-17 | Asistente | Borrador inicial basado en SPEC-014-historial-auditoria-precios.md, HU-014-historial-auditoria-precios.md, DESIGN.md y WF-013 como guía de formato | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -828,3 +840,5 @@ Aplicar DESIGN.md como fuente de representación visual.
 - [ ] Resolver Q-01 (contradicción de roles) antes de finalizar el texto de "Sin permisos".
 - [ ] Resolver Q-02 antes de confirmar la ruta definitiva.
 - [ ] Resolver Q-07 antes de decidir si S-04-P es necesaria.
+
+---

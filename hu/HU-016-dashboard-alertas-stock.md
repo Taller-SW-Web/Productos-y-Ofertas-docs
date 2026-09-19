@@ -24,7 +24,7 @@ La unidad primaria de inventario del dashboard es el **SKU vendible**. El Produc
 | **CA-06** | Los indicadores deben representar el estado actual del inventario y las alertas deben generarse según el estado calculado de cada SKU en ese momento. |
 | **CA-07** | Los indicadores y alertas deben actualizarse cuando la gestión de inventario notifique un cambio de stock de una variante mediante el contrato de evento `inventory.stock.changed`; la actualización debe reflejar el saldo y el estado vigentes. |
 | **CA-08** | Después de un consumo correctamente registrado, el estado del SKU debe reflejarse correctamente en el dashboard: si pasa de **Disponible → Stock bajo**, debe verse como **Stock bajo**; si pasa de **Stock bajo → Agotado**, debe verse como **Agotado**. |
-| **CA-09** | El período del Top 5 debe ser seleccionable por el usuario; si no se especifica uno, se utilizan los últimos 30 días. |
+| **CA-09** | El período del Top 5 debe ser seleccionable; si el usuario no especifica uno, se utilizan los últimos 30 días. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -91,3 +91,5 @@ La unidad primaria de inventario del dashboard es el **SKU vendible**. El Produc
 * **Umbral:** `umbral_stock_bajo` se configura individualmente por SKU; no existe un valor global obligatorio.
 * **Filtros:** el dashboard permite filtrar por producto, categoría, marca, SKU y estado de inventario.
 * **Top 5:** período seleccionable; por defecto, últimos 30 días.
+
+---

@@ -15,6 +15,14 @@
 | **CA-03** | El sistema debe permitir eliminar la asociación entre una característica y una categoría cuando ya no sea aplicable. |
 | **CA-04** | El sistema debe exponer, para una categoría dada, el listado de características aplicables junto con su condición de obligatoriedad, vía API de solo lectura. |
 | **CA-05** | Si una categoría o característica se desactiva, sus asociaciones deben dejar de considerarse activas, sin necesidad de eliminarlas físicamente. |
+| **CA-06** | Las características asociadas a una categoría padre se heredan automáticamente a sus subcategorías; las asociaciones heredadas no se duplican físicamente. |
+| **CA-07** | Una característica obligatoria heredada no puede convertirse en opcional en una subcategoría. |
+| **CA-08** | Una categoría puede tener como máximo 20 características efectivas, contando directas y heredadas sin duplicados. |
+| **CA-09** | Si una característica cambia de opcional a obligatoria, los productos existentes no se invalidan inmediatamente; la obligatoriedad se exige en la siguiente edición/guardado. |
+| **CA-10** | La consulta debe indicar las características efectivas de la categoría, su obligatoriedad y si su origen es directo o heredado. |
+
+| **CA-11** | Asociar o activar una característica en una categoría padre verifica que ninguna hija exceda 20 características efectivas; de lo contrario la operación se rechaza íntegramente. |
+| **CA-12** | Reasignar el padre recalcula herencia, obligatoriedad y límite de 20 en las categorías afectadas antes de guardar. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -54,6 +62,30 @@
 * **CUANDO** el gestor comercial intenta eliminar esa asociación inexistente,
 * **ENTONCES** el sistema devuelve un error indicando que la asociación no existe.
 
+
+**Escenario 7: Herencia a subcategoría**
+
+* **DADO** que "Talla" es obligatoria en la categoría padre "Calzado",
+* **CUANDO** Catálogo Core consulta las características de la subcategoría "Zapatillas",
+* **ENTONCES** devuelve "Talla" como obligatoria y heredada.
+
+**Escenario 8: Cambio de opcional a obligatoria**
+
+* **DADO** que existen productos antiguos sin "Color",
+* **CUANDO** "Color" pasa de opcional a obligatoria,
+* **ENTONCES** los productos conservan su estado hasta su próxima edición; al guardarlos, se exige completar "Color".
+
+**Escenario 9: Límite de características**
+
+* **DADO** que una categoría ya posee 20 características efectivas,
+* **CUANDO** el gestor intenta agregar una adicional,
+* **ENTONCES** el sistema rechaza la asociación.
+
+**Escenario 10: Herencia que excede el límite de una hija**
+* **DADO** que una subcategoría ya tiene 20 características efectivas,
+* **CUANDO** se agrega otra característica nueva al padre,
+* **ENTONCES** se rechaza la asociación del padre sin alterar a ninguna hija.
+
 ## Interacción con otros módulos
 
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
@@ -68,9 +100,11 @@
 | **Gestión de categorías y subcategorías** | Identificador y estado (activo/inactivo) de la categoría a la que se asocian las características. |
 | **Gestión de características y sus valores** | Identificador y estado (activo/inactivo) de la característica a asociar. |
 
-## Reglas resueltas (antes pendientes)
+## Reglas de negocio consolidadas
 
-Las siguientes reglas estuvieron pendientes de acordar y fueron formalizadas en la capacidad "Gestión de características":
-* **Herencia en subcategorías:** si una característica está asociada a una categoría padre, se hereda obligatoriamente a todas sus subcategorías.
-* **Cambio de obligatoriedad:** si se cambia una característica de "opcional" a "obligatoria" en una categoría que ya tiene productos sin ese dato, los productos preexistentes NO se invalidan de inmediato; la obligatoriedad se exigirá en la próxima edición/guardado de cada producto.
-* **Límite de características por categoría:** existe un máximo estricto de 20 características asociadas a una sola categoría.
+* **Herencia:** las asociaciones del padre se heredan automáticamente a las subcategorías.
+* **Límite:** máximo 20 características efectivas por categoría, contando directas y heredadas sin duplicados.
+* **Obligatoriedad:** el cambio de opcional a obligatoria no invalida productos preexistentes; se exige al siguiente guardado.
+* **Precedencia:** una obligatoriedad heredada no puede relajarse en la subcategoría.
+
+---

@@ -56,7 +56,7 @@ stock > umbral_stock_bajo
 → DISPONIBLE
 ```
 
-El `umbral_stock_bajo` será **configurable por cada Variante/SKU**, de modo que cada variante pueda definir su propio límite a partir del cual se considera stock bajo. Corresponde a una configuración del negocio y no se asume un valor por defecto.
+El `umbral_stock_bajo` será **configurable por cada Variante/SKU desde Gestión de Inventario**, que es la capacidad propietaria de esta configuración. Cada SKU puede definir su propio límite a partir del cual se considera stock bajo; Gestión de Variantes puede consultarlo, pero no lo edita. Corresponde a una configuración del negocio y no se asume un valor por defecto.
 
 ### Ejemplo
 
@@ -171,11 +171,11 @@ La **actualización por consumo** permitirá reflejar las unidades utilizadas en
 
 **Delimitación de Ventas y Despacho:**
 
-* La **confirmación definitiva del consumo** corresponde al evento contractual **`order.confirmed`** emitido por **Ventas y Postventa** cuando la venta queda confirmada (pago aprobado o estado equivalente para un canal sin pago electrónico). Sin `order.confirmed` no se aplica consumo definitivo.
+* La **confirmación definitiva del consumo** se solicita mediante el contrato **provisional `order.confirmed`**, cuya existencia, nombre y campos deberán homologarse con **Ventas y Postventa**, cuando la venta queda confirmada (pago aprobado o estado equivalente para un canal sin pago electrónico). Sin `order.confirmed` no se aplica consumo definitivo.
 * El módulo de **Despacho no genera consumo adicional ni modifica directamente el stock**: se limita a entregar las unidades correspondientes a ventas ya confirmadas, cuyos consumos ya fueron aplicados y validados bajo la misma regla de consumo.
 * En el alcance actual **no se contemplan reservas** en `order.created`: crear un pedido no descuenta ni reserva stock.
-* Si una venta confirmada es anulada **antes del despacho**, Ventas/Postventa emite `order.cancelled` y el inventario compensa el consumo.
-* Si la mercadería ya fue entregada, la reposición de stock solo ocurre ante una **devolución aceptada**, comunicada mediante `order.returned`.
+* Si una venta confirmada es anulada **antes del despacho**, el evento provisional `order.cancelled` solicita compensar únicamente un consumo previo exitoso y no compensado.
+* Si la mercadería ya fue entregada, la reposición de stock solo ocurre ante una **devolución aceptada y físicamente reintegrable**, comunicada mediante el evento provisional `order.returned` con cantidades aceptadas; para combo inicial se exige devolución integral.
 * Una anulación administrativa posterior al despacho que no implique devolución física no repone stock.
 
 Después de cada actualización de stock (por consumo o ajuste), la gestión de inventario **notificará el cambio de stock** de la variante mediante el contrato de evento `inventory.stock.changed`, que será consumido por el dashboard analítico y por otros componentes interesados para mantenerse actualizados.
@@ -183,6 +183,17 @@ Después de cada actualización de stock (por consumo o ajuste), la gestión de 
 La comunicación entre módulos se realizará mediante las interfaces de integración establecidas para el proyecto, manteniendo la separación entre los diferentes componentes.
 
 ---
+
+### Contrato provisional de consumo, compensación y venta sin stock
+Ventas/Postventa aún no ha homologado eventos. Como hipótesis interna se acepta `order.confirmed` con `order_id`, `operation_id`, `occurred_at`, SKUs y cantidades por línea, referencia/snapshot de componentes de combo cuando aplique, y versión del contrato. Inventario verifica existencia, elegibilidad, stock y deduplicación por `order_id + tipo_operacion + sku`, aplica el débito ACID para **todas las líneas de la misma operación** y registra Kardex y Outbox en la misma transacción local. Publica `inventory.consumption.completed` o `inventory.consumption.rejected` con `order_id`, `operation_id`, SKUs y motivo; no decide ni altera estados del pedido o pagos. Si el stock es insuficiente tras un pedido/pago confirmado, Ventas/Postventa resuelve la anulación, sustitución o reembolso mediante su propio proceso pendiente de coordinación. La consulta anterior a la venta no constituye reserva ni garantía de stock.
+
+Las compensaciones `order.cancelled`/`order.returned` deben referenciar `order_id`, operación previa y líneas aceptadas. `order.cancelled` revierte solamente consumos efectivos y previos a despacho; `order.returned` registra solo unidades realmente aceptadas/reintegrables, y para combo inicial se exige devolución integral. El procesamiento es idempotente, tolera llegada desordenada con estado pendiente/reconciliación y evita acreditar dos veces el mismo consumo. Ningún evento de Despacho ocasiona débito adicional.
+
+### Ajuste masivo y control de concurrencia
+Inventario inicializa cada nuevo SKU vendible con stock 0 y `stock_version=0`, de forma idempotente. Los conteos absolutos de `SPEC-001-carga-exportacion-masiva-productos.md` requieren `stock_version`. Inventario es el único dueño del ajuste, recibido mediante `inventory.bulk.stock.adjust.requested`; comprueba `stock_version` con actualización condicional y registra movimiento de Kardex anterior/nuevo/delta. Si hubo consumo concurrente que cambió la versión, publica rechazo `VERSION_CONFLICT` y no reaplica el conteo obsoleto. Solo después de persistir emite `inventory.stock.adjusted` y `inventory.stock.changed`. Se permiten bloqueos transaccionales breves por SKU, nunca un bloqueo global de todas las ventas. Una variación de inventario no es un evento de confirmación de pedido.
+
+### Límite de aprobación de contratos externos
+Los nombres y payloads de `order.confirmed`, `order.cancelled` y `order.returned`, y de los resultados de consumo, constituyen un **contrato de integración propuesto**, pendiente de homologación con Ventas y Postventa. Hasta ese acuerdo, ninguna implementación puede presumir que el equipo externo ya publica tales mensajes, ni que el pago queda automáticamente revertido ante un rechazo de Inventario. El consumo y las compensaciones aquí descritos son las reglas internas que implementará Productos al recibir una comunicación equivalente acordada.
 
 ## 5. Resultado esperado
 
@@ -198,6 +209,8 @@ En términos generales, permitirá:
 * Evitar consumos superiores al stock existente y consumos concurrentes sobre las mismas unidades.
 * Aplicar el consumo únicamente cuando exista una venta confirmada, quedando Despacho limitado a la entrega de unidades ya vendidas.
 * Notificar los cambios de stock mediante el contrato de evento `inventory.stock.changed` para mantener actualizados el dashboard analítico y los componentes integrados.
-* Mantener sincronizada la información de disponibilidad utilizada por los diferentes canales.
+* Mantener las proyecciones de disponibilidad utilizadas por los canales mediante eventos; las vistas son eventualmente consistentes y el consumo definitivo vuelve a comprobar el stock en Inventario.
 
 Con estas funcionalidades, el inventario proporcionará información actualizada sobre la disponibilidad de las variantes y permitirá reflejar correctamente los cambios producidos por su consumo.
+
+---

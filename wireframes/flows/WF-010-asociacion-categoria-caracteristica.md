@@ -1,5 +1,7 @@
 # WF-010 — Asociación entre categorías y características
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la asociación
@@ -28,7 +30,7 @@ Reglas de producción:
 - No agregues campos, permisos, endpoints ni reglas no documentadas.
 - Solo se asocian características y categorías existentes y activas.
 - No se permite asociar la misma característica dos veces a la misma categoría.
-- No se permiten más de 20 asociaciones directas por categoría.
+- No se permiten más de 20 características efectivas (directas + heredadas, sin duplicados) por categoría.
 - Las características asociadas a una categoría padre se heredan
   obligatoriamente a sus subcategorías.
 - El cambio de opcional a obligatoria no invalida productos preexistentes; se
@@ -52,8 +54,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No uses React ni dependencias del frontend productivo.
 - No requieras conexión a servicios externos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
-- Incluye las anotaciones visibles definidas en cada pantalla.
+- Implementa un diseño responsivo real para escritorio, tablet y móvil mediante CSS y cambios de viewport; no agregues controles internos de dispositivo.
+- Documenta las anotaciones A-xx fuera de la interfaz simulada; no las renderices en el prototipo.
 - Aplica el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
@@ -63,7 +65,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
    obligatoriedad y origen.
 3. Asociación de una característica a la categoría seleccionada marcando su
    condición.
-4. Validación de límite de 20 asociaciones directas.
+4. Validación de límite de 20 características efectivas (directas + heredadas, sin duplicados).
 5. Validación de no duplicado.
 6. Cambio de obligatoriedad (opcional ↔ obligatoria) con las reglas resueltas.
 7. Desasociación con confirmación.
@@ -82,7 +84,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado | Borrador |
 | Responsable | Leonardo Lopez |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
@@ -101,7 +103,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Cambiar la obligatoriedad de una asociación.
 - Desasociar una característica de una categoría.
 - Reflejar la herencia automática a subcategorías.
-- Aplicar límite de 20 asociaciones directas por categoría.
+- Aplicar límite de 20 características efectivas (directas + heredadas, sin duplicados) por categoría.
 - Aplicar la regla de baja cuando categoría o característica se desactiva.
 
 ### Fuera de alcance
@@ -128,13 +130,13 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 El gestor comercial debe poder definir qué características aplican a cada
 categoría, con su condición de obligatoriedad, respetando la herencia a
-subcategorías, el límite de 20 asociaciones directas y la prohibición de
+subcategorías, el límite de 20 características efectivas (directas + heredadas, sin duplicados) y la prohibición de
 duplicados, para alimentar al Catálogo Core.
 
 ### Resultado exitoso
 
 La asociación queda registrada con su condición. La subcategoría hereda las
-características del padre. El límite de 20 directas se respeta. La consulta
+características del padre. El límite de 20 características efectivas se respeta. La consulta
 por categoría devuelve directas y heredadas con su obligatoriedad.
 
 ### Indicadores de finalización
@@ -142,7 +144,7 @@ por categoría devuelve directas y heredadas con su obligatoriedad.
 - Asociación: mensaje Característica asociada y actualización del listado.
 - Cambio de obligatoriedad: mensaje Condición actualizada.
 - Desasociación: mensaje Asociación eliminada.
-- El contador de directas se actualiza en cada operación.
+- El contador de características efectivas se actualiza en cada operación.
 
 El patrón exacto de notificación debe alinearse con el sistema global.
 
@@ -205,7 +207,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 1. En S-01, el gestor selecciona Desasociar sobre una asociación directa.
 2. S-04 confirma que la característica dejará de aplicarse.
 3. El gestor confirma.
-4. La lista se recalcula y el contador de directas baja.
+4. La lista se recalcula y el contador de características efectivas baja.
 
 ### Flujos alternativos
 
@@ -268,7 +270,7 @@ aplican, con origen y obligatoriedad.
 | Región | Componente neutral | Contenido | Comportamiento |
 |---|---|---|---|
 | Selección | Selector árbol | Raíces y subcategorías | Al elegir, se carga la categoría |
-| Resumen | Métricas | Directas X/20; Heredadas N | Calculado en tiempo real |
+| Resumen | Métricas | Efectivas X/20; Directas N; Heredadas M | Calculado en tiempo real |
 | Listado | Tabla/tarjetas | Característica, origen, condición, estado | Editable según permiso |
 | Acciones | Botones | Asociar característica | Depende de límite y permisos |
 
@@ -281,7 +283,7 @@ aplican, con origen y obligatoriedad.
 | Origen | Cálculo | Directa / Heredada | Alta | No disponible |
 | Condición | Asociación | Obligatoria / Opcional | Alta | No disponible |
 | Estado | Categoría/Característica | Activa / No activa | Alta | Mostrar No disponible |
-| Contador directas | Cálculo | X/20 | Media | — |
+| Contador efectivas | Cálculo | X/20 (efectivas) | Media | — |
 
 #### Acciones
 
@@ -305,7 +307,7 @@ aplican, con origen y obligatoriedad.
 | A-01 | Selector | Solo categorías existentes; inactivas marcadas |
 | A-02 | Origen | Heredada proviene de la categoría padre |
 | A-03 | Heredada | No se puede desasociar desde la subcategoría |
-| A-04 | Contador | Máximo 20 asociaciones directas |
+| A-04 | Contador | Máximo 20 características efectivas (directas + heredadas, sin duplicados) |
 | A-05 | Condición | Obligatoria u opcional por asociación |
 | A-06 | No activa | Si categoría o característica se desactiva, la asociación no es activa |
 
@@ -347,7 +349,7 @@ Elegir una característica activa no asociada y marcar su condición.
 #### Validaciones
 
 - La característica no debe estar ya asociada a la categoría.
-- La categoría no debe haber alcanzado 20 asociaciones directas.
+- La categoría no debe haber alcanzado 20 características efectivas (directas + heredadas, sin duplicados).
 - Solo se listan características activas.
 
 #### Navegación y foco
@@ -455,7 +457,7 @@ adaptación sin fijar breakpoints definitivos.
 
 - Verificar 320 px sin desplazamiento horizontal.
 - El selector de categoría debe mantenerse utilizable en móvil.
-- Contador de directas visible en todo el flujo.
+- Contador principal de características efectivas (directas + heredadas, sin duplicados) visible en todo el flujo.
 
 ## 12. Accesibilidad
 
@@ -486,7 +488,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Acción principal | Asociar característica | Resultado concreto |
 | Heredada | Esta característica se hereda de {categoría padre}. | Explica el origen |
 | Duplicado | La característica ya está asociada a esta categoría. | Rechazo explícito |
-| Límite | Has alcanzado el máximo de 20 asociaciones directas. | Regla formalizada |
+| Límite | Has alcanzado el máximo de 20 características efectivas (incluidas las heredadas). | Regla formalizada |
 | Cambio a obligatoria | Los productos preexistentes no se invalidan; se exigirá en la próxima edición. | Regla resuelta |
 | Desasociar | La característica dejará de aplicarse a esta categoría. | Efecto claro |
 | No activa | La asociación no está activa porque la categoría o característica está inactiva. | Sin tecnicismo |
@@ -526,7 +528,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Muestra origen (Directa/Heredada) y condición.
 - [ ] Permite asociar indicando obligatoriedad.
 - [ ] Rechaza duplicados.
-- [ ] Respeta el límite de 20 asociaciones directas.
+- [ ] Respeta el límite de 20 características efectivas (directas + heredadas, sin duplicados).
 - [ ] Refleja la herencia a subcategorías.
 - [ ] Representa el cambio de obligatoriedad con su regla resuelta.
 - [ ] Permite desasociar con confirmación.
@@ -561,25 +563,32 @@ Aplicar DESIGN.md como única fuente de representación visual.
 |---|---|---|---|---|
 | SUP-01 | WF-010 es el ID asignado en INDEX.md | Asignación de la rama `lopez` | Renombrar archivo/referencias | Sí |
 | SUP-02 | La ruta será /productos/caracteristicas/asociaciones | No se entregó mapa de navegación | Cambiar rutas/entrada | Sí |
-| SUP-03 | El límite de 20 aplica a asociaciones directas | Regla formalizada | Incluir heredadas en el contador | Sí |
+| SUP-03 | El máximo 20 cuenta características efectivas directas y heredadas, sin duplicados | Specs/HU definitivos | Recalcular también al mover padre | No |
 | SUP-04 | La consulta pública es API, representada solo documentalmente | Alcance de la spec | Añadir vista de inspección si aplica | Sí |
 
 ## 18. Preguntas y decisiones pendientes
 
 | ID | Pregunta o decisión | Responsable | Bloquea wireframe | Estado |
 |---|---|---|---|---|
-| Q-01 | ¿La condición se hereda tal cual o puede cambiar en la subcategoría? | Producto | Sí para S-03 | Abierta |
-| Q-02 | ¿El contador de 20 incluye heredadas o solo directas? | Producto | Sí para S-01 | Abierta |
+| Q-01 | Resuelto: se hereda; una obligatoriedad heredada no puede relajarse en subcategoría. | Specs/HU definitivos | No | Resuelta |
+| Q-02 | Resuelto: máximo 20 características efectivas contando directas + heredadas sin duplicados. | Specs/HU definitivos | No | Resuelta |
 | Q-03 | ¿Existe búsqueda o filtro en el selector de características? | Producto | No para flujo base | Abierta |
 | Q-04 | ¿Debe advertirse al salir con cambios sin guardar? | Producto/UX | No | Abierta |
 | Q-05 | ¿Se permite asociar en cascada entre categorías hermanas? | Producto | No | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |
+
+### Alineación definitiva de Asociación Categoría–Característica
+
+- El contador principal **X/20** refleja características **efectivas** de la categoría: directas + heredadas, sin duplicados. El desglose «directas / heredadas» es adicional; no se debe presentar `20 directas` como límite autónomo.
+- Una obligatoriedad heredada no puede relajarse en la subcategoría; una asociación heredada no se elimina desde la hija. Cambiar opcional a obligatoria no invalida productos preexistentes hasta su siguiente guardado.
+- Añadir asociaciones a un padre o mover una categoría requiere comprobar el límite sobre **cada descendiente afectado** antes de confirmar; mostrar error contextual cuando un descendiente excedería el máximo. El flujo debe conservar la ubicación y datos anteriores ante rechazo.
 
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -595,3 +604,5 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Confirmar el ID WF-010 contra INDEX.md.
 - [ ] Resolver Q-01 y Q-02 antes del diseño definitivo.
 - [ ] Confirmar rutas y permisos antes de implementar el frontend.
+
+---

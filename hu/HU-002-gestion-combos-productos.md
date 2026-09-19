@@ -6,7 +6,7 @@
 **quiero** crear y gestionar paquetes (combos) agrupando múltiples SKUs y productos
 complementarios bajo un precio único promocional que sea estrictamente menor a la suma individual,
 **para** incentivar las ventas, garantizando que el sistema calcule
-dinámicamente la disponibilidad en tiempo real, descuente el inventario ante la confirmación definitiva de la venta (`order.confirmed`),
+la disponibilidad informativa a partir de una proyección eventualmente consistente, descuente el inventario ante la confirmación definitiva de la venta (`order.confirmed`),
 y compense transaccionalmente ante cancelaciones o devoluciones.
 
 ## Criterios de aceptación
@@ -15,22 +15,28 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 | --- | --- |
 | **ID** | **Criterio** |
 | **CA-01** | Solo un gestor comercial con los permisos correspondientes (Módulo Seguridad y Usuarios) puede crear, modificar, consultar y desactivar combos. |
-| **CA-02** | El registro de un combo debe incluir obligatoriamente: nombre, descripción, selección de 2 o más SKUs vendibles (SKU de variante o `sku_base` de producto simple) con sus respectivas cantidades, y un precio único de paquete. |
-| **CA-03** | El sistema debe validar de manera estricta y obligatoria que el precio del paquete sea mayor a cero y estrictamente menor que la suma de los precios regulares vigentes de todos sus componentes ($precio\_combo < \sum precio\_componentes$). |
+| **CA-02** | El registro de un combo debe incluir obligatoriamente: nombre, descripción, selección de 2 o más SKUs vendibles **distintos** (SKU de variante o `sku_base` de producto simple) con sus respectivas cantidades, y un precio único de paquete. |
+| **CA-03** | El sistema debe validar de manera estricta y obligatoria que el precio del paquete sea mayor a cero y estrictamente menor que la suma de `precio_regular_vigente_sku × cantidad` para todos sus componentes, resuelto por Pricing con override/herencia. No se usa precio de oferta ni descuentos adicionales para esta comparación. |
 | **CA-04** | Queda estrictamente prohibido el anidamiento: los combos únicamente pueden estar conformados por productos y SKUs individuales puros, rechazando la inclusión de otros combos. |
-| **CA-05** | El sistema debe calcular dinámicamente la disponibilidad (stock) del combo basándose en el SKU individual con menor disponibilidad proporcional ($stock\_disponible = \min \lfloor stock\_sku_i / cantidad\_requerida_i \rfloor$). |
+| **CA-05** | El sistema debe calcular la disponibilidad informativa (stock) del combo basándose en el SKU individual con menor disponibilidad proporcional ($stock\_disponible = \min \lfloor stock\_sku_i / cantidad\_requerida_i \rfloor$). |
 | **CA-06** | Si alguno de los SKUs componentes del combo se queda sin stock (0 unidades), la disponibilidad del combo automáticamente pasa a ser 0 y se marca como no disponible para compra. |
-| **CA-07** | Al emitirse `order.confirmed` desde Ventas/Postventa, el descuento del inventario de los múltiples SKUs que forman el combo debe ejecutarse de forma transaccional (ACID) en la base de datos (se descuentan todos o ninguno). |
+| **CA-07** | Al emitirse el contrato provisional `order.confirmed` desde Ventas/Postventa con `order_id`, composición/SKUs y cantidades aceptadas, **Inventario** ejecuta el descuento ACID de todos los componentes o ninguno y publica resultado correlacionado; Combos no escribe stock. |
 | **CA-08** | Si una venta ya confirmada se cancela antes del despacho (`order.cancelled`), el sistema compensa íntegramente el stock consumido. Un `order.created` que nunca llega a confirmarse no requiere compensación porque no afectó stock. |
 | **CA-09** | En caso de cancelación o devolución postventa (`order.returned`), la reposición de stock se gestiona de forma atómica e integral para todos los artículos que integraban el paquete. |
 | **CA-10** | Si un gestor comercial desactiva o da de baja un SKU o producto componente en el Catálogo, el combo debe inhabilitarse y ocultarse automáticamente en todos los canales de venta, emitiendo una notificación al gestor para su revisión. |
+
+| **CA-11** | No se repite un mismo SKU como dos componentes; cada uno requiere cantidad entera positiva. El precio de referencia es la suma de precios regulares vigentes por SKU × cantidad, incluidos overrides de variante. |
+| **CA-12** | Si un cambio de precios deja de cumplir el descuento real, el combo se vuelve no elegible para nuevas ventas y se notifica, sin alterar pedidos históricos. |
+| **CA-13** | Un combo no acumula descuentos adicionales de promociones o cupones en el alcance inicial; su precio y composición se conservan en el snapshot confirmado del pedido. |
+| **CA-14** | Un rechazo de consumo desde Inventario se comunica a Ventas mediante resultado idempotente; la resolución de pedido/pago depende de Ventas/Postventa y no se presume exitosa. |
+| **CA-15** | La disponibilidad mostrada del combo es una estimación calculada con la proyección de stock de sus SKUs; la consulta expone `calculated_at` y estado de actualización. Si es desconocida/obsoleta se informa «No verificable», nunca se garantiza una compra. Inventario revalida y descuenta atómicamente en `order.confirmed`, sin reservas. |
 
 ## Escenarios dado-cuando-entonces
 
 **Escenario 1: Creación exitosa de un combo**
 
 * **DADO** que el gestor comercial se encuentra en la pantalla de gestión de combos,
-* **CUANDO** ingresa los datos del combo (nombre, descripción), selecciona 2 o más SKUs individuales válidos con stock y establece un precio de paquete que es estrictamente menor a la suma de los precios de los artículos seleccionados,
+* **CUANDO** ingresa los datos del combo (nombre, descripción), selecciona 2 o más SKUs individuales distintos válidos con stock y establece un precio de paquete que es estrictamente menor a la suma de los precios de los artículos seleccionados,
 * **ENTONCES** el sistema registra el combo, lo activa para su venta en los canales y vincula los SKUs con sus cantidades respectivas.
 
 **Escenario 2: Rechazar precio de combo igual o superior a la suma de componentes**
@@ -49,7 +55,7 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 
 * **DADO** que existe un combo activo compuesto por 1 "Camiseta Talla M" (SKU-CAM-M, Stock: 10) y 2 "Medias Blancas" (SKU-MED-W, Stock: 15),
 * **CUANDO** un canal de venta (Marketplace, Chatbot o Retail) consulta la disponibilidad del combo,
-* **ENTONCES** el sistema calcula en tiempo real y responde que hay 7 combos disponibles (limitado por las medias: $15 / 2 = 7.5 \rightarrow 7$).
+* **ENTONCES** el sistema calcula con la última proyección de Inventario y muestra como estimación 7 combos disponibles (limitado por las medias: $15 / 2 = 7.5 \rightarrow 7$).
 
 **Escenario 5: Combo sin stock por producto agotado**
 
@@ -73,7 +79,22 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 
 * **DADO** un combo activo que contiene el SKU de una zapatilla en liquidación,
 * **CUANDO** el gestor desactiva ese SKU en el Catálogo,
-* **ENTONCES** el sistema deshabilita inmediatamente el combo en los canales de venta y notifica al gestor comercial para que edite o archive el paquete.
+* **ENTONCES** el sistema procesa la baja, marca el combo como inactivo y propaga el cambio a los canales mediante eventos; puede existir latencia de propagación y no se garantiza deshabilitación instantánea global. Además, notifica al gestor comercial para que edite o archive el paquete.
+
+**Escenario 9: Dos unidades del mismo SKU no forman un combo válido**
+* **DADO** un combo con una sola fila SKU y cantidad 2,
+* **CUANDO** se intenta crearlo,
+* **ENTONCES** el sistema rechaza el guardado porque necesita dos SKUs distintos.
+
+**Escenario 10: Cambio de precio regular invalida combo**
+* **DADO** un combo cuyo precio deja de ser inferior al total regular de componentes,
+* **CUANDO** Pricing confirma el cambio,
+* **ENTONCES** el combo se oculta para nuevas ventas y se notifica al gestor, sin alterar pedidos previos.
+
+**Escenario 9: Disponibilidad proyectada no verificable**
+* **DADO** un combo cuya proyección de un componente está ausente o se sabe desactualizada,
+* **CUANDO** el canal consulta su disponibilidad,
+* **ENTONCES** devuelve «No verificable» con estado de actualización y no presenta un stock cero ni promete disponibilidad para compra; Inventario comprobará el stock al confirmar.
 
 ## Interacción con otros módulos
 
@@ -81,7 +102,7 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 | --- | --- | --- | --- |
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
 | **Canal Marketplace** | Mostrar combos en catálogo y permitir compra según stock dinámico. | Consultas de combos y peticiones de validación de carrito. | Detalles del combo, precio unificado, componentes y disponibilidad calculada. |
-| **Canal Chatbot / Retail** | Consulta y venta presencial o asistida por chat. | Solicitudes de cotización y disponibilidad en tiempo real. | Información comercial del combo, precio final y existencia. |
+| **Canal Chatbot / Retail** | Consulta y venta presencial o asistida por chat. | Solicitudes de cotización y disponibilidad informativa basada en proyecciones. | Información comercial del combo, precio final y existencia. |
 | **Ventas y Postventa** | Coordinar confirmación, cancelación previa al despacho y devolución mediante eventos de dominio. | Eventos `order.confirmed`, `order.cancelled` y `order.returned`. | Resultado del débito o compensación de stock de componentes. |
 | **Seguridad y Usuarios** | Validar privilegios de gestión comercial. | Token de sesión y rol de usuario autenticado. | Solicitud de autorización para administrar combos. |
 
@@ -99,4 +120,6 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 * **Baja de productos individuales:** Si un SKU componente es desactivado en el catálogo, **el combo se deshabilita y oculta automáticamente en los canales de venta** y se genera una notificación al gestor comercial para su revisión.
 * **Devoluciones:** Ante cancelaciones o devoluciones de combos desde Ventas y Postventa (`order.returned`), la reposición de existencias se procesa de forma **atómica e integral para todos sus artículos individuales** (el combo se anula y devuelve completo).
 * **Anidamiento:** **Prohibido el anidamiento**. Un paquete solo puede conformarse por artículos y variantes directas, descartando complejidades recursivas.
-* **Límites de precios:** Es una **validación obligatoria y bloqueante**: el precio configurado para el combo DEBE ser estrictamente menor que la suma de los precios regulares vigentes de los productos y variantes que lo integran ($precio\_combo < \sum precio\_componentes$).
+* **Límites de precios:** Es una **validación obligatoria y bloqueante**: el precio configurado para el combo DEBE ser menor que la suma de los precios regulares vigentes por SKU, multiplicados por sus cantidades ($0 < precio\_combo < \sum_i precio\_regular\_sku_i \times cantidad_i$).
+
+---

@@ -10,7 +10,7 @@ El dashboard estará pensado como una pantalla de consulta rápida, donde se pue
 
 ## Unidad de inventario
 
-El dashboard utiliza como **unidad primaria de inventario el SKU vendible**, en coherencia con la gestión de inventario:
+El dashboard utiliza como **unidad primaria de inventario la Variante/SKU**, en coherencia con la gestión de inventario:
 
 * **Métrica operativa de inventario → SKU vendible:** los indicadores de disponibilidad, stock bajo y agotamiento se expresan sobre variantes.
 * **Agrupación comercial → Producto:** el producto es un agrupador comercial. Las variantes pueden presentarse individualmente o agrupadas bajo su producto en una vista comercial, sin que esto cree un stock independiente por producto.
@@ -159,3 +159,5 @@ La funcionalidad permitirá:
 * Actualizarse de forma reactiva ante los cambios de stock notificados por la gestión de inventario mediante el contrato de evento `inventory.stock.changed`.
 
 De esta manera, el dashboard complementará la gestión del inventario proporcionando una visión rápida y comprensible de su estado actual y facilitando la identificación de situaciones que requieran atención.
+
+---

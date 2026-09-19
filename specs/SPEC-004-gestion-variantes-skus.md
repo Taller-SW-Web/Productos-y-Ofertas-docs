@@ -1,9 +1,11 @@
 # SPEC-004 — Especificación: Gestión avanzada de variantes (SKUs)
 **Versión:** v2 — corregida para eliminar discrepancias con `HU-004-gestion-variantes-skus.md`
 
+> **Cambios respecto a la v1:** el SKU es siempre autogenerado (se elimina la opción de recibirlo manualmente); se formaliza la aplicabilidad exclusiva a productos con `tiene_variantes = true`; se aclara que Inventario es el único dueño del stock; los atributos que forman el SKU pasan a ser inmutables.
+
 ## 1. Contexto
 
-Dentro del catálogo de productos deportivos (camisetas, zapatillas, accesorios, etc.), es común que un mismo producto base tenga múltiples versiones comerciales que se diferencian por características como talla, color u otro atributo específico del deporte o tipo de artículo. La capacidad obligatoria de CRUD de productos (`SPEC-003-gestion-productos-crud.md`) introduce el atributo `tiene_variantes` en el producto: cuando es `false`, el producto se vende con su propio `sku_base` y su propio stock (gestionado directamente por Inventario); cuando es `true`, el producto no se vende directamente y esta capacidad extiende el modelo de catálogo para representar cada combinación concreta (por ejemplo, "zapatilla X, talla 42, color negro") como una variante independiente, con su propio código de identificación e imagen, y con su stock gestionado también por Inventario, pero a nivel de variante.
+Dentro del catálogo de productos deportivos (camisetas, zapatillas, accesorios, etc.), es común que un mismo producto base tenga múltiples versiones comerciales que se diferencian por características como talla, color u otro atributo específico del deporte o tipo de artículo. La capacidad obligatoria de CRUD de productos (`SPEC-003-gestion-productos-crud.md`) introduce el atributo `tiene_variantes` en el producto: cuando es `false`, el producto se vende utilizando su `sku_base` como SKU vendible, cuyo stock pertenece exclusivamente a Inventario; cuando es `true`, el producto no se vende directamente y esta capacidad extiende el modelo de catálogo para representar cada combinación concreta (por ejemplo, "zapatilla X, talla 42, color negro") como una variante independiente, con su propio código de identificación e imagen, y con su stock gestionado también por Inventario, pero a nivel de variante.
 
 ## 2. Propósito
 
@@ -14,17 +16,20 @@ Permitir que un producto con `tiene_variantes = true` tenga una o más variantes
 Aplica exclusivamente a productos con `tiene_variantes = true`. Los productos simples (`tiene_variantes = false`) no utilizan esta funcionalidad; se activan mediante Gestión de Productos y su `sku_base` funciona como SKU vendible para Pricing e Inventario.
 
 Incluye:
-- Definición de los tipos de atributos que generan variantes para un producto (por ejemplo, talla, color), configurables según el tipo de producto.
+- Configuración previa por producto de características identificadoras LISTA de su categoría, inmutable desde la primera variante; sus valores referencian IDs estables.
 - Creación de una o más variantes (SKUs) asociadas a un producto base, cada una con su combinación única de atributos identificadores (ej. talla + color).
 - Generación automática de un código único (SKU) por variante, distinto del `sku_base` del producto y de cualquier otro SKU del catálogo. El sistema es el único que asigna este código; no se acepta ingreso manual.
 - Asociación de una imagen propia a cada variante (por ejemplo, para reflejar el color específico).
 - Posibilidad de definir un precio propio para una variante en Pricing; si no existe, hereda el precio base vigente del producto. La persistencia y vigencia del precio pertenece a Pricing.
 - Actualización de los atributos no identificadores, la imagen o el estado de una variante existente. Los atributos identificadores (los que componen el SKU) son inmutables una vez creada la variante.
 - Consulta de variantes de un producto, tanto de forma individual como listadas junto con el producto base, incluyendo su estado (la disponibilidad de stock se consulta al componente de Inventario, no se replica aquí).
-- Desactivación (baja lógica) de una variante específica, de forma independiente al estado del producto base y de las demás variantes.
+- Desactivación (baja lógica) de una variante específica; si era la última variante activa, también se inactiva el producto padre para no dejar un producto activo sin unidades vendibles.
 - Exposición de la información de variantes mediante API para su consumo por los demás módulos (Marketplace Cliente, Chatbot Cliente, Retail Vendedor, Ventas y Postventa, Despacho y Entrega).
 
 ## 4. Requisitos
+
+### Requisito 0: Configuración de características identificadoras por producto
+El gestor configura **en Catálogo, para cada producto `tiene_variantes=true` y antes de crear su primera variante**, un conjunto no vacío de `caracteristica_id` distintos seleccionados entre las características LISTA efectivas y activas de la categoría; las características NUMERO/TEXTO no identifican variantes en este alcance. El conjunto de IDs se ordena de forma canónica y queda **inmutable desde la primera variante registrada**, incluso cuando quede inactiva, para impedir cambios retroactivos de identidad/SKU. Para cada variante se exige exactamente un `valor_id` activo y perteneciente a cada LISTA identificadora configurada; no pueden faltar atributos ni aparecer atributos identificadores extra. Los valores y características se referencian por ID estable; el código SKU se genera usando `sku_base` y representaciones técnicas inmutables de esos IDs, no etiquetas editables. Una combinación de IDs no puede reutilizarse aunque una variante anterior esté inactiva. La selección de características se valida contra la Taxonomía vigente en el momento de configurar y crear; si una categoría cambia y deja sin validez una configuración, se bloquea la creación/activación de nuevas variantes hasta resolución explícita sin reescribir SKUs ya emitidos. La primera variante puede crearse en el mismo lote que su padre solo si las filas coherentes declaran el mismo conjunto de `caracteristica_id` identificadoras.
 
 ### Requisito 1: Creación de variantes de un producto
 
@@ -33,7 +38,7 @@ El sistema DEBE permitir registrar una o más variantes para un producto existen
 #### Escenario: Registro exitoso de una nueva variante
 - DADO un producto base activo o en borrador, con `tiene_variantes = true`, registrado en el catálogo
 - CUANDO el gestor comercial registra una nueva variante indicando sus atributos identificadores (ej. talla "M", color "azul") y una imagen
-- ENTONCES el sistema crea la variante asociada al producto, le asigna automáticamente un código SKU único y la deja disponible para su consulta vía API
+- ENTONCES el sistema crea la variante asociada al producto en estado BORRADOR, le asigna automáticamente un código SKU único y la deja disponible únicamente para consulta administrativa mientras no se active
 
 #### Escenario: Intento de registro de una variante con combinación de atributos duplicada
 - DADO un producto que ya tiene registrada una variante con una combinación específica de atributos identificadores (ej. talla "M", color "azul")
@@ -82,10 +87,26 @@ El sistema DEBE permitir actualizar la imagen y los atributos **no identificador
 - CUANDO el gestor comercial intenta modificar el valor de talla o color de esa misma variante
 - ENTONCES el sistema rechaza el cambio e indica que debe desactivar la variante actual y registrar una nueva con el atributo correcto
 
-#### Escenario: Desactivación de una variante sin afectar el producto base ni otras variantes
+#### Escenario: Desactivación de una variante cuando quedan otras variantes activas
 - DADO un producto con varias variantes activas
 - CUANDO el gestor comercial desactiva una de esas variantes (por ejemplo, por descontinuación de una talla)
 - ENTONCES el sistema marca únicamente esa variante como "inactiva", manteniendo el producto base y las demás variantes sin cambios en su estado ni disponibilidad. Los pedidos ya confirmados conservan el snapshot de la variante vendida
+
+### Requisito 4.1: Ciclo de vida y activación de variante
+La variante se crea BORRADOR y puede pasar a ACTIVA mediante una acción autorizada si dispone de SKU único, atributos identificadores válidos e imagen válida; su producto padre tiene categoría y marca activas, precio base confirmado en Pricing y registro de SKU inicializado en Inventario. Una variante activa puede pasar a INACTIVA por baja lógica. La reactivación de una variante inactiva requiere las mismas validaciones que la activación y no genera SKU nuevo. Un SKU inactivo o borrador no participa en nuevas ventas ni en nuevos combos. Si se desactiva la última variante activa, Catálogo pone INACTIVO al producto padre en la misma transacción local; los pedidos confirmados conservan su snapshot. La reactivación del padre vuelve a comprobar sus condiciones de activación.
+
+#### Escenario: Activar variante preparada
+- DADO una variante BORRADOR con SKU, atributos e imagen válidos, precio base del padre confirmado y SKU inicializado en Inventario
+- CUANDO el gestor la activa
+- ENTONCES queda ACTIVA y, si el producto padre está INACTIVO, este no se reactiva automáticamente.
+
+#### Escenario: Rechazar variante sin preparación
+- DADO una variante BORRADOR cuyo registro de Inventario aún no está confirmado
+- CUANDO se solicita activarla
+- ENTONCES se rechaza sin convertirla en ACTIVA.
+
+### Requisito 4.2: Creación masiva sin SKU manual
+Cuando Carga Masiva crea una variante, identifica el producto padre (existente o creado como BORRADOR una sola vez por grupo `sku_base` en el mismo lote) y la combinación de características por sus IDs/valores; Catálogo genera el SKU único y devuelve `product_id`, `sku` y la correlación `batch_id`/`row_id` en el resultado. Un SKU suministrado en el archivo para una variante inexistente NO se adopta como identificador manual. Si la fila señala un SKU existente, se trata como actualización y se rechaza todo intento de cambiar los atributos identificadores.
 
 ### Requisito 5: Consulta de variantes por producto
 
@@ -100,6 +121,9 @@ El sistema DEBE permitir consultar todas las variantes asociadas a un producto, 
 - DADO un producto con `tiene_variantes = true` que aún no tiene ninguna variante registrada
 - CUANDO se solicita la información de variantes de ese producto
 - ENTONCES el sistema retorna una lista vacía de variantes, sin generar error, e indica que el producto no puede activarse hasta registrar al menos una
+
+### Regla transversal: elegibilidad comercial de la variante
+Una variante con estado ACTIVA no es vendible si su producto padre está BORRADOR o INACTIVO; la elegibilidad comercial requiere simultáneamente padre ACTIVO, variante ACTIVA, precio preparado y SKU inicializado. La activación de variante preparada puede ocurrir antes de la activación del padre y no activa al padre implícitamente.
 
 ## 5. Requisitos no funcionales
 
@@ -125,3 +149,5 @@ La capacidad se considera correctamente implementada cuando:
 - Todos los escenarios definidos se cumplen, incluyendo los casos borde y de error.
 - Los requisitos no funcionales aplicables (rendimiento, seguridad, disponibilidad, auditoría, escalabilidad) se cumplen.
 - No se han incorporado funcionalidades fuera del alcance, como gestión de precios, cálculo de stock u ofertas asociadas a variantes.
+
+---

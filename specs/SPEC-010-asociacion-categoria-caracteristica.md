@@ -1,80 +1,95 @@
 # SPEC-010 — Especificación: Asociación entre categorías y características
 
 ## 1. Contexto
-No todos los productos comparten los mismos atributos: una zapatilla necesita "Talla" y "Color", mientras que un balón necesita "Tamaño" y "Material", pero no "Talla". El módulo de Catálogo Core (a cargo de otro integrante) necesita saber, al momento de registrar un producto, qué características debe solicitar según la categoría elegida. Esta capacidad centraliza esa regla de negocio en el sub-módulo de Taxonomía, evitando que cada canal o módulo defina su propia lógica de qué atributos aplican a cada categoría.
+No todos los productos comparten los mismos atributos: una zapatilla necesita "Talla" y "Color", mientras que un balón necesita "Tamaño" y "Material". Catálogo Core necesita conocer, al crear o editar un producto, qué características aplican según la categoría elegida. Esta capacidad centraliza esa regla en Taxonomía y evita que cada canal o módulo mantenga lógica propia.
 
 ## 2. Propósito
-Permitir al gestor comercial definir qué características son aplicables a cada categoría, indicando si son obligatorias u opcionales, de modo que el Catálogo Core pueda construir formularios de producto dinámicos y consistentes por categoría.
+Permitir al gestor comercial definir qué características son aplicables a cada categoría, indicando obligatoriedad, herencia y límites, de modo que Catálogo Core construya y valide formularios de producto consistentes.
 
 ## 3. Alcance
 Incluye:
-- Asociación de una o varias características a una categoría específica.
-- Marcado de una característica como obligatoria u opcional dentro de una categoría.
+- Asociación de características a una categoría.
+- Marcado de cada asociación como obligatoria u opcional.
+- Herencia automática de asociaciones desde categoría padre a subcategorías.
+- Cambio de obligatoriedad sin invalidar inmediatamente productos existentes.
+- Límite máximo de 20 características efectivas por categoría.
 - Desasociación de una característica de una categoría.
-- Consulta, para una categoría dada, del listado de características aplicables (con su condición de obligatoriedad).
-- Exposición de esta información vía API de solo lectura para el módulo de Catálogo Core.
+- Consulta de características aplicables, indicando origen directo o heredado y obligatoriedad.
+- API interna de solo lectura para Catálogo Core.
 
 ## 4. Requisitos
 
 ### Requisito 1: Asociar característica a categoría
-El sistema DEBE permitir asociar una característica existente a una categoría existente, indicando si es obligatoria u opcional.
+El sistema DEBE permitir asociar una característica existente y activa a una categoría existente y activa, indicando si es obligatoria u opcional.
 
-#### Escenario: Asociación exitosa de una característica obligatoria
-- DADO que existen la categoría "Zapatillas" (id 10) y la característica "Talla" (id 3), ambas activas
-- CUANDO el gestor comercial asocia la característica 3 a la categoría 10 marcándola como obligatoria
-- ENTONCES el sistema registra la asociación y la característica "Talla" aparece como obligatoria al consultar las características de "Zapatillas"
+No se permite asociar dos veces la misma característica a la misma categoría.
 
-#### Escenario: Intento de asociar una característica ya asociada a la misma categoría
-- DADO que la característica "Talla" ya está asociada a la categoría "Zapatillas"
-- CUANDO el gestor comercial intenta asociar nuevamente "Talla" a "Zapatillas"
-- ENTONCES el sistema rechaza la operación e indica que la asociación ya existe
+La cantidad de características efectivas de una categoría, contando asociaciones directas y heredadas sin duplicados, NO DEBE superar 20.
 
-### Requisito 2: Consultar características aplicables a una categoría
-El sistema DEBE exponer, para una categoría dada, el listado de características aplicables junto con su condición de obligatoriedad, para ser consumido por el módulo de Catálogo Core.
+#### Escenario: Asociación exitosa
+- DADO que existen la categoría "Zapatillas" y la característica "Talla", ambas activas
+- CUANDO el gestor asocia "Talla" como obligatoria
+- ENTONCES se registra la asociación y aparece como obligatoria al consultar la categoría
 
-#### Escenario: Consulta exitosa de características de una categoría
-- DADO que la categoría "Zapatillas" tiene asociadas las características "Talla" (obligatoria) y "Color" (opcional)
-- CUANDO el módulo de Catálogo Core solicita las características de la categoría "Zapatillas"
-- ENTONCES el sistema devuelve ambas características indicando correctamente cuál es obligatoria y cuál opcional
+#### Escenario: Límite máximo
+- DADO que una categoría ya posee 20 características efectivas entre directas y heredadas
+- CUANDO se intenta asociar una característica adicional
+- ENTONCES el sistema rechaza la operación por exceder el límite
 
-#### Escenario: Consulta de características de una categoría sin asociaciones
-- DADO que la categoría "Accesorios Varios" no tiene ninguna característica asociada
-- CUANDO se solicita el listado de características de esa categoría
-- ENTONCES el sistema devuelve una lista vacía sin generar error
+### Requisito 2: Herencia a subcategorías
+Las características asociadas a una categoría padre SE HEREDAN automáticamente a sus subcategorías.
 
-### Requisito 3: Desasociar característica de categoría
-El sistema DEBE permitir eliminar la asociación entre una característica y una categoría cuando ya no sea aplicable.
+Una subcategoría no necesita duplicar físicamente la asociación heredada. Si una característica aparece tanto por herencia como por asociación directa, la consulta debe devolverla una sola vez.
 
-#### Escenario: Desasociación exitosa
-- DADO que la característica "Material" está asociada a la categoría "Balones"
-- CUANDO el gestor comercial elimina esa asociación
-- ENTONCES el sistema deja de listar "Material" como característica aplicable a "Balones"
+La obligatoriedad heredada no puede relajarse en la subcategoría: una característica obligatoria en el padre continúa siendo obligatoria en sus hijas.
 
-#### Escenario: Intento de desasociar una relación inexistente
-- DADO que la característica "Talla" nunca fue asociada a la categoría "Balones"
-- CUANDO el gestor comercial intenta eliminar esa asociación inexistente
-- ENTONCES el sistema devuelve un error indicando que la asociación no existe
+#### Escenario: Herencia de característica
+- DADO que "Talla" es obligatoria en "Calzado"
+- Y "Zapatillas" es subcategoría de "Calzado"
+- CUANDO Catálogo Core consulta las características de "Zapatillas"
+- ENTONCES "Talla" aparece como obligatoria e identificada como heredada
 
-### Requisito 4: Reglas de negocio confirmadas
-Las siguientes reglas fueron resueltas en la capacidad "Gestión de características" y aplican a la asociación:
-1. **Herencia:** Las características asociadas a una categoría padre SE HEREDAN obligatoriamente a todas sus subcategorías.
-2. **Cambio opcional a obligatoria:** Si una característica pasa de opcional a obligatoria, los productos preexistentes NO se invalidan de inmediato; la obligatoriedad se exigirá en la próxima edición/guardado de cada producto.
-3. **Límite por categoría:** Máximo estricto de 20 características asociables por cada categoría.
+### Requisito 3: Cambio de obligatoriedad
+El sistema DEBE permitir cambiar una asociación directa de opcional a obligatoria o viceversa.
+
+Si una característica pasa de opcional a obligatoria, los productos preexistentes sin ese dato NO se invalidan ni desactivan automáticamente. La obligatoriedad se exige en la siguiente edición/guardado del producto.
+
+#### Escenario: Producto legado
+- DADO que un producto existente no posee "Color"
+- Y "Color" cambia de opcional a obligatorio para su categoría
+- CUANDO el producto solo es consultado
+- ENTONCES conserva su estado actual
+- Y CUANDO se intenta editar y guardar
+- ENTONCES Catálogo Core exige completar "Color"
+
+### Requisito 4: Consultar características aplicables
+El sistema DEBE exponer para una categoría el conjunto efectivo de características directas y heredadas, con su obligatoriedad y origen.
+
+Si no existen asociaciones directas ni heredadas, devuelve una lista vacía.
+
+### Requisito 5: Desasociar característica
+El sistema DEBE permitir eliminar una asociación directa cuando ya no sea aplicable.
+
+Eliminar una asociación directa no elimina una característica que continúe aplicando por herencia.
+
+### Requisito 6: Desactivación de entidades
+Si una categoría o característica se desactiva, las asociaciones que dependan de ella dejan de considerarse activas sin eliminación física.
+
+### Requisito 7: Cambios en jerarquía o asociaciones del padre
+Agregar o activar una asociación en una categoría padre debe comprobar el límite máximo de 20 características efectivas **tanto en esa categoría como en todas sus hijas afectadas**. Reasignar una categoría a otro padre también recalcula las características efectivas y sus obligatoriedades antes de confirmar el cambio; si se excede el límite se rechaza sin cambios parciales. La obligatoriedad heredada prevalece sobre una asociación directa opcional. Las nuevas obligaciones se exigen a los productos preexistentes en su siguiente guardado y a los nuevos productos en la creación. Taxonomía publica cambios versionados; Catálogo no valida un producto activo con una versión de reglas conocida como obsoleta.
 
 ## 5. Requisitos no funcionales
-- Rendimiento: la consulta de características por categoría debe responder en menos de 500 ms, dado que será invocada frecuentemente por el Catálogo Core al crear productos.
-- Seguridad: solo el gestor comercial autenticado puede crear o eliminar asociaciones; la consulta puede exponerse como API interna de solo lectura para otros módulos.
-- Disponibilidad: el endpoint de consulta debe estar disponible de forma constante, ya que es una dependencia directa del flujo de creación de productos en otro módulo.
-- Consistencia: si una característica o categoría se desactiva, sus asociaciones deben dejar de considerarse activas sin necesidad de eliminarlas físicamente.
+- Rendimiento: consulta efectiva de características por categoría < 500 ms.
+- Seguridad: solo Gestor Comercial autenticado puede crear, modificar o eliminar asociaciones.
+- Disponibilidad: API interna de consulta disponible para Catálogo Core.
+- Consistencia: las asociaciones se mantienen por identificador; no se duplican relaciones heredadas físicamente.
 
 ## 6. Fuera de alcance
-- Creación y edición de categorías — corresponde a la capacidad "Gestión de categorías y subcategorías".
-- Creación y edición de características y sus valores — corresponde a la capacidad "Gestión de características".
-- Uso de estas asociaciones para validar el formulario real de creación de producto — es responsabilidad del módulo de Catálogo Core.
+- CRUD de categorías.
+- CRUD de características y valores.
+- Persistencia de los valores concretos de características en cada producto, responsabilidad de Catálogo Core.
 
 ## Criterio de completitud
-La capacidad se considera correctamente implementada cuando:
-- Todos los requisitos están implementados.
-- Todos los escenarios definidos se cumplen.
-- Los requisitos no funcionales aplicables se cumplen.
-- No se han incorporado funcionalidades fuera del alcance.
+La capacidad se considera completa cuando asociación, herencia, obligatoriedad, límite de 20, consulta y desasociación se comportan según estas reglas y no quedan decisiones abiertas sobre estas materias.
+
+---

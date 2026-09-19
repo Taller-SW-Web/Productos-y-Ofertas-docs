@@ -1,7 +1,7 @@
 # HU-007 — Historia de Usuario: Reglas de venta cruzada y upselling
 
-Proyecto: Módulo de Productos y Ofertas.  
-Responsabilidad: Persona 4 — Axel Cueva.  
+Proyecto: Módulo de Productos y Ofertas.
+Responsabilidad: Persona 4 — Axel Cueva.
 Versión corregida: 2026-09-16.
 
 ## Funcionalidad
@@ -10,24 +10,26 @@ Reglas de venta cruzada: Cross-sell y Upsell — Valor agregado.
 
 ## Historia de usuario
 
-**Como** gestor comercial,  
-**quiero** configurar relaciones manuales o reglas lógicas que vinculen productos o categorías con complementos o alternativas superiores,  
+**Como** gestor comercial,
+**quiero** configurar relaciones manuales o reglas lógicas que vinculen productos o categorías con complementos o alternativas superiores,
 **para** que los canales de venta presenten recomendaciones pertinentes durante la compra.
 
-**Cross-sell:** complemento del producto consultado.  
+**Cross-sell:** complemento del producto consultado.
 **Upsell:** alternativa que el gestor comercial clasifica explícitamente como superior y justifica mediante una mejora concreta.
 
 La clasificación es una decisión comercial manual: por cada alternativa Upsell, el gestor registra una justificación que mencione una característica o prestación identificable en la ficha del producto recomendado (por ejemplo, mejor amortiguación, material más resistente o funcionalidad adicional). Cuando el origen es una categoría, la mejora se justifica respecto del tipo de productos de esa categoría. El sistema comprueba que exista una justificación, pero no comprueba automáticamente su veracidad ni infiere superioridad por un precio mayor.
 
 ## Modelo de ordenamiento consolidado
 
-Cada regla tiene una **prioridad de regla**.  
+Cada regla tiene una **prioridad de regla**.
 Cada producto recomendado dentro de la regla tiene un **orden de presentación**.
 
 - Prioridad `1` es mayor que prioridad `2`.
 - Primero se ordenan las reglas por prioridad ascendente.
 - Dentro de una regla, se respetan los productos por su orden ascendente.
 - Si el mismo producto aparece por varias reglas, se conserva la primera aparición según ese orden y se elimina el duplicado.
+
+**Decisión de interfaz:** la consulta de recomendaciones se mantiene como capacidad de API para Marketplace, Chatbot y Retail; no existe una pantalla administrativa independiente «Probar recomendaciones».
 
 ## Criterios de aceptación
 
@@ -129,3 +131,11 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 ## Condiciones de integración
 
 Las integraciones se realizan mediante APIs, de forma asíncrona y sin acceso directo a bases de datos de otros módulos.
+
+
+---
+
+## Aclaración normativa: precio informativo
+El precio de una recomendación es informativo y corresponde al regular u oferta pública vigente de Pricing para el SKU elegible; una promoción de carrito o cupón no se aplica por anticipado. Un producto con variantes puede mostrar rango/«desde» para SKUs activos con stock, y la cotización final se recalcula para el SKU seleccionado. La recomendación no reserva stock ni congela precio.
+
+---

@@ -1,9 +1,11 @@
 # WF-006 — Gestión de ofertas y promociones
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
-Genera un wireframe detallado, anotado y navegable para la administración y
-evaluación de promociones descrita en este archivo.
+Genera un wireframe detallado, anotado y navegable para la administración de
+promociones descrita en este archivo.
 
 Antes de diseñar:
 
@@ -23,7 +25,7 @@ Reglas de producción:
   elegible, no por unidad.
 - Ningún descuento puede producir un importe resultante negativo.
 - Exige al menos un producto activo, inicio anterior al fin y estado inicial.
-- No acumules promociones automáticas entre sí ni con cupones.
+- No acumules promociones automáticas entre sí, con cupones ni con precio de oferta de Pricing.
 - Si hay empate entre promoción automática y cupón, prioriza el cupón.
 - Modificar o desactivar no cambia pedidos ya confirmados.
 - No muestres criterios CA, endpoints, supuestos, decisiones técnicas ni
@@ -35,7 +37,7 @@ Reglas de producción:
 
 - Entrada: `../prototipos/WF-006-gestion-ofertas-promociones/index.html`.
 - HTML, CSS y JavaScript estáticos y navegables.
-- Debe representar listado, alta/edición, detalle, cambio de estado y evaluación.
+- Debe representar listado, alta/edición, detalle y cambio de estado. La evaluación comercial existe como capacidad de API/flujo real y no como pantalla administrativa.
 - Responsividad por CSS real, sin controles internos de dispositivo.
 
 ## 1. Metadatos
@@ -48,7 +50,7 @@ Reglas de producción:
 | Estado | En revisión |
 | Responsable | Axel Andree Cueva Alcalá |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
@@ -64,7 +66,6 @@ Reglas de producción:
 - Crear y editar condiciones, descuento, vigencia, estado y productos.
 - Activar y desactivar promociones.
 - Consultar el detalle.
-- Simular la evaluación de beneficios aplicables.
 
 ### Fuera de alcance
 
@@ -79,24 +80,21 @@ Reglas de producción:
 | Persona | Gestor comercial |
 | Nivel técnico | Intermedio |
 | Contexto | Planificación y control de campañas comerciales |
-| Necesidad | Configurar beneficios válidos y comprobar su efecto |
+| Necesidad | Configurar beneficios válidos y controlar su vigencia, alcance y estado |
 | Permisos | Consultar, crear, editar, activar y desactivar |
 | Dispositivo | Escritorio, con soporte tablet y móvil |
 
 ## 4. Objetivo del flujo
 
-**El usuario debe poder** configurar una promoción válida y revisar el resultado
-de su evaluación **para** ofrecer el mejor beneficio aplicable sin acumulaciones.
+**El usuario debe poder** configurar y administrar una promoción válida **para** que los canales puedan evaluarla dentro de las reglas comerciales definidas, sin convertir esa evaluación en una pantalla administrativa.
 
 ### Resultado exitoso
 
-La promoción queda visible con tipo, valor, productos, vigencia y estado. La
-evaluación identifica un único beneficio y desglosa importes.
+La promoción queda visible con modalidad, tipo, valor, productos/SKUs, vigencia y estado, lista para ser consumida por la lógica de evaluación de los canales.
 
 ### Indicador de finalización
 
-Confirmación no bloqueante y listado actualizado, o panel de resultado de la
-evaluación con importe original, descuento e importe resultante.
+Confirmación no bloqueante y listado o detalle actualizado después de crear, editar o cambiar el estado.
 
 ## 5. Precondiciones y disparador
 
@@ -108,13 +106,13 @@ evaluación con importe original, descuento e importe resultante.
 ### Punto de entrada
 
 - Ubicación: Productos y ofertas, sección Promociones.
-- Disparadores: `Crear promoción`, `Ver detalle` o `Evaluar compra`.
+- Disparadores: `Crear promoción` o `Ver detalle`.
 
 ### Salidas
 
 | Resultado | Comportamiento |
 |---|---|
-| Éxito | Actualiza listado o muestra resultado de evaluación |
+| Éxito | Actualiza listado o detalle de la promoción |
 | Cancelación | Vuelve sin persistir cambios |
 | Validación fallida | Conserva datos e identifica campos |
 | Error remoto | Mantiene contexto y permite reintentar |
@@ -123,12 +121,11 @@ evaluación con importe original, descuento e importe resultante.
 
 1. El gestor abre el listado.
 2. Selecciona `Crear promoción`.
-3. Ingresa nombre, tipo, valor, estado y vigencia.
-4. Selecciona uno o más productos activos.
+3. Ingresa nombre, modalidad (AUTOMATICA o CUPON), tipo, valor, estado y vigencia.
+4. Selecciona uno o más productos y/o SKUs vendibles activos.
 5. El sistema valida y el gestor guarda.
 6. La promoción aparece en el listado.
 7. El gestor puede consultar, editar o cambiar su estado.
-8. Opcionalmente evalúa una compra para revisar el beneficio seleccionado.
 
 ### Flujos alternativos
 
@@ -138,10 +135,6 @@ evaluación con importe original, descuento e importe resultante.
 | `ALT-02` | Monto fijo no positivo | Bloquear y explicar aplicación única | Formulario |
 | `ALT-03` | Fin no posterior al inicio | Asociar error al campo fin | Formulario |
 | `ALT-04` | Sin productos | Solicitar al menos uno | Formulario |
-| `ALT-05` | Descuento supera subtotal | Limitar descuento al subtotal | Evaluación |
-| `ALT-06` | Varias promociones | Elegir la que deja menor importe | Resultado |
-| `ALT-07` | Empate con cupón | Seleccionar el cupón | Resultado |
-| `ALT-08` | Ninguna promoción aplicable | Informar motivo | Resultado |
 
 ## 7. Inventario de pantallas y variantes
 
@@ -152,16 +145,14 @@ evaluación con importe original, descuento e importe resultante.
 | `S-02` | Crear/editar | Configurar promoción | Formulario | Sí |
 | `S-02-V` | Validación fallida | Corregir sin perder datos | Misma vista | Sí |
 | `S-03` | Detalle | Revisar condiciones y productos | Vista de detalle | Sí |
-| `S-04` | Evaluar compra | Probar selección del mejor beneficio | Vista funcional | Sí |
-| `S-04-R` | Resultado de evaluación | Mostrar beneficio y desglose | Panel en S-04 | Sí |
-| `S-05` | Confirmar estado | Evitar cambios accidentales | Diálogo | Sí |
+| `S-04` | Confirmar estado | Evitar cambios accidentales | Diálogo | Sí |
 
 ## 8. Especificación por pantalla
 
 ### `S-01` — Listado de promociones
 
 1. Título `Ofertas y promociones`.
-2. Acciones `Evaluar compra` y `Crear promoción`.
+2. Acción principal `Crear promoción`.
 3. Búsqueda y filtros por estado y tipo.
 4. Tabla con nombre, descuento, productos, vigencia, estado y detalle.
 
@@ -179,12 +170,13 @@ evaluación con importe original, descuento e importe resultante.
 | Campo | Tipo | Obligatorio | Validación | Error |
 |---|---|---|---|---|
 | Nombre | Texto | Sí | No vacío | `Ingresa un nombre` |
-| Tipo | Radio | Sí | Porcentaje o monto fijo | N/A |
+| Tipo de descuento | Radio | Sí | Porcentaje o monto fijo | N/A |
+| Modalidad | Selector | Sí | `AUTOMATICA` o `CUPON` | `Selecciona la modalidad` |
 | Valor | Número | Sí | Porcentaje `(0,100]`; monto `(0,∞)` | Mensaje específico por tipo |
 | Estado | Selector | Sí | Activa o inactiva | N/A |
 | Inicio | Fecha/hora | Sí | Valor válido | `Indica el inicio` |
 | Fin | Fecha/hora | Sí | Posterior al inicio | `El fin debe ser posterior al inicio` |
-| Productos | Selección múltiple | Sí | Al menos uno, todos activos | `Selecciona al menos un producto` |
+| Alcance | Selección múltiple | Sí | Al menos un producto y/o SKU vendible activo; deduplicar SKU incluido por producto | `Selecciona al menos un producto o SKU` |
 
 - Cambiar el tipo actualiza la ayuda del valor.
 - Conservar datos tras error y la última configuración válida en edición.
@@ -193,14 +185,14 @@ evaluación con importe original, descuento e importe resultante.
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| `A-05` | Tipo de descuento | Solo una modalidad por promoción |
+| `A-05` | Tipo de descuento | Solo un tipo de descuento; la modalidad AUTOMATICA/CUPON es un campo independiente |
 | `A-06` | Ayuda de monto fijo | Aclarar que se aplica una vez al subtotal elegible |
 | `A-07` | Productos | Mostrar únicamente productos existentes y activos |
 | `A-08` | Guardado inválido | Mantener todos los valores para corregirlos |
 
 ### `S-03` — Detalle
 
-- Mostrar nombre, tipo, valor, estado, vigencia y productos participantes.
+- Mostrar nombre, modalidad, tipo de descuento, valor, estado, vigencia y productos/SKUs participantes.
 - Acciones `Editar`, `Activar/Desactivar` y `Volver`.
 - Mostrar aviso de que cambios futuros no alteran pedidos confirmados.
 
@@ -210,31 +202,7 @@ evaluación con importe original, descuento e importe resultante.
 | `A-10` | Productos | Lista solo de lectura en detalle |
 | `A-11` | Persistencia histórica | Explicar efecto sin exponer arquitectura |
 
-### `S-04` — Evaluar compra
-
-#### Regiones
-
-| Región | Contenido | Comportamiento |
-|---|---|---|
-| Datos | Producto, subtotal y cupón opcional | Captura ficticia para probar flujo |
-| Acción | `Evaluar beneficios` | Compara resultados sin acumular |
-| Resultado | Beneficio, original, descuento y resultante | Aparece después de evaluar |
-
-#### Reglas visibles
-
-- Mostrar un único beneficio seleccionado.
-- Si el descuento supera el subtotal, el resultado es cero, nunca negativo.
-- Si no aplica ninguno, mostrar el motivo.
-- Si hay empate con cupón, identificar el cupón como seleccionado.
-- La evaluación no ofrece consumir cupones ni confirmar pedidos.
-
-| ID | Elemento | Anotación |
-|---|---|---|
-| `A-12` | Cupón opcional | Permite probar convivencia, no administrarlo |
-| `A-13` | Resultado | Desglosar importes para que la decisión sea verificable |
-| `A-14` | Selección | Mayor beneficio equivale al menor importe resultante |
-
-### `S-05` — Confirmar activación o desactivación
+### `S-04` — Confirmar activación o desactivación
 
 - Mensaje explica participación en nuevas evaluaciones.
 - Desactivar no altera descuentos de pedidos ya confirmados.
@@ -256,15 +224,13 @@ evaluación con importe original, descuento e importe resultante.
 | Formulario inválido | Errores por campo | Corregir | Datos conservados |
 | Guardando | Acción deshabilitada | Esperar | Reintentar |
 | Éxito | Confirmación | Continuar | N/A |
-| Evaluación con beneficio | Panel con desglose | Revisar o cambiar datos | Nueva evaluación |
-| Evaluación sin beneficio | Motivo explícito | Cambiar datos | Nueva evaluación |
 | Conflicto de datos | Aviso de precios/estado vigentes | Revisar | Recargar |
 | Sin permisos | Mensaje seguro | Volver | Solicitar acceso |
 | Sesión expirada | Aviso | Iniciar sesión | Recuperar contexto |
 
 ### Reglas para datos remotos
 
-- Refrescar productos, precios, estado y vigencia antes de guardar o evaluar.
+- Refrescar productos, precios, estado y vigencia antes de guardar. La evaluación de beneficios ocurre en los canales/servicios reales, no en una pantalla administrativa de este wireframe.
 - No usar guardado optimista para alta, edición o cambio de estado.
 - Distinguir ausencia de beneficio de error de consulta.
 - Conservar el formulario ante errores recuperables.
@@ -278,7 +244,6 @@ evaluación con importe original, descuento e importe resultante.
 | Filtros | Tres columnas | Dos columnas | Una columna |
 | Listado | Tabla completa | Scroll contenido | Scroll contenido |
 | Formulario | Dos columnas | Ajustable | Una columna |
-| Resultado | Tres métricas | Apilado parcial | Una columna |
 | Modal | Centrado | Adaptable | Ancho disponible |
 
 Verificar 320 px, zoom 200 %, nombres largos, importes y fechas completas.
@@ -297,7 +262,7 @@ Verificar 320 px, zoom 200 %, nombres largos, importes y fechas completas.
 
 - Densidad media/alta en listado y media en formularios.
 - Sensación: control comercial y cálculo transparente.
-- Dominante: condiciones de la promoción; en evaluación, importe resultante.
+- Dominante: condiciones de la promoción, su alcance, vigencia y estado.
 - Permanecen discretos: ayudas, metadatos y efectos históricos.
 - Documentación, eventos y contratos nunca aparecen como contenido del producto.
 
@@ -308,7 +273,6 @@ Verificar 320 px, zoom 200 %, nombres largos, importes y fechas completas.
 | CTA | `Crear promoción` |
 | Porcentaje | `Ingresa un porcentaje mayor que 0 y hasta 100.` |
 | Monto fijo | `Se aplica una vez al subtotal elegible.` |
-| Selección | `Se aplicó la opción con el menor importe resultante.` |
 | Desactivar | `Dejará de participar en nuevas evaluaciones.` |
 
 ## 13. Restricciones técnicas relevantes
@@ -335,11 +299,6 @@ Verificar 320 px, zoom 200 %, nombres largos, importes y fechas completas.
 - [x] Exige nombre, productos, tipo, valor, fechas y estado.
 - [x] Valida porcentaje, monto fijo y orden de fechas.
 - [x] Mantiene la configuración previa tras un rechazo.
-- [x] Representa monto fijo aplicado una sola vez y límite en cero.
-- [x] Selecciona una única promoción automática.
-- [x] Compara promoción y cupón sin acumularlos.
-- [x] Prioriza el cupón en empate.
-- [x] Muestra beneficio, original, descuento, resultante o motivo.
 - [x] Separa documentación y detalles técnicos de la interfaz.
 - [x] Es responsivo y consistente con `DESIGN.md`.
 
@@ -348,9 +307,9 @@ Verificar 320 px, zoom 200 %, nombres largos, importes y fechas completas.
 | Criterio | Cobertura |
 |---|---|
 | CA-01–CA-04 | S-01, S-02, S-03 y permisos |
-| CA-05–CA-08 | S-04 y variantes de resultado |
-| CA-09 | S-03/S-05 y mensajes históricos |
-| CA-10 | S-04, ALT-07 y A-12 a A-14 |
+| CA-05–CA-08 | Reglas de negocio/API en Spec/HU; el backoffice no incorpora pantalla de evaluación |
+| CA-09 | S-03/S-04 y mensajes históricos |
+| CA-10 | Regla de modalidad y evaluación documentada en Spec/HU; sin simulador administrativo |
 
 ## 16. Supuestos
 
@@ -358,23 +317,30 @@ Verificar 320 px, zoom 200 %, nombres largos, importes y fechas completas.
 |---|---|---|---|
 | `SUP-01` | Moneda visible PEN/S/ | Cambiar formato | Sí |
 | `SUP-02` | Escritorio es principal | Repriorizar móvil | Sí |
-| `SUP-03` | La evaluación administrativa usa un producto y subtotal de prueba | Cambiar composición | Sí |
 
 ## 17. Preguntas y decisiones pendientes
 
 | ID | Pregunta o decisión | Responsable | Bloquea | Estado |
 |---|---|---|---|---|
-| `Q-01` | ¿La promoción tiene modalidad automática/cupón como campo administrable aquí? | Producto | Formulario definitivo | Abierta |
+| `Q-01` | Resuelto: la modalidad `AUTOMATICA` / `CUPON` es obligatoria y visible en formulario y detalle. | Specs/HU definitivos | No | Resuelta |
 | `Q-02` | ¿Cuáles son límites de nombre y cantidad de productos? | Producto/Backend | Validaciones finales | Abierta |
 | `Q-03` | ¿Qué zona horaria se muestra en fechas? | Producto/Backend | Formato final | Abierta |
-| `Q-04` | ¿La evaluación administrativa forma parte del producto final o solo del prototipo? | Producto | S-04 final | Abierta |
+| `Q-04` | Resuelto: no existe pantalla administrativa «Evaluar compra»; la evaluación permanece como capacidad de API/flujo real de venta. | Decisión de producto | No | Resuelta |
 | `D-01` | Selección de librería UI y estrategia CSS | Frontend | Implementación | Pendiente |
+
+### Alineación definitiva de Promociones
+
+- **Modalidad obligatoria `AUTOMATICA | CUPON`** distinta del tipo de descuento (porcentaje/monto fijo). Una promoción `CUPON` no se ofrece automáticamente: solo entra en la evaluación mediante un código válido. La modalidad solo se edita antes de primera activación, sin cupones asociados ni usos; en los otros casos mostrar control bloqueado y explicación, sin inventar una transición.
+- Selector de alcance por **producto completo o SKU vendible específico**: a nivel producto aplica a todos sus SKUs activos; al coincidir producto y SKU, se deduplica el beneficio por unidad elegible.
+- La base de los descuentos es el **precio regular vigente por SKU × cantidad**. Comparar el **total final de la misma cesta**, conservando líneas no elegibles. La oferta Pricing es alternativa independiente, no base acumulativa. Empate cupón/automática: cupón; empate con oferta Pricing: oferta Pricing y no se consume cupón. Usar importe monetario final, no porcentaje nominal.
+- La evaluación comercial de promociones permanece en la API y en los flujos reales de los canales. **No existe una pantalla administrativa para simularla**; el backoffice se limita a configurar, consultar y cambiar el estado de promociones. Los contratos con Ventas siguen sujetos a homologación.
 
 ## 18. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Flujo inicial basado en spec, HU, prototipo y `DESIGN.md` | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ## 19. Lista de control
 
@@ -385,3 +351,5 @@ Verificar 320 px, zoom 200 %, nombres largos, importes y fechas completas.
 - [x] Información técnica separada de la interfaz.
 - [x] Prototipo HTML disponible.
 - [ ] Resolver preguntas abiertas antes de implementación productiva.
+
+---

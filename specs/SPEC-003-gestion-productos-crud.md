@@ -1,13 +1,15 @@
 # SPEC-003 — Especificación: Gestión de productos (CRUD principal)
 **Versión:** v2 — corregida para eliminar discrepancias con `HU-003-gestion-productos-crud.md`
 
+> **Cambios respecto a la v1:** estado inicial en "borrador" (no "activo"); nuevo requisito de activación; duplicidad redefinida sobre `sku_base` y `(nombre, marca_id)`; slug como propiedad de este componente; reactivación con re-validación; precio base con responsabilidad resuelta.
+
 ## 1. Contexto
 
-El módulo de Productos y Ofertas es el dueño de la entidad "producto" dentro de la arquitectura de microservicios del Marketplace Multicanal, e incluye también la gestión del stock asociado a productos que no manejan variantes (ver sección 6). Todos los demás módulos (Marketplace Cliente, Chatbot Cliente, Retail Vendedor, Ventas y Postventa, Despacho y Entrega) consumen la información de productos mediante APIs, sin acceso directo a la base de datos de este módulo. Esto significa que este módulo es la única fuente de verdad del catálogo, y cualquier error, inconsistencia o demora en sus operaciones CRUD repercute directamente en la disponibilidad y confiabilidad de todos los canales de venta. Como parte del equipo del gestor comercial, esta capacidad constituye la base sobre la cual se construirán posteriormente las funcionalidades de precios, ofertas, combos y variantes.
+El módulo de Productos y Ofertas es el dueño de la entidad "producto" dentro de la arquitectura de microservicios del Marketplace Multicanal, y define los productos simples y sus SKU vendibles, pero el stock de todos los SKU pertenece exclusivamente a Inventario. Todos los demás módulos (Marketplace Cliente, Chatbot Cliente, Retail Vendedor, Ventas y Postventa, Despacho y Entrega) consumen la información de productos mediante APIs, sin acceso directo a la base de datos de este módulo. Esto significa que este módulo es la única fuente de verdad del catálogo, y cualquier error, inconsistencia o demora en sus operaciones CRUD repercute directamente en la disponibilidad y confiabilidad de todos los canales de venta. Como parte del equipo del gestor comercial, esta capacidad constituye la base sobre la cual se construirán posteriormente las funcionalidades de precios, ofertas, combos y variantes.
 
 ## 2. Propósito
 
-Permitir al gestor comercial administrar el ciclo de vida completo de los productos del catálogo (creación, activación, actualización, consulta, desactivación y reactivación), garantizando que la información expuesta a los demás módulos sea siempre consistente, íntegra y esté disponible mediante API.
+Permitir al gestor comercial administrar el ciclo de vida completo de los productos del catálogo (creación, activación, actualización, consulta, desactivación y reactivación), garantizando integridad en sus datos propios y propagación asíncrona consistente eventualmente hacia otros módulos mediante contratos versionados.
 
 ## 3. Alcance
 
@@ -45,17 +47,19 @@ La bandera `tiene_variantes` se define al crear el producto y es **inmutable** e
 - CUANDO el gestor comercial intenta registrar un nuevo producto con esa misma combinación
 - ENTONCES el sistema rechaza la operación y muestra un mensaje indicando que ya existe un producto con esos datos
 
+**Configuración de variantes:** si `tiene_variantes=true`, el formulario de producto configura antes de la primera variante las características identificadoras LISTA aplicables según `SPEC-004-gestion-variantes-skus.md`; el conjunto queda fijo desde la primera variante, incluso inactiva. Un cambio de categoría no modifica silenciosamente sus identidades ni los SKU existentes y debe revalidar la configuración.
+
 ### Requisito 1.1: Activación de productos
 
-El sistema DEBE permitir cambiar un producto de "borrador" a "activo" únicamente cuando, además de los campos mínimos de creación, cuente con categoría y marca activas, al menos una característica y al menos una imagen.
+El sistema DEBE permitir cambiar un producto de "borrador" a "activo" únicamente cuando, además de los campos mínimos de creación, cuente con categoría y marca activas, tenga informados **todos los valores de las características obligatorias efectivas** de su categoría y al menos una imagen. Si la categoría no tiene características obligatorias efectivas, no se exige informar una característica únicamente para activar. Si `tiene_variantes = true`, también requiere una variante ACTIVA con SKU e imagen válidos; si es simple, su `sku_base` es el SKU vendible. No se publica como vendible hasta que Pricing confirme precio inicial y, para cada SKU publicable, Inventario confirme inicialización; la consulta comercial verifica su disponibilidad vigente.
 
 #### Escenario: Activación exitosa
-- DADO un producto en borrador que cuenta con categoría y marca activas, al menos una característica y al menos una imagen
+- DADO un producto en borrador que cuenta con categoría y marca activas, todos los valores de sus características obligatorias efectivas completos y al menos una imagen
 - CUANDO el gestor comercial solicita su activación
 - ENTONCES el sistema cambia su estado a "activo" y lo pone disponible para su consulta vía API por parte de los canales de venta
 
 #### Escenario: Activación rechazada por datos incompletos
-- DADO un producto en borrador sin ninguna imagen o sin ninguna característica
+- DADO un producto en borrador sin ninguna imagen o con una o más características obligatorias efectivas sin valor
 - CUANDO el gestor comercial solicita su activación
 - ENTONCES el sistema rechaza la activación, indica el requisito faltante y mantiene el producto en "borrador"
 
@@ -63,7 +67,7 @@ El sistema DEBE permitir cambiar un producto de "borrador" a "activo" únicament
 
 El sistema DEBE permitir modificar los atributos editables de un producto existente, en cualquiera de sus estados, preservando la trazabilidad del cambio. `tiene_variantes` no es editable.
 
-Los cambios válidos sobre un producto activo se publican inmediatamente. Si el cambio provoca que deje de cumplir una condición de activación, la operación se rechaza y se conserva la última versión válida.
+Los cambios válidos sobre un producto activo se confirman inmediatamente en Catálogo y se propagan a otros consumidores por eventos (consistencia eventual, sin promesa de visibilidad instantánea global). Si el cambio provoca que deje de cumplir una condición de activación, la operación se rechaza y se conserva la última versión válida.
 
 #### Escenario: Actualización exitosa de atributos de un producto
 - DADO un producto existente en el catálogo
@@ -113,6 +117,17 @@ El sistema DEBE permitir cambiar el estado de un producto entre "activo" e "inac
 - CUANDO el gestor comercial solicita su reactivación
 - ENTONCES el sistema rechaza la reactivación, indica qué condición ya no se cumple y mantiene el producto en "inactivo"
 
+### Requisito 5: Elegibilidad y barreras de entidades maestras
+Catálogo no debe crear, activar ni reasignar productos a una categoría o marca sujeta a una barrera de desactivación instalada según `SPEC-008-gestion-categorias.md` y `SPEC-011-gestion-marcas.md`. La comprobación y la escritura de producto deben coordinarse transaccionalmente con la barrera local; una proyección conocida como obsoleta no permite autorizar una operación comercial. El servicio publica la confirmación o rechazo de verificación asíncrona de bajas de entidades maestras con `operation_id` y conserva la barrera hasta reconciliar la finalización.
+
+**Valores identificadores bajo baja segura:** Catálogo aplica las mismas barreras locales de escritura al recibir solicitud de baja de un valor LISTA desde Taxonomía (`SPEC-009-gestion-caracteristicas.md`), y confirma asíncronamente si algún SKU ACTIVO lo usa como identidad o algún producto ACTIVO lo usa como valor requerido. Mientras dure la verificación no crea, activa ni reasigna nuevos artículos al valor; un fallo de confirmación nunca autoriza la baja. La regla no altera snapshots de pedidos.
+
+### Requisito 6: Última variante activa
+Si se desactiva la última variante ACTIVA de un producto con `tiene_variantes = true`, Catálogo desactiva también el producto padre en la misma transacción local y emite los eventos correspondientes; conserva el snapshot de pedidos confirmados. Para volver a activar el producto se debe activar una variante elegible y validar íntegramente los requisitos de activación.
+
+### Requisito 7: Alta de precio inicial
+Catálogo entrega a Pricing un comando idempotente de inicialización con `product_id`, `sku_base`, precio base, motivo `ALTA_PRODUCTO` y contexto de actor; Pricing persiste y confirma su resultado, y emite `pricing.price.changed` solo después del commit. La creación del borrador no equivale a precio inicial ya disponible; un fallo en Pricing se registra como pendiente de preparación y no habilita activación.
+
 ## 5. Requisitos no funcionales
 
 - **Rendimiento:** Las operaciones de consulta de producto (individual y listado) deben responder en un tiempo adecuado para no degradar la experiencia de los canales que las consumen (Marketplace, Chatbot, Retail), dado que son invocadas de forma frecuente.
@@ -137,3 +152,5 @@ La capacidad se considera correctamente implementada cuando:
 - Todos los escenarios definidos se cumplen, incluyendo los casos borde y de error.
 - Los requisitos no funcionales aplicables (rendimiento, seguridad, disponibilidad, auditoría, escalabilidad) se cumplen.
 - No se han incorporado funcionalidades fuera del alcance, como gestión de variantes, precios, metadatos SEO u ofertas.
+
+---

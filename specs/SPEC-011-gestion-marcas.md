@@ -17,7 +17,7 @@ Incluye:
 ## 4. Requisitos
 
 ### Requisito 1: Creación de marca
-El sistema DEBE permitir crear una marca con nombre único, descripción opcional, logo (máximo 5 MB) y país de origen opcional.
+El sistema DEBE permitir crear una marca con nombre globalmente único tras normalizar espacios y mayúsculas/minúsculas (incluidas marcas inactivas), descripción opcional, logo (PNG, JPG/JPEG o WebP, máximo 5 MB) y país de origen opcional identificado mediante código ISO 3166-1.
 
 #### Escenario: Creación exitosa de una marca
 - DADO que el gestor comercial está autenticado
@@ -65,13 +65,25 @@ El sistema DEBE permitir desactivar (baja lógica) una marca, impidiendo la desa
 - CUANDO el gestor comercial solicita reactivarla
 - ENTONCES el sistema cambia su estado a ACTIVO y vuelve a mostrarla en los filtros de los canales
 
+### Contrato transversal para baja segura de entidades maestras (EDA)
+
+La desactivación de categoría o marca que pueda tener productos asociados es **una operación asíncrona de dos fases funcionales**, no una llamada HTTP entre servicios. Taxonomía registra la operación `PENDING_DEACTIVATION` con `operation_id`, `entity_type`, `entity_id` y `version`, y publica el comando `taxonomy.master.deactivation.check.requested`. Catálogo, en una transacción local, instala una barrera de escritura por entidad (impide crear, activar o reasignar productos a ella mientras dure la operación), revisa todos los productos activos asociados y publica `catalog.master.deactivation.checked` con el mismo `operation_id`, versión y resultado `HAS_ACTIVE_PRODUCTS` o `CLEAR`. La barrera debe participar de las mismas transacciones de escritura de producto para evitar carreras.
+
+Taxonomía **solo confirma la baja lógica tras un resultado `CLEAR` vigente**; si hay productos activos, timeout o error, deja la entidad activa y registra rechazo o estado pendiente recuperable, nunca éxito supuesto. Publica `taxonomy.master.deactivated` o `taxonomy.master.deactivation.rejected`; Catálogo libera la barrera tras procesar idempotentemente ese resultado. La caída de un servicio no autoriza liberar automáticamente una barrera sin reconciliar el estado por `operation_id`. Los consumidores de canales actualizan sus vistas por eventos; durante la propagación no deben prometer visibilidad instantánea global. **No existe transacción distribuida** ni validación HTTP síncrona entre Catálogo y Taxonomía.
+
+La desactivación de una categoría sigue bloqueándose cuando tiene subcategorías activas, comprobación local de Taxonomía. La reactivación vuelve a validar padre y unicidad aplicable según el tipo de entidad. Este protocolo es interno y no presupone contratos confirmados con Ventas y Postventa.
+
+### Requisito 4: Unicidad global y reactivación
+El nombre normalizado con `trim` y comparación sin distinción de mayúsculas/minúsculas es único **entre todas las marcas, independientemente de su estado**. Crear o renombrar una marca con nombre reservado por una marca inactiva se rechaza. Reactivar una marca no reutiliza un nombre diferente ni crea un nuevo registro. La unicidad se protege mediante restricción de base de datos, además de validación en aplicación.
+
 ## 5. Requisitos no funcionales
 - Rendimiento: el listado de marcas activas debe responder en menos de 500 ms.
 - Seguridad: solo usuarios con rol "gestor comercial" autenticados pueden crear, actualizar, desactivar o reactivar marcas; la consulta de marcas activas puede ser de acceso público (para los canales).
-- Disponibilidad: el endpoint de consulta de marcas activas debe estar disponible para los canales de venta de forma asíncrona vía API.
+- Disponibilidad: la consulta de marcas activas se expone vía API al consumidor; la sincronización entre microservicios internos se efectúa mediante eventos asíncronos.
 - Auditoría: toda creación o modificación debe registrar automáticamente las fechas created_at y updated_at.
-- Integración: la validación de "productos activos asociados" antes de desactivar una marca se resuelve mediante una llamada síncrona al módulo de Catálogo Core, con un timeout de 15 segundos. Si no se recibe respuesta dentro de ese lapso, la desactivación debe rechazarse en lugar de asumir que no existen productos asociados.
-- Almacenamiento: el archivo de logo no debe superar los 5 MB.
+- Integración: la validación de productos activos se realiza mediante la coordinación asíncrona de baja segura. Ante falta de respuesta la operación permanece pendiente o se rechaza, sin desactivar la marca.
+- Almacenamiento: el logo debe ser PNG, JPG/JPEG o WebP y no superar 5 MB. SVG no se admite en el alcance inicial.
+- Datos maestros: cuando se informe país de origen, debe utilizarse un código ISO 3166-1 válido.
 
 ## 6. Fuera de alcance
 - Gestión de categorías y características — corresponden a capacidades independientes dentro del mismo sub-módulo.
@@ -84,3 +96,5 @@ La capacidad se considera correctamente implementada cuando:
 - Todos los escenarios definidos se cumplen.
 - Los requisitos no funcionales aplicables se cumplen.
 - No se han incorporado funcionalidades fuera del alcance.
+
+---
