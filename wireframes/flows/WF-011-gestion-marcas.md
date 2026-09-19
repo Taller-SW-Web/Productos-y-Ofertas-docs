@@ -1,5 +1,7 @@
 # WF-011 — Gestión de marcas
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la gestión de marcas
@@ -7,8 +9,8 @@ descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_marcas.md.
-2. Consulta ../../hu/hu_gestion_marcas.md.
+1. Consulta ../../specs/SPEC-011-gestion-marcas.md.
+2. Consulta ../../hu/HU-011-gestion-marcas.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -31,11 +33,10 @@ Reglas de producción:
 - La descripción y el país de origen son opcionales.
 - El logo no debe superar los 5 MB; al excederlo se rechaza indicando el
   motivo.
-- La desactivación es baja lógica y se completa solo si la validación síncrona
-  contra Catálogo Core (timeout 15 s) confirma que no hay productos activos.
-- Si Catálogo Core no responde dentro del timeout, la desactivación se rechaza:
-  no se asume “sin productos”.
-- La reactivación de una marca desactivada es permitida sin validación extra.
+- La desactivación es baja lógica y se completa solo si la verificación asíncrona correlacionada
+  contra Catálogo Core (plazo operacional de mensajes por confirmar) confirma que no hay productos activos.
+- Si Catálogo Core no devuelve una confirmación confiable, se rechaza la desactivación; no se asume “sin productos” ni un timeout HTTP específico.
+- La reactivación de una marca desactivada conserva su ID y comprueba unicidad global del nombre normalizado; no añade comprobaciones comerciales no documentadas.
 - NUNCA muestres eliminación física de una marca.
 - No elijas una librería de UI ni una estrategia CSS.
 - Usa datos ficticios y no consumas APIs reales.
@@ -52,8 +53,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No uses React ni dependencias del frontend productivo.
 - No requieras conexión a servicios externos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
-- Incluye las anotaciones visibles definidas en cada pantalla.
+- Implementa un diseño responsivo real para escritorio, tablet y móvil mediante CSS y cambios de viewport; no agregues controles internos de dispositivo.
+- Documenta las anotaciones A-xx fuera de la interfaz simulada; no las renderices en el prototipo.
 - Aplica el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
@@ -64,7 +65,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 4. Edición de nombre, descripción, logo y país de origen.
 5. Rechazo de logo mayor a 5 MB.
 6. Confirmación de desactivación (baja lógica) y bloqueo por productos activos.
-7. Variante de timeout en la validación síncrona.
+7. Variante de falta de confirmación en la verificación asíncrona correlacionada.
 8. Reactivación de una marca.
 9. Estados de carga, vacío, error, permisos y conflicto.
 10. Navegación funcional entre los estados simulados.
@@ -81,14 +82,14 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado | Borrador |
 | Responsable | Leonardo Lopez |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_marcas.md, secciones 1–6 | Alcance, requisitos y NFR |
-| Historia de usuario | hu_gestion_marcas.md, CA-01 a CA-08 | Criterios y escenarios |
+| Spec | SPEC-011-gestion-marcas.md, secciones 1–6 | Alcance, requisitos y NFR |
+| Historia de usuario | HU-011-gestion-marcas.md, CA-01 a CA-08 | Criterios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
@@ -100,7 +101,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Validar unicidad del nombre ignorando mayúsculas/minúsculas.
 - Actualizar nombre, descripción, logo y país de origen.
 - Rechazar logos mayores a 5 MB.
-- Desactivar (baja lógica) con validación síncrona de productos activos.
+- Desactivar (baja lógica) con verificación asíncrona correlacionada de productos activos.
 - Bloquear la desactivación ante timeout de la validación.
 - Reactivar una marca desactivada.
 
@@ -137,7 +138,7 @@ renderizar filtros por marca.
 
 La marca queda registrada con estado Activo, nombre único y logo válido (≤ 5
 MB). La desactivación solo se completa sin productos activos asociados y con
-validación síncrona respondida. La reactivación la vuelve disponible en los
+verificación asíncrona correlacionada respondida. La reactivación la vuelve disponible en los
 filtros de los canales.
 
 ### Indicadores de finalización
@@ -212,11 +213,10 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 1. El gestor selecciona Desactivar desde S-01.
 2. S-04 explica que dejará de mostrarse en los filtros de los canales.
 3. El gestor confirma.
-4. El sistema ejecuta la validación síncrona contra Catálogo Core (timeout
-   15 s).
+4. El sistema inicia la verificación asíncrona correlacionada con Catálogo Core; mantiene la solicitud pendiente sin presentar la marca como inactiva.
 5. Sin productos activos: pasa a Inactivo.
 6. Con productos activos: S-04-B explica el bloqueo.
-7. Sin respuesta en el timeout: S-04-T rechaza la desactivación.
+7. Si no obtiene confirmación confiable, S-04-T rechaza la desactivación y mantiene la marca activa.
 
 ### Flujo E — Reactivar marca
 
@@ -232,7 +232,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 | ALT-03 | Logo mayor a 5 MB | Rechazo con motivo del límite | S-02/S-03 |
 | ALT-04 | Marca inexistente al editar | Error de no encontrado | S-01 |
 | ALT-05 | Desactivar con productos activos | Bloqueo explicando el requisito | S-04-B |
-| ALT-06 | Timeout de validación síncrona (15 s) | Rechazar desactivación; no asumir resultado | S-04-T |
+| ALT-06 | Ausencia de confirmación asíncrona | Rechazar desactivación; no asumir resultado | S-04-T |
 | ALT-07 | Error al guardar | Conservar datos y permitir reintento | S-02-E |
 | ALT-08 | Error al cargar listado | Mostrar estado no disponible con reintento | S-01-E |
 | ALT-09 | Usuario sin permiso | Ocultar o deshabilitar acción y explicar acceso | Estado global |
@@ -427,7 +427,7 @@ Evitar una baja accidental y explicar su efecto comercial.
 - Título Desactivar marca.
 - Nombre de la marca.
 - Mensaje: La marca dejará de mostrarse en los filtros de los canales.
-- Indicación: se validará síncronamente que no tenga productos activos.
+- Indicación: se verificará de forma asíncrona que no tenga productos activos antes de confirmar la baja.
 - Acciones Desactivar y Cancelar.
 
 #### Navegación y foco
@@ -441,7 +441,7 @@ Evitar una baja accidental y explicar su efecto comercial.
 | ID | Elemento | Anotación |
 |---|---|---|
 | A-16 | Efecto | Retiro de los filtros de canales |
-| A-17 | Validación | Síncrona con Catálogo Core, timeout 15 s |
+| A-17 | Validación | Asíncrona con Catálogo; operación correlacionada, sin garantía de timeout HTTP |
 | A-18 | Sin eliminación | No existe acción de eliminación física |
 
 ### S-04-B — Desactivación bloqueada
@@ -467,7 +467,7 @@ Evitar una baja accidental y explicar su efecto comercial.
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| A-20 | Timeout | Si Catálogo Core no responde en 15 s, se rechaza la baja |
+| A-20 | Sin confirmación | Si Catálogo no confirma de forma confiable que no hay productos activos, se rechaza la baja; SLA pendiente |
 
 ### S-05 — Detalle de marca
 
@@ -528,8 +528,7 @@ Evitar una baja accidental y explicar su efecto comercial.
 ### Reglas para datos remotos
 
 - Consultar marcas vigentes al cargar y refrescar tras guardar.
-- La validación de productos activos es síncrona (timeout 15 s); rechazar si no
-  responde.
+- La comprobación de productos activos es asíncrona y correlacionada; rechazar la baja si no se obtiene confirmación confiable, sin fijar un timeout HTTP.
 - No aplicar guardado optimista.
 - Distinguir ausencia de marcas de fallo de carga.
 
@@ -586,7 +585,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Logo | El logo no debe superar los 5 MB. | CA-08 |
 | Baja | La marca dejará de mostrarse en los filtros de los canales. | Efecto comercial |
 | Bloqueo | No se puede desactivar porque la marca tiene productos activos. | Motivo accionable |
-| Timeout | No pudimos validar los productos asociados. Inténtalo nuevamente. | No asumir resultado |
+| Sin confirmación | No pudimos verificar los productos asociados. Inténtalo nuevamente. | No asumir resultado |
 | Reactivar | La marca vuelve a los filtros de los canales de venta. | CA-05 |
 
 ## 14. Restricciones técnicas relevantes
@@ -596,7 +595,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - Estado remoto: TanStack Query.
 - Formularios: React Hook Form y Zod.
 - Contratos HTTP: OpenAPI/Swagger.
-- Validación de productos: llamada síncrona a Catálogo Core con timeout 15 s.
+- Validación de productos: coordinación EDA con Catálogo; sin respuesta confirmada la baja se rechaza.
 - La librería de componentes y estrategia CSS están pendientes.
 - El prototipo es HTML/CSS/JS estático.
 
@@ -605,7 +604,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Tipo | Operación o referencia | Impacto visible |
 |---|---|---|
 | HTTP | Listar/crear/editar marcas; pendiente | S-01/S-02/S-03 |
-| HTTP | Validar productos activos (síncrono, 15 s); pendiente | S-04/S-04-B/S-04-T |
+| EDA | Comando/resultado correlacionado para validar productos activos; contrato en Docs | S-04/S-04-B/S-04-T |
 | HTTP | Endpoint de solo lectura de marcas activas | Canales de venta |
 | Almacenamiento | URL del logo (externo) | S-02/S-03 |
 | Permiso | Consultar/crear/editar/desactivar/reactivar; código pendiente | Acciones condicionadas |
@@ -627,9 +626,9 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Descripción y país de origen son opcionales.
 - [ ] El logo es opcional y su límite es 5 MB.
 - [ ] Rechaza un logo mayor a 5 MB con motivo.
-- [ ] La baja lógica valida productos activos de forma síncrona.
-- [ ] Ante timeout (15 s) rechaza la desactivación.
-- [ ] Permite reactivar sin validación adicional.
+- [ ] La baja lógica comprueba productos activos por coordinación EDA antes de confirmar.
+- [ ] Ante ausencia de confirmación de dependencias, rechaza la baja y conserva la marca activa.
+- [ ] La reactivación verifica nombre globalmente único y conserva la identidad de la marca.
 - [ ] No existe eliminación física.
 - [ ] Representa el endpoint de solo lectura para canales.
 - [ ] Incluye carga, vacío, error, permisos y sesión.
@@ -663,19 +662,26 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 | ID | Pregunta o decisión | Responsable | Bloquea wireframe | Estado |
 |---|---|---|---|---|
-| Q-01 | ¿El logo usa los formatos PNG, JPG, SVG u otros? | Producto | No para wireframe | Abierta |
-| Q-02 | ¿El país de origen es lista cerrada o texto libre? | Producto | No para wireframe | Abierta |
+| Q-01 | Resuelto: logo PNG, JPG/JPEG o WebP, máximo 5 MB; SVG no admitido. | Specs/HU definitivos | No | Resuelta |
+| Q-02 | Resuelto: país opcional identificado por ISO 3166-1; no texto libre no normalizado. | Specs/HU definitivos | No | Resuelta |
 | Q-03 | ¿El país de origen se muestra en el listado o solo en detalle? | Producto/UX | No | Abierta |
-| Q-04 | ¿Reactivar exige alguna validación adicional no documentada? | Producto | No | Abierta |
+| Q-04 | Resuelto: reactivación conserva ID y debe respetar unicidad global del nombre, incluso frente a marcas inactivas. | Specs/HU definitivos | No | Resuelta |
 | Q-05 | ¿Debe advertirse al salir con cambios sin guardar? | Producto/UX | No | Abierta |
 | Q-06 | ¿Existe búsqueda, filtros u orden en el listado? | Producto | No para flujo base | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |
+
+### Alineación definitiva de Marcas
+
+- Nombre normalizado es **único globalmente**, incluso en marcas inactivas. Al crear, renombrar o reactivar una marca se comprueba unicidad; la reactivación no puede crear un segundo nombre equivalente.
+- Baja lógica: mostrar **Solicitud recibida → Verificando productos activos → Desactivación confirmada / Rechazada**. La comprobación usa coordinación EDA y barrera de escrituras correlacionada en Catálogo; si falla la verificación o existen productos activos, la marca permanece activa. El SLA de la coordinación no está fijado, no mostrar un «timeout HTTP de 15 s» como requisito vigente.
+- Logo: PNG/JPG/JPEG/WebP hasta 5 MB; país, cuando se ingrese, es ISO 3166-1; no aceptar SVG. El almacenamiento físico del logo está fuera del dominio de Marcas y el formulario maneja el resultado/URL del servicio de almacenamiento que se acuerde.
 
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -685,10 +691,12 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [x] El alcance y fuera de alcance están claros.
 - [x] Las pantallas y variantes están inventariadas.
 - [x] Los criterios CA-01 a CA-08 están cubiertos.
-- [x] La unicidad, el límite de 5 MB y el timeout de 15 s están documentados.
+- [x] La unicidad global, logos de hasta 5 MB y el flujo EDA de baja segura están documentados.
 - [x] La baja lógica y reactivación están documentadas.
 - [x] Los supuestos y preguntas están registrados.
 - [x] El formato HTML está definido.
 - [ ] Confirmar el ID WF-011 contra INDEX.md.
-- [ ] Resolver Q-01 y Q-02 antes del diseño definitivo.
+- [ ] Revisar únicamente las preguntas no resueltas en la sección 18 antes de implementar.
 - [ ] Confirmar rutas y permisos antes de implementar el frontend.
+
+---

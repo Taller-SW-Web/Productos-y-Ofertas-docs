@@ -30,6 +30,8 @@
     button{min-height:44px;cursor:pointer}
     button:disabled{cursor:not-allowed;color:var(--neutral-50);border-color:var(--neutral-30);background:var(--neutral-10)}
     a,button,input,textarea,select{outline-offset:3px}
+    a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--neutral-90);outline-offset:2px}
+    input[type="checkbox"],input[type="radio"]{accent-color:var(--neutral-90)}
     .app-shell{min-height:100vh}
     .topbar{border-bottom:1px solid var(--neutral-30);background:var(--surface)}
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}

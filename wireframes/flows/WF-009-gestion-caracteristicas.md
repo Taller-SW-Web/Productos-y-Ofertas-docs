@@ -1,5 +1,7 @@
 # WF-009 — Gestión de características y sus valores
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la gestión de
@@ -7,8 +9,8 @@ características del catálogo descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_caracteristicas.md.
-2. Consulta ../../hu/hu_gestion_caracteristicas.md.
+1. Consulta ../../specs/SPEC-009-gestion-caracteristicas.md.
+2. Consulta ../../hu/HU-009-gestion-caracteristicas.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -50,8 +52,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No uses React ni dependencias del frontend productivo.
 - No requieras conexión a servicios externos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
-- Incluye las anotaciones visibles definidas en cada pantalla.
+- Implementa un diseño responsivo real para escritorio, tablet y móvil mediante CSS y cambios de viewport; no agregues controles internos de dispositivo.
+- Documenta las anotaciones A-xx fuera de la interfaz simulada; no las renderices en el prototipo.
 - Aplica el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
@@ -78,20 +80,20 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado | Borrador |
 | Responsable | Leonardo Lopez |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_caracteristicas.md, secciones 1–6 | Tipos, límites y reglas de valores |
-| Historia de usuario | hu_gestion_caracteristicas.md, CA-01 a CA-06 | Criterios de característica y valores |
+| Spec | SPEC-009-gestion-caracteristicas.md, secciones 1–6 | Tipos, límites y reglas de valores |
+| Historia de usuario | HU-009-gestion-caracteristicas.md, CA-01 a CA-06 | Criterios de característica y valores |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
 > CA-05/CA-06 (Marcas) y CA-07/CA-08/CA-09 (Asociación) no se cubren aquí:
-> las propias fuentes remiten a `hu_gestion_marcas.md` y
-> `hu_asociacion_categoria_caracteristica.md` (WF-011 y WF-010).
+> las propias fuentes remiten a `HU-011-gestion-marcas.md` y
+> `HU-010-asociacion-categoria-caracteristica.md` (WF-011 y WF-010).
 
 ### Funcionalidades incluidas
 
@@ -406,8 +408,7 @@ Actualizar el nombre y, si el tipo es `NUMERO`, la unidad de medida.
 
 #### Comportamiento
 
-- El tipo se muestra como dato inmutable (Q-03 pendiente si se permite cambiar
-  de tipo).
+- El tipo es inmutable desde creación (Q-03 resuelta); no permitir cambiarlo.
 - La unidad se edita solo en `NUMERO`.
 - Los valores de `LISTA` se editan desde S-04, no aquí.
 - Guardar valida las mismas reglas que la creación.
@@ -416,7 +417,7 @@ Actualizar el nombre y, si el tipo es `NUMERO`, la unidad de medida.
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| A-12 | Tipo inmutable | Cambios de tipo pendientes; Q-03 |
+| A-12 | Tipo inmutable | No existe edición de tipo; crear nueva característica si se requiere otro tipo |
 | A-13 | Unidad | Aplica solo a NUMERO |
 
 ### S-04 — Gestionar valores (tipo LISTA)
@@ -447,7 +448,7 @@ la integridad por ID.
 - El contador cuenta solo valores activos (máximo 50).
 - Valor vacío o duplicado no se permite.
 - Renombrar un valor en uso lo propaga por ID a los productos existentes.
-- La baja de un valor es lógica; decisión de validación de uso pendiente (Q-02).
+- La baja de valor LISTA es lógica y requiere verificación asíncrona segura; rechazar si lo usa SKU ACTIVO como identidad o producto ACTIVO como valor requerido. Ante falta de respuesta no desactivar.
 - La desactivación de un valor activo requiere confirmación.
 
 #### Navegación y foco
@@ -665,18 +666,27 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | ID | Pregunta o decisión | Responsable | Bloquea wireframe | Estado |
 |---|---|---|---|---|
 | Q-01 | ¿El nombre de la característica es único? | Producto | No para flujo base | Abierta |
-| Q-02 | ¿Se permite dar de baja un valor que está en uso por productos? | Producto | Sí para S-04 | Abierta |
-| Q-03 | ¿Se permite cambiar el tipo de una característica existente? | Producto | Sí para S-03 | Abierta |
+| Q-02 | Resuelto: baja lógica bloqueada cuando la identidad de SKU ACTIVO o el valor requerido por producto ACTIVO lo utiliza; verificación EDA con barrera y fallo cerrado. | Spec/HU Características | No | Resuelta |
+| Q-03 | Resuelto: tipo inmutable desde creación; crear otra característica con ID nuevo. | Spec/HU Características | No | Resuelta |
 | Q-04 | ¿Debe advertirse al salir del formulario con cambios sin guardar? | Producto/UX | No | Abierta |
 | Q-05 | ¿La unidad de medida es una lista cerrada o texto libre? | Producto | No para wireframe | Abierta |
 | Q-06 | ¿Existe búsqueda, filtros u orden en el listado? | Producto | No para flujo base | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |
+
+### Alineación definitiva de Características
+
+- Este wireframe administra exclusivamente características y valores `TEXTO` (máximo 100 caracteres), `NUMERO` (unidad obligatoria) y `LISTA` (máximo 50 valores activos). La asociación/herencia y el límite de 20 efectivos corresponden al **WF-010**, y el CRUD de marcas al **WF-011**; no incluir pantallas CRUD redundantes.
+- Renombrar un valor conserva su ID y no altera SKU. La baja de valores LISTA usados por SKU ACTIVO o producto ACTIVO requerido se rechaza con verificación asíncrona segura; el tipo es inmutable.
+
+### Estados de verificación asíncrona al desactivar valor LISTA
+Al solicitar baja mostrar «Comprobando uso en productos», impedir nuevos vínculos bajo barrera y mantener el valor sin confirmar baja hasta recibir resultado. Si lo usa un SKU ACTIVO o producto ACTIVO requerido, mostrar rechazo y conservar valor; si no hay respuesta, informar error recuperable y no dar por exitosa la baja. El histórico conserva IDs y snapshots.
 
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -691,5 +701,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [x] Los supuestos y preguntas están registrados.
 - [x] El formato HTML está definido.
 - [ ] Confirmar el ID WF-009 contra INDEX.md.
-- [ ] Resolver Q-02 y Q-03 antes del diseño definitivo.
+- [x] Q-02 y Q-03 resueltas: baja protegida y tipo inmutable.
 - [ ] Confirmar rutas y permisos antes de implementar el frontend.
+
+---
