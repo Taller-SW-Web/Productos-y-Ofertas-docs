@@ -50,16 +50,18 @@
       justify-content: space-between;
       gap: 16px;
     }
-    .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; font-weight: 700; }
     .brand-mark {
-      width: 32px;
-      height: 32px;
-      border: 1px solid var(--neutral-90);
+      width: 34px;
+      height: 34px;
+      border: 2px solid var(--neutral-90);
       display: grid;
       place-items: center;
+      flex: 0 0 auto;
       font-family: "Roboto Mono", monospace;
-      font-size: 11px;
+      font-size: 12px;
     }
+    .brand-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
     .crumb { color: var(--neutral-50); font-size: 14px; }
     .page { max-width: 1200px; margin: auto; padding: 32px 24px 64px; width: 100%; flex: 1; }
     .page-header {
@@ -317,8 +319,8 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <span class="brand-mark" aria-hidden="true">PO</span>
-        <span>Productos y ofertas</span>
+        <div class="brand-mark" aria-hidden="true">PO</div>
+        <span class="brand-text">PO Productos y ofertas</span>
       </div>
       <div class="crumb">Control interno / Auditoría de precios</div>
     </div>
@@ -574,7 +576,7 @@
       `;
       return true;
     }
-    if (state.queryState === 's01-e') {
+    if (state.queryState === 's01-e' || state.queryState === 'query-error') {
       app.innerHTML = `
         <div class="page-header">
           <div>
@@ -703,9 +705,6 @@
           <button class="btn btn-quiet" id="btn-open-csv" type="button" ${records.length === 0 ? 'disabled' : ''}>Exportar a CSV</button>
           <button class="btn btn-primary" id="btn-open-pdf" type="button" ${records.length === 0 ? 'disabled' : ''}>Exportar a PDF</button>
         </div>
-      </div>
-
-      
       </div>
 
       <!-- Panel de Filtros -->
