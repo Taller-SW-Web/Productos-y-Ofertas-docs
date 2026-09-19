@@ -37,6 +37,7 @@
     .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
     .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
     .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
@@ -179,7 +180,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div>
       <div class="crumb">Productos / Características</div>
     </div>
   </header>
@@ -245,6 +246,7 @@
     Estados documentales de WF-009 que pueden inspeccionarse sin contaminar la UI:
       ?state=empty
       ?state=list-error
+      ?state=save-error       -> fallo al guardar (S-02-E), conserva datos y permite reintento
       ?state=no-permission
       ?state=session-expired
     No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
@@ -275,9 +277,11 @@
     dirty:false,
     saving:false,
     listLoading:true,
+    saveErrorShown:false,
     queryState:new URLSearchParams(location.search).get('state') || '',
     valueName:''                 // texto para agregar valor
   };
+  state.saveError = state.queryState==='save-error';
 
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
@@ -374,12 +378,16 @@
     const errors=formErrors(); const nameErr=errorFor('name'); const typeErr=errorFor('type'); const unitErr=errorFor('unit');
     const mode=state.formMode; const title=mode==='create'?'Crear característica':'Editar característica';
     const type=state.form.type;
+    const saveErr=state.saveErrorShown
+      ?`<div class="notice error" role="alert"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos guardar la característica.</h3><p>Se conservaron tus datos. Revisa la conexión y reintenta; no se registraron duplicados.</p></div></div>`
+      :'';
     const opts=[['TEXTO','Valor libre con límite de 100 caracteres.'],['NUMERO','Valor numérico con unidad de medida.'],['LISTA','Lista cerrada de hasta 50 valores activos.']].map(([t,desc])=>
       `<label class="radio-option ${type===t?'selected':''}" style="display:block"><input type="radio" name="charType" value="${t}" ${type===t?'checked':''}> <strong>${t}</strong><div class="small muted" style="margin-top:6px">${desc}</div></label>`).join('');
     app.innerHTML=`
       <div class="page-header"><div><h1>${title}</h1><p>Define un atributo estandarizado para el catálogo.</p></div></div>
       <div id="formErrorSummary" class="error-summary" tabindex="-1"><h3>Revisa los datos antes de guardar.</h3><ul>${errors.map(e=>`<li>${escapeHtml(e.msg)}</li>`).join('')}</ul></div>
       <form id="charForm" novalidate>
+      ${saveErr}
       <div class="form-layout">
         <div>
           <section class="section"><h2>Datos generales</h2>
@@ -506,6 +514,14 @@
     if(errors.length){renderForm();const s=document.getElementById('formErrorSummary');s.classList.add('show');s.focus();return;}
     state.saving=true;renderForm();
     setTimeout(()=>{
+      state.saving=false;
+      if(state.saveError){
+        state.saveError=false;
+        state.saveErrorShown=true;
+        render();
+        showToast('No se pudo guardar. Se conservaron tus datos.');
+        return;
+      }
       if(state.formMode==='create'){
         const id='ch-'+Date.now();
         const c={id,name:state.form.name.trim(),type:state.form.type,status:'active',values:state.form.type==='LISTA'?[]:[],unit:state.form.type==='NUMERO'?state.unitValue.trim():''};
