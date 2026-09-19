@@ -6,7 +6,7 @@
 
 | Parámetro | Detalle |
 | :--- | :--- |
-| **Rol (Como)** | Gestor Comercial / Auditor Interno |
+| **Rol (Como)** | `AUDITOR_COMERCIAL` / `ADMIN_SISTEMA` |
 | **Acción (Quiero)** | Registrar de forma automática e inmutable cada cambio de precio con su contrato completo y consultar o exportar el historial cronológico (en CSV o PDF) con filtros por SKU, usuario, fechas, canal y lote |
 | **Beneficio (Para)** | Contar con trazabilidad absoluta (quién, cuándo, valor anterior, valor nuevo, variación %, motivo, canal, IP), resolviendo contingencias operativas, comerciales o legales y garantizando el cumplimiento normativo |
 
@@ -17,16 +17,20 @@
 | ID | Criterio |
 | :---: | :--- |
 | **CA-01** | **Captura Asíncrona y Desacoplada:** Toda modificación exitosa de precios (individual o masiva) debe capturarse mediante eventos asíncronos (`pricing.price.changed`). La captura y persistencia en la bitácora no debe añadir más de 50 ms a la operación de precios del microservicio emisor. |
-| **CA-02** | **Contrato Completo de Auditoría:** Cada registro de auditoría debe persistir de forma mandatoria: `id_auditoria`, `sku`, `product_id`, `tipo_precio` (`REGULAR` u `OFERTA`), `precio_anterior`, `precio_nuevo`, `variacion_porcentual`, `motivo_cambio`, `canal_origen` (`BACKOFFICE`, `BULK_IMPORT`, `API`), `batch_id` (obligatorio si provino de lote masivo, `null` si fue individual), `usuario_id`, `usuario_email`, `ip_origen` (evaluando `X-Forwarded-For` o `X-Real-IP`) y `timestamp` (UTC). |
+| **CA-02** | **Contrato Completo de Auditoría:** Cada registro de auditoría debe persistir de forma mandatoria: `id_auditoria`, `sku`, `product_id`, `tipo_precio` (`REGULAR` u `OFERTA`), `precio_anterior` (nulo en CREACION), `precio_nuevo` (nulo en RETIRO_OFERTA), `variacion_porcentual` (nula en CREACION o RETIRO_OFERTA), `tipo_operacion`, `motivo_cambio`, `canal_origen` (`BACKOFFICE`, `BULK_IMPORT`, `API`), `batch_id` (obligatorio si provino de lote masivo, `null` si fue individual), `usuario_id`, `usuario_email`, `ip_origen` (evaluando `X-Forwarded-For` o `X-Real-IP`) y `timestamp` (UTC). |
 | **CA-03** | **Omisión ante Operaciones Fallidas:** Si una actualización de precio es rechazada por regla de negocio, falta de motivo obligatorio o error transaccional, no se emite el evento y la auditoría no genera ningún registro. Solo se auditan cambios efectivamente persistidos. |
 | **CA-04** | **Inmutabilidad Estricta (Append-Only):** El almacén de auditoría solo admite operaciones `INSERT` y `SELECT`. Todo intento de invocar `PUT`, `PATCH` o `DELETE` sobre las rutas de auditoría debe ser rechazado inmediatamente con HTTP `405 Method Not Allowed` o `403 Forbidden`. |
 | **CA-05** | **Consulta y Filtrado Multicriterio:** Provee endpoints para consultar cronológicamente el log en orden descendente, permitiendo filtrar por: `sku`, rango de fechas/horas (`fecha_desde` / `fecha_hasta`), identificador o email de usuario, `canal_origen` y `batch_id`. |
 | **CA-06** | **Paginación y Tiempos de Respuesta:** La consulta debe ser paginada y responder en menos de 800 ms. Si no existen registros para los filtros seleccionados, retorna HTTP `200 OK` con un arreglo vacío (`[]`) y total de elementos 0, mostrando en interfaz: "No se registraron cambios de precio bajo los criterios seleccionados". |
 | **CA-07** | **Exportación de Registros (CSV y PDF):** Permite exportar los registros consultados. La exportación en formato **CSV** soporta hasta 100,000 filas para análisis masivo; la exportación en **PDF** está restringida a un máximo de 500 registros para reportes ejecutivos de control con membrete oficial. |
 | **CA-08** | **Seguridad y Accesos:** La consulta y exportación del historial está restringida a usuarios autenticados con rol `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA`. |
-| **CA-09** | **Política de Retención y Archivado:** Los registros se mantienen indexados en la base de datos operativa durante **24 meses exactos**. Al cumplirse este tiempo, un proceso mensual por lotes traslada las particiones a almacenamiento en frío en formato Parquet (S3/Cloud Storage) donde se conservan por 5 años adicionales. |
+| **CA-09** | **Política de Retención y Archivado:** Los registros se mantienen indexados en la base de datos operativa durante **al menos 24 meses completos**. Al cumplirse este tiempo, un proceso mensual por lotes traslada las particiones a almacenamiento en frío en formato Parquet (S3/Cloud Storage) donde se conservan por cinco años desde el archivado, después de verificar integridad/recuperabilidad antes de retirar los registros de la base operativa. |
 
 ---
+
+| CA-10 | La creación inicial de precio regular o de una nueva oferta registra `tipo_operacion=CREACION`, precio anterior y variación nulos; los cambios entre importes existentes son `MODIFICACION`. Retirar una oferta registra `RETIRO_OFERTA`, precio nuevo y variación nulos, sin confundir «sin oferta» con precio cero. |
+| CA-11 | Duplicados del mismo `event_id` no producen auditorías repetidas; la bitácora nunca modifica precios. |
+| CA-12 | El archivado mensual nunca retira registros antes de cumplir 24 meses completos y verifica integridad y recuperabilidad antes del retiro; su conservación fría dura cinco años desde el archivado. |
 
 ## 3. Escenarios (Dado - Cuando - Entonces / Gherkin)
 
@@ -62,6 +66,21 @@
 
 ---
 
+### Escenario 7: Registro del precio inicial
+* **Dado** un producto nuevo sin precio anterior,
+* **Cuando** Pricing confirma su primera inicialización,
+* **Entonces** Auditoría inserta una sola entrada `CREACION` con precio anterior y variación nulos.
+
+### Escenario 8: Archivo fallido
+* **Dado** un lote elegible para archivado,
+* **Cuando** la verificación del Parquet falla,
+* **Entonces** no se retiran los registros operativos ni se modifica su contenido.
+
+### Escenario adicional: Retiro auditable de oferta
+* **Dado** un SKU con oferta S/ 170 vigente y un gestor autorizado que ejecuta `accion_precio_oferta=ELIMINAR`,
+* **Cuando** Pricing confirma el retiro y emite `pricing.price.changed`,
+* **Entonces** Auditoría inserta un único registro con `tipo_precio=OFERTA`, `tipo_operacion=RETIRO_OFERTA`, `precio_anterior=170`, `precio_nuevo=null` y `variacion_porcentual=null`, conservando intacto el histórico.
+
 ## 4. Matriz de Interacción con Otros Módulos
 
 | Módulo | Necesidad de Interacción | Información que Recibe | Información que Entrega |
@@ -84,6 +103,8 @@
 
 ## 6. Reglas de Negocio Resueltas
 
-- [x] **Contrato completo homologado:** Resuelto. Se capturan mandatoriamente `canal_origen`, `motivo_cambio`, `batch_id` y `variacion_porcentual`.
+- [x] **Contrato interno completo:** Resuelto. Se capturan `canal_origen`, `motivo_cambio`, `batch_id` y `variacion_porcentual` (nula en CREACION o RETIRO_OFERTA, cuando no existe importe de referencia o final); no se afirma homologación con módulos externos.
 - [x] **Formatos de exportación:** Resuelto. CSV habilitado hasta 100,000 registros y PDF limitado a 500 filas para reportes ejecutivos.
-- [x] **Retención y archivado:** Resuelto. 24 meses exactos en base de datos operativa y posterior exportación mensual en Parquet hacia almacenamiento en frío por 5 años.
+- [x] **Retención y archivado:** Resuelto. Al menos 24 meses completos en base operativa; archivado mensual verificado en Parquet y cinco años adicionales desde archivado.
+
+---

@@ -16,16 +16,22 @@ El stock se controla por **SKU vendible**. Un producto simple (`tiene_variantes 
 | --- | --- |
 | **CA-01** | Cada unidad vendible debe tener un SKU único: el `sku_base` para un producto simple o el SKU autogenerado para una variante. |
 | **CA-02** | El sistema debe permitir consultar el stock disponible de una variante proporcionando su SKU. |
-| **CA-03** | La consulta de disponibilidad debe informar como mínimo el SKU, la cantidad disponible y su estado: **Disponible, Stock bajo o Agotado**, según las reglas: `stock = 0 → Agotado`, `0 < stock <= umbral_stock_bajo → Stock bajo`, `stock > umbral_stock_bajo → Disponible`. El `umbral_stock_bajo` debe ser configurable por cada variante/SKU. |
+| **CA-03** | La consulta de disponibilidad debe informar como mínimo el SKU, la cantidad disponible y su estado: **Disponible, Stock bajo o Agotado**, según las reglas: `stock = 0 → Agotado`, `0 < stock <= umbral_stock_bajo → Stock bajo`, `stock > umbral_stock_bajo → Disponible`. El `umbral_stock_bajo` se configura individualmente por SKU desde **Gestión de Inventario**; Gestión de Variantes puede consultarlo, pero no editarlo. |
 | **CA-04** | El sistema debe permitir registrar el consumo de unidades de una variante proporcionando su SKU y la cantidad consumida. |
 | **CA-05** | Antes de actualizar el stock, el sistema debe validar que la variante exista, que la cantidad consumida sea válida y que exista stock suficiente. |
 | **CA-06** | Cuando exista stock suficiente, el sistema debe descontar la cantidad consumida y conservar el nuevo stock actualizado. |
 | **CA-07** | El sistema no debe permitir que el stock de una variante sea negativo. Si no existe stock suficiente, debe rechazar el consumo y conservar el stock actual. |
 | **CA-08** | Cuando el consumo deje el stock en cero, la variante debe quedar identificada como **Agotada**. Si el consumo deja el stock en `0 < stock <= umbral_stock_bajo`, la variante debe quedar identificada como **Stock bajo**. |
-| **CA-09** | La información de stock actualizada debe estar disponible para las posteriores consultas realizadas por los canales y módulos integrados. |
+| **CA-09** | El saldo confirmado se devuelve autoritativamente desde Inventario; las vistas replicadas de canales se actualizan por eventos y pueden presentar retraso temporal identificable. |
 | **CA-10** | Ante consumos concurrentes sobre el mismo SKU, el sistema debe garantizar que el stock no sea negativo y que la suma de consumos aceptados no supere el stock disponible de la variante. Para ello, el descuento se ejecuta como una **actualización condicional sobre el stock disponible** y emplea el **mismo control de concurrencia optimista** definido para las operaciones masivas de inventario, sin bloquear otros consumos. |
-| **CA-11** | El consumo definitivo de stock se aplica únicamente al recibir `order.confirmed` desde Ventas y Postventa. `order.created` no reserva ni descuenta stock. Despacho no genera consumos adicionales. |
-| **CA-12** | Si una venta confirmada se cancela antes del despacho, `order.cancelled` compensa el stock. Si ya fue entregada, solo `order.returned` tras devolución aceptada repone unidades. |
+| **CA-11** | El consumo definitivo de stock se aplica únicamente al recibir el contrato provisional `order.confirmed` desde Ventas y Postventa, sujeto a homologación formal. `order.created` no reserva ni descuenta stock. Despacho no genera consumos adicionales. |
+| **CA-12** | Si una venta confirmada se cancela antes del despacho, `order.cancelled` compensa únicamente el consumo previo exitoso y no compensado. Si ya fue entregada, solo `order.returned` tras devolución aceptada y físicamente reintegrable repone las unidades autorizadas. |
+
+| **CA-13** | `order.confirmed` es un contrato externo provisional con `order_id`, `operation_id`, SKUs y cantidades (y snapshot de componentes para combo). Inventario consume todas las líneas de la operación en ACID y emite resultado idempotente aceptado o rechazado. |
+| **CA-14** | Un rechazo por stock insuficiente nunca marca la venta como exitosa ni revierte pagos en Inventario; Ventas/Postventa define el tratamiento comercial y financiero. |
+| **CA-15** | `order.cancelled` y `order.returned` solo compensan consumos previos efectivos, no repuestos anteriormente; los eventos duplicados no acreditan dos veces, y el retorno requiere aceptación física. |
+| **CA-16** | Un ajuste absoluto masivo lleva `stock_version`, se rechaza ante conflicto y solo Inventario emite `inventory.stock.adjusted` y `inventory.stock.changed` después del registro del Kardex. |
+| **CA-17** | Un SKU nuevo se inicializa idempotentemente con saldo 0 y `stock_version=0` antes de admitir conteos masivos o consumo. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -95,6 +101,21 @@ El stock se controla por **SKU vendible**. Un producto simple (`tiene_variantes 
 * **CUANDO** un canal consulta su disponibilidad,
 * **ENTONCES** el sistema devuelve la cantidad disponible de 3 unidades y el estado **Stock bajo**.
 
+### Escenario 12: Venta confirmada sin stock
+* **DADO** un pedido confirmado con cantidad superior a las existencias restantes,
+* **CUANDO** Inventario recibe `order.confirmed`,
+* **ENTONCES** rechaza el consumo sin stock negativo y emite resultado a Ventas, sin cambiar pagos ni afirmar que el pedido quedó resuelto.
+
+### Escenario 13: Cancelación duplicada
+* **DADO** un consumo confirmado compensado una vez,
+* **CUANDO** llega nuevamente la misma cancelación,
+* **ENTONCES** no se incrementa de nuevo el stock.
+
+### Escenario 14: Ajuste absoluto con versión anterior
+* **DADO** que un consumo aumentó `stock_version` desde la exportación,
+* **CUANDO** se solicita restablecer el conteo anterior por carga masiva,
+* **ENTONCES** el ajuste se rechaza con `VERSION_CONFLICT` sin sobrescribir la venta.
+
 ## Interacción con otros módulos
 
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
@@ -116,6 +137,9 @@ La consulta de disponibilidad por parte de los canales **Marketplace, Retail y C
 | **Gestión de características** | Características de las variantes, como talla, color u otras que permitan diferenciar unidades de inventario. |
 | **Gestión de precios** | Identificación de la variante y precio vigente cuando los canales necesiten relacionar la disponibilidad con la información comercial del producto. |
 
+## Condición externa para la implementación
+Los eventos `order.confirmed`, `order.cancelled` y `order.returned` y las respuestas de consumo son **propuestas de contrato** pendientes de homologación con Ventas y Postventa; esta HU no afirma que ya existan en el sistema externo. Inventario no confirma pedidos, no realiza cobros ni ejecuta reembolsos.
+
 ## Reglas consolidadas
 
 * El `umbral_stock_bajo` se configura individualmente por SKU; no existe un valor global obligatorio.
@@ -123,3 +147,5 @@ La consulta de disponibilidad por parte de los canales **Marketplace, Retail y C
 * La generación del SKU corresponde a Gestión de Variantes/Productos según el tipo de producto.
 
 > Nota: la generación del SKU la define la funcionalidad de **Gestión de variantes/SKUs** (generación automática desde `sku_base` y atributos identificadores); la confirmación del consumo y la interacción con Despacho ya quedaron resueltas en **CA-11** y en la tabla de interacción.
+
+---

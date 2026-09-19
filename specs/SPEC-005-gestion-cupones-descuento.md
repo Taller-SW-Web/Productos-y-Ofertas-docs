@@ -91,7 +91,7 @@ Solo se consume si el cupón fue el beneficio finalmente seleccionado.
 
 ### Requisito 7: Garantizar idempotencia
 
-La combinación `pedido_id + cupon_id` debe ser única para el registro de consumo. Reintentos o mensajes duplicados de la misma confirmación no incrementan el contador.
+La combinación `order_id + cupon_id` debe ser única para el registro de consumo. Reintentos o mensajes duplicados de la misma confirmación no incrementan el contador.
 
 ### Requisito 8: Garantizar concurrencia
 
@@ -99,9 +99,9 @@ Si varios pedidos compiten por los últimos usos, el sistema debe asegurar atóm
 
 ### Requisito 9: Resolver convivencia con promoción automática
 
-Un cupón válido y una promoción automática no se acumulan.
+Un cupón válido, una promoción automática y una oferta vigente de Pricing son alternativas excluyentes; ningún descuento se acumula con otro.
 
-Se aplica únicamente el beneficio que produzca el menor importe resultante. En empate se prioriza el cupón.
+Se compara cada alternativa sobre el total de la misma cesta, incluidas las líneas no elegibles sin descuento, y se aplica únicamente el menor importe final. En empate cupón/automática se prioriza cupón; en empate con oferta de Pricing se conserva la oferta y no se consume cupón.
 
 ### Requisito 10: Anulación posterior
 
@@ -117,6 +117,9 @@ La consulta administrativa DEBE mostrar:
 - límite máximo;
 - usos consumidos;
 - usos disponibles, cuando exista límite.
+
+### Requisito 12: Integración provisional de confirmación y rechazo
+La validación sin consumo puede vencer entre cotización y confirmación. Al recibir un `order.confirmed` provisional con `order_id`, `cupon_id`, beneficio elegido y líneas de compra, Cupones comprueba de forma atómica que el mismo `order_id + cupon_id` no fue consumido, que el cupón sigue elegible según el contrato pactado y que queda capacidad. Publica un resultado idempotente `promotions.coupon.consumption.completed` o `promotions.coupon.consumption.rejected` con `order_id`, `operation_id` y motivo. Si falla después de que Ventas confirmó el pago, Ventas/Postventa define la gestión comercial/financiera; Cupones no procesa reembolsos ni decreta el estado del pedido. Las denominaciones y campos externos están pendientes de homologación con Ventas; no se consideran un compromiso de ese equipo.
 
 ## 6. Requisitos no funcionales
 
@@ -137,3 +140,5 @@ La consulta administrativa DEBE mostrar:
 ## Criterio de completitud
 
 La capacidad se considera correctamente implementada cuando todos los requisitos anteriores se cumplen.
+
+---

@@ -8,11 +8,10 @@ Permitir al gestor comercial configurar el slug (con control de duplicados y red
 
 ## 3. Alcance
 - Generación automática y edición manual de slug.
-- Normalización automática del slug al crear la categoría.
 - Historial de slugs (Redirección 301).
 - Política única de duplicados.
 - Límites de caracteres estrictos recomendados: 70 y 160.
-- Endpoint público de metadatos SEO por slug activo.
+- Endpoint público de solo lectura para consultar metadatos SEO por slug activo.
 
 ## 4. Requisitos
 
@@ -34,11 +33,13 @@ Si el gestor modifica el slug de una categoría ya existente e indexada, el sist
 - CUANDO el canal Marketplace recibe una petición a "running-antiguo"
 - ENTONCES el sistema devuelve una redirección 301 indicando la nueva ruta "running-nuevo"
 
-### Requisito 4: Generación de slug normalizado
-Al crear una categoría, el sistema DEBE generar automáticamente un slug normalizado (minúsculas, sin tildes ni espacios) a partir del nombre de la categoría.
+### Requisito 4: Endpoint público de metadatos por slug activo
+El sistema DEBE exponer un endpoint público de solo lectura que, dado un slug activo de categoría, retorne como mínimo el meta-título y la meta-descripción vigentes. El endpoint no requiere autenticación para lectura, no permite modificaciones y no devuelve metadatos de una categoría inactiva como si estuviera publicada.
 
-### Requisito 5: Endpoint público de metadatos SEO
-El sistema DEBE exponer un endpoint público que retorne los metadatos SEO (título y descripción) de una categoría por su slug activo.
+#### Escenario: Consulta pública por slug activo
+- DADO que existe una categoría activa con slug `futbol` y metadatos SEO configurados
+- CUANDO un canal consulta el endpoint público usando el slug `futbol`
+- ENTONCES el sistema retorna los metadatos SEO vigentes de esa categoría sin permitir operaciones de escritura
 
 ## 5. Criterio de completitud
-La capacidad cumple si los límites (70/160) se validan, las redirecciones 301 operan correctamente, la política de duplicidad (Autogenerar sufijo en creación VS Error en edición) se respeta, y el endpoint público retorna los metadatos SEO por slug activo.
+La capacidad cumple si los límites (70/160) se validan, las redirecciones 301 operan correctamente, la política de duplicidad (Autogenerar sufijo en creación VS Error en edición) se respeta y el endpoint público de solo lectura retorna los metadatos por slug activo.

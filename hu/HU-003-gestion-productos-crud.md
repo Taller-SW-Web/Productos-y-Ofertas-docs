@@ -1,8 +1,15 @@
-# HU-003 — Historia de Usuario: Gestión de productos (CRUD principal)
+# HU-003 — Historia de Usuario: Gestión de productos (CRUD principal)
 **Responsable:** Gabriel — Persona 2
 **Referencia:** MDPYO-6
 **Versión:** v2 — corregida para eliminar discrepancias con `SPEC-003-gestion-productos-crud.md`
 
+> **Decisiones de corrección aplicadas** (ver resumen completo en el mensaje de respuesta):
+> 1. Se mantiene el modelo **borrador → validar → activo** (no "crear en activo").
+> 2. Los campos obligatorios se dividen en **mínimos para crear** vs. **requisitos para activar**.
+> 3. La duplicidad se define sobre `sku_base` y sobre `(nombre, marca_id)`, no sobre un "código" genérico.
+> 4. El **slug** es propiedad explícita de este componente (Catálogo Core), no de Taxonomía y SEO.
+> 5. Se agrega **reactivación** como criterio y escenario propios.
+> 6. Se resuelve la regla pendiente del **precio base**: se ingresa en el mismo formulario de creación y se notifica a Motor de Precios.
 
 ## Historia de usuario principal
 
@@ -20,14 +27,20 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 | CA-02 | Para **crear** un producto (estado "borrador") basta con nombre, descripción, categoría, marca, precio base referencial, `sku_base` y `tiene_variantes`. No se exige característica ni imagen en este punto. |
 | CA-03 | El sistema debe validar que la categoría y la marca indicadas existan y estén activas antes de guardar o actualizar el producto, sin importar su estado. |
 | CA-04 | El sistema debe impedir el registro de un producto con el mismo `sku_base` que otro existente, o con la misma combinación `(nombre, marca_id)` que un producto ya registrado. |
-| CA-05 | Un producto solo puede pasar de "borrador" a "activo" cuando, además de los campos de CA-02, cuente con al menos una característica y al menos una imagen. |
+| CA-05 | Un producto solo puede pasar de "borrador" a "activo" cuando, además de los campos de CA-02, tenga completos **todos los valores de las características obligatorias efectivas de su categoría** y al menos una imagen. Si la categoría no tiene características obligatorias efectivas, no se exige informar una característica solo para activar. Si `tiene_variantes=true`, requiere también una variante ACTIVA válida. La publicación comercial espera confirmaciones de inicialización de precio y stock para los SKUs vendibles. |
 | CA-06 | El gestor comercial puede consultar los productos registrados, filtrando por categoría, marca o estado, y ver el detalle completo de cada uno. |
-| CA-07 | Al actualizar un producto, el sistema valida las mismas reglas según su estado. Los cambios válidos de un producto activo se publican inmediatamente; si dejan de cumplir una condición de activación, el guardado se rechaza. `tiene_variantes` no es editable. |
+| CA-07 | Al actualizar un producto, el sistema valida las mismas reglas según su estado. Los cambios válidos de un producto activo se persisten inmediatamente en Catálogo y se propagan por eventos a los canales; no se garantiza visibilidad instantánea global; si dejan de cumplir una condición de activación, el guardado se rechaza. `tiene_variantes` no es editable. |
 | CA-08 | Al desactivar un producto, deja de mostrarse para nuevas ventas, conserva su registro/snapshot histórico y emite `catalog.product.deactivated` para que Promociones, Combos y otros consumidores reaccionen. |
 | CA-09 | Un producto inactivo puede reactivarse; al reactivarlo, el sistema debe volver a validar las condiciones de CA-05 antes de marcarlo como "activo" nuevamente. |
 | CA-10 | El sistema genera y mantiene el **slug** del producto (a partir del nombre) como parte de este componente; no depende del componente de Taxonomía y SEO. |
 | CA-11 | El precio base ingresado en la creación se notifica al Motor de Precios para abrir su historial de auditoría; las actualizaciones posteriores del precio (individuales o masivas) son responsabilidad exclusiva de ese componente, no de Catálogo Core. |
 | CA-12 | Toda operación (registro, actualización, activación, desactivación, reactivación) debe quedar trazable con usuario, fecha/hora y resultado. |
+
+| CA-13 | Si se desactiva la última variante ACTIVA de un producto con variantes, Catálogo inactiva el producto padre en la misma transacción local; las demás entidades y pedidos históricos conservan sus datos. |
+| CA-14 | Una barrera de baja de categoría o marca impide crear, activar o reasignar productos a esa entidad durante la verificación asíncrona; Catálogo confirma el resultado por `operation_id`. |
+| CA-15 | El producto no se ofrece comercialmente hasta que Pricing confirme la preparación de su precio y, para el SKU vendible ofrecido, Inventario confirme la inicialización. |
+| CA-16 | Al crear un producto, el precio base se solicita a Pricing con operación idempotente; el evento `pricing.price.changed` lo emite Pricing tras persistirlo, no Catálogo. |
+| CA-17 | Durante la baja asíncrona de un valor LISTA identificador o requerido, Catálogo bloquea nuevos vínculos bajo barrera, confirma el uso activo con el `operation_id` y no altera SKUs/pedidos. Un producto `tiene_variantes=true` permite configurar sus características identificadoras LISTA antes de crear la primera variante; después no permite cambiarlas. Al editar su categoría se valida que la configuración continúe siendo aplicable, sin mutar SKUs previamente generados. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -37,12 +50,12 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 ● ENTONCES el sistema lo guarda en estado "borrador", genera su identificador y slug, y confirma el registro al gestor.
 
 **Escenario 2: Activar un producto completo**
-● DADO que un producto en borrador ya tiene categoría y marca activas, al menos una característica y al menos una imagen,
+● DADO que un producto en borrador ya tiene categoría y marca activas, todos los valores de sus características obligatorias efectivas completos y al menos una imagen,
 ● CUANDO el gestor comercial solicita su activación,
 ● ENTONCES el sistema cambia su estado a "activo" y lo hace visible para los canales de venta.
 
 **Escenario 3: Rechazar activación incompleta**
-● DADO que un producto en borrador no tiene ninguna imagen o ninguna característica,
+● DADO que un producto en borrador no tiene ninguna imagen o tiene una o más características obligatorias efectivas sin valor,
 ● CUANDO el gestor comercial intenta activarlo,
 ● ENTONCES el sistema impide la activación, indica qué requisito falta y mantiene el producto en "borrador".
 
@@ -81,6 +94,16 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 ● CUANDO intenta registrar, actualizar, activar, desactivar o reactivar un producto,
 ● ENTONCES el sistema rechaza la solicitud con un error de autorización y no aplica ningún cambio.
 
+**Escenario adicional: Última variante activa**
+* **DADO** un producto activo con una sola variante activa,
+* **CUANDO** el gestor desactiva esa variante,
+* **ENTONCES** el producto padre queda INACTIVO en la misma transacción y se notifican ambas bajas, conservando snapshots históricos.
+
+**Escenario adicional: Inicialización de precio pendiente**
+* **DADO** un borrador cuya inicialización de precio aún no ha sido confirmada por Pricing,
+* **CUANDO** el gestor intenta activarlo,
+* **ENTONCES** Catálogo rechaza la activación e informa qué preparación sigue pendiente.
+
 ## Interacción con otros módulos
 
 | Módulo | Necesidad de interacción | Información que esta funcionalidad recibe | Información que esta funcionalidad entrega |
@@ -111,4 +134,4 @@ Estas son coordinaciones internas con otras funcionalidades del mismo módulo.
 2. `tiene_variantes` es inmutable después de la creación.
 3. Al desactivar un producto se emite `catalog.product.deactivated`; promociones y combos dejan de considerarlo para nuevas operaciones, mientras pedidos confirmados conservan su snapshot.
 
-
+---

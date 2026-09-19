@@ -11,13 +11,18 @@
 | **ID** | **Criterio** |
 | --- | --- |
 | **CA-01** | El sistema debe permitir crear una marca con nombre único, descripción opcional, logo y país de origen opcional. |
-| **CA-02** | El sistema no debe permitir crear dos marcas activas con el mismo nombre. |
+| **CA-02** | El sistema debe impedir nombres duplicados normalizados en marcas activas **o inactivas**, incluyendo creación y cambio de nombre; reactivar no crea otra marca. |
 | **CA-03** | El sistema debe permitir actualizar nombre, descripción, logo y país de origen de una marca existente. |
 | **CA-04** | El sistema debe permitir desactivar (baja lógica) una marca, impidiendo la desactivación si tiene productos activos asociados. |
 | **CA-05** | El sistema debe permitir reactivar una marca previamente desactivada. |
 | **CA-06** | El sistema NUNCA debe eliminar físicamente una marca; toda baja es lógica. |
 | **CA-07** | El sistema debe exponer un endpoint de solo lectura con las marcas activas, para ser consumido por otros módulos y canales de venta. |
-| **CA-08** | El sistema debe rechazar el logo de una marca si el archivo supera los 5 MB, indicando el motivo al gestor comercial. |
+| **CA-08** | El sistema debe aceptar únicamente logos PNG, JPG/JPEG o WebP de hasta 5 MB; debe rechazar otros formatos o tamaños superiores indicando el motivo. |
+| **CA-09** | Si se registra país de origen, debe seleccionarse o validarse contra un código ISO 3166-1; no se admite texto libre no normalizado. |
+
+| **CA-10** | El nombre normalizado de una marca es globalmente único, incluso entre marcas inactivas; se rechazan renombres duplicados. |
+| **CA-11** | Una solicitud de desactivación solo concluye tras confirmación asíncrona `CLEAR` de Catálogo bajo barrera concurrente; rechazo o falta de respuesta no desactiva. |
+| **CA-12** | Una reactivación conserva el mismo ID y nombre, sin crear duplicados. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -63,12 +68,22 @@
 * **CUANDO** el gestor comercial solicita reactivarla,
 * **ENTONCES** el sistema cambia su estado a ACTIVO y vuelve a mostrarla en los filtros de los canales.
 
+**Escenario 8: Nombre reservado por marca inactiva**
+* **DADO** que existe «Nike» inactiva,
+* **CUANDO** se intenta registrar «NIKE»,
+* **ENTONCES** se rechaza la creación por nombre normalizado duplicado.
+
+**Escenario 9: Sin confirmación asíncrona de Catálogo**
+* **DADO** una marca cuya baja fue solicitada,
+* **CUANDO** Catálogo no confirma la inexistencia de productos activos,
+* **ENTONCES** la marca conserva su estado activo y la operación informa pendiente o rechazada.
+
 ## Interacción con otros módulos
 
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
 | --- | --- | --- | --- |
 | **Seguridad y Usuarios** | Verificar que quien crea, edita, desactiva o reactiva marcas tenga el rol de gestor comercial. | Identidad del usuario, token de sesión, roles y permisos. | Solicitudes de validación de permisos para las operaciones de escritura. |
-| **Catálogo Core (Productos)** | Consultar marcas activas al momento de clasificar un producto. Al intentar desactivar una marca, se realiza una llamada **síncrona** a Catálogo Core para validar si tiene productos activos asociados, antes de completar la operación. | Identificador de marca a validar. | Listado de marcas activas vía API; confirmación síncrona (sí/no) de si existen productos activos asociados a la marca. |
+| **Catálogo Core (Productos)** | Consultar marcas activas al momento de clasificar un producto. Al intentar desactivar una marca, Taxonomía solicita una verificación **asíncrona** a Catálogo; Catálogo bloquea las altas/activaciones/reasignaciones concurrentes y responde por identificador de operación. Sin confirmación `CLEAR` no se desactiva. | Identificador de marca a validar. | Listado de marcas activas vía API; resultado de verificación correlacionado, sin llamada síncrona interna. |
 | **Canales de venta (Marketplace, Chatbot, Retail)** | Mostrar el filtro de marcas para la navegación y búsqueda de productos. | (No hay interacción directa; solo consume el resultado). | Listado de marcas activas para renderizar filtros. |
 
 ## Dependencias dentro de Productos y Ofertas
@@ -80,9 +95,11 @@
 ## Reglas resueltas (antes pendientes)
 
 * **Tamaño máximo del logo:** 5 MB por archivo.
-* **Validación de productos activos antes de desactivar:** se realiza de forma síncrona contra el módulo de Catálogo Core (ver detalle en la sección "Interacción con otros módulos"), con un timeout de 15 segundos. Si Catálogo Core no responde dentro de ese lapso, la desactivación se rechaza automáticamente.
+* **Validación de productos activos antes de desactivar:** se realiza mediante solicitud/respuesta asíncronas, barrera concurrente en Catálogo y confirmación correlacionada. Falta de respuesta implica operación pendiente o rechazada, nunca baja confirmada.
 
-## Reglas pendientes de acordar
+## Reglas resueltas adicionales
 
-* **Formato del logo:** ¿qué formatos de imagen se aceptan (PNG, JPG, SVG)? El límite de tamaño (5 MB) ya está definido, falta acordar el formato.
-* **País de origen:** ¿se valida contra una lista cerrada de países o es un campo de texto libre?
+* **Formato del logo:** PNG, JPG/JPEG y WebP; máximo 5 MB. SVG queda fuera del alcance inicial.
+* **País de origen:** se normaliza mediante ISO 3166-1.
+
+---

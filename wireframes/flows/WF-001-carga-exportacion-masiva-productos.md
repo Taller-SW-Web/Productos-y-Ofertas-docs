@@ -1,5 +1,7 @@
 # WF-001 — Carga y exportación masiva de productos
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable del flujo descrito en este\
@@ -33,7 +35,7 @@ Reglas de producción:
 - Los supuestos y las preguntas abiertas pertenecen a este documento de especificación y no deben mostrarse como contenido de la interfaz del producto.
 - El comportamiento responsivo debe verificarse cambiando el tamaño real del viewport; no agregues controles internos para simular escritorio, tablet o móvil.
 - Representa todos los estados obligatorios indicados en este documento.
-- Los eventos de dominio son contexto técnico; no deben exponerse al usuario\
+- Los comandos y eventos de dominio son contexto técnico; no deben exponerse al usuario\
   salvo que una regla funcional lo requiera.
 - La concurrencia de inventario es responsabilidad del sistema. El wireframe\
   debe comunicar el resultado del procesamiento, no sus detalles internos.
@@ -75,7 +77,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado               | Borrador                                |
 | Responsable          | Por asignar                             |
 | Fecha                | 2026-09-16                              |
-| Última actualización | 2026-09-17                              |
+| Última actualización | 2026-09-18                              |
 
 ## 2. Trazabilidad
 
@@ -107,8 +109,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Edición manual de productos dentro de este flujo.
 - Procesamiento sincrónico que bloquee la interfaz.
 - Visualización de RabbitMQ, eventos EDA, Kardex o concurrencia interna.
-- Historial de importaciones, cancelación del lote y reintento automático,\
-  porque no están confirmados en las fuentes.
+- Historial completo de importaciones y cancelación del lote no están confirmados. Los reintentos técnicos son automáticos; ante `FAILED_GENERAL` se ofrece **reanudar operaciones pendientes con el mismo lote**, sin iniciar otro ni duplicar filas confirmadas.
 
 ## 3. Usuario objetivo
 
@@ -141,7 +142,7 @@ La pantalla cambia del estado En cola o Procesando a un estado final:
 
 - Completado sin errores.
 - Completado con errores parciales.
-- Fallo general, si el producto define posteriormente este estado.
+- Fallo general del worker (`FAILED_GENERAL`), conservando resultado por fila y reanudación idempotente del mismo lote.
 
 El usuario recibe una notificación al finalizar. El canal y el comportamiento\
 de esa notificación están pendientes de definición.
@@ -170,7 +171,7 @@ con la arquitectura de navegación.
 | Resultado                         | Destino o comportamiento                            |
 | --------------------------------- | --------------------------------------------------- |
 | Descarga de plantilla             | Permanece en S-01 y el navegador inicia la descarga |
-| Exportación del catálogo          | Permanece en S-01 y el navegador inicia la descarga |
+| Exportación del catálogo          | Crea trabajo asíncrono, muestra `export_id`/estado y habilita descarga al concluir |
 | Archivo estructuralmente inválido | Permanece en S-02-R y permite sustituirlo           |
 | Importación confirmada            | Navega a S-04 con estado En cola o Procesando       |
 | Procesamiento completo            | Navega o actualiza a S-05                           |
@@ -193,10 +194,8 @@ con la arquitectura de navegación.
 1. El gestor entra a Carga y exportación masiva.
 2. Selecciona Exportar catálogo.
 3. Elige XLSX o CSV mediante el patrón de selección que se apruebe.
-4. El sistema genera y descarga el catálogo completo, con una fila por\
-   SKU/variante.
-5. La interfaz confirma que la descarga fue iniciada o comunica un error\
-   recuperable.
+4. El sistema crea un trabajo asíncrono con `export_id` y una fila por SKU vendible.
+5. La interfaz muestra En cola/Procesando y permite salir; al completar ofrece Descargar archivo o informa `FAILED_GENERAL` si el worker no pudo terminar.
 
 ### Flujo C — Importar archivo
 
@@ -223,10 +222,10 @@ con la arquitectura de navegación.
 | ALT-02 | Archivo mayor de 10 MB                    | Rechazo total y mensaje con límite exacto                                     | S-02-R        |
 | ALT-03 | Más de 5,000 filas                        | Rechazo total y mensaje con límite exacto                                     | S-02-R        |
 | ALT-04 | Cabeceras ausentes o estructura distinta  | Rechazo total; orientar a descargar la plantilla oficial                      | S-02-R        |
-| ALT-05 | Contenido inseguro o fórmula ejecutable   | Rechazo o saneamiento según política pendiente; nunca ejecutar el contenido   | S-02-R        |
+| ALT-05 | Contenido inseguro, fórmula o macro       | Rechazo total en prevalidación; nunca ejecutar ni persistir contenido activo  | S-02-R        |
 | ALT-06 | Errores de negocio en filas individuales  | Procesar filas válidas, rechazar inválidas y generar CSV detallado            | S-05-P        |
 | ALT-07 | Error temporal al consultar el lote       | Mostrar error recuperable sin afirmar que el procesamiento falló              | S-04-E        |
-| ALT-08 | Descarga de plantilla o exportación falla | Mostrar error contextual y permitir reintentar la descarga                    | S-01-E        |
+| ALT-08 | Plantilla falla o exportación entra en FAILED_GENERAL | Plantilla: error de descarga; exportación: conservar `export_id` y permitir reanudar trabajo | S-01-E / estado de exportación |
 | ALT-09 | Sesión expirada                           | Solicitar autenticación y conservar la referencia del lote cuando sea posible | Estado global |
 | ALT-10 | Usuario sin permiso                       | Bloquear las acciones y ofrecer retorno seguro                                | Estado global |
 
@@ -243,7 +242,7 @@ con la arquitectura de navegación.
 | S-04-E | Error al consultar el lote      | Separar un fallo de consulta de un fallo de procesamiento           | Variante de S-04                       | Sí                     |
 | S-05-S | Resultado sin errores           | Confirmar que todas las filas fueron aceptadas                      | Variante final                         | Sí                     |
 | S-05-P | Resultado con errores parciales | Resumir aceptadas/rechazadas y ofrecer CSV de errores               | Variante final                         | Sí                     |
-| S-05-F | Fallo general del lote          | Comunicar un fallo no atribuible a filas concretas                  | Variante final                         | Pendiente de confirmar |
+| S-05-F | Fallo general del lote          | Comunicar `FAILED_GENERAL`, preservar filas aplicadas y permitir reanudar pendientes | Variante final | Sí |
 
 ## 8. Mapa de navegación
 
@@ -289,7 +288,7 @@ antes de descargar o importar.
 | ---------- | ------------------------- | ------------------- | --------------------------- | -------------------- |
 | Primaria   | Abrir selector de archivo | Seleccionar archivo | Con permiso de importación  | Inicia prevalidación |
 | Secundaria | Descargar plantilla       | Descargar plantilla | Con permiso correspondiente | Descarga XLSX o CSV  |
-| Secundaria | Exportar catálogo         | Exportar catálogo   | Con permiso correspondiente | Descarga XLSX o CSV  |
+| Secundaria | Exportar catálogo         | Exportar catálogo   | Con permiso correspondiente | Genera trabajo y permite descarga XLSX o CSV al concluir |
 
 #### Datos mostrados
 
@@ -317,7 +316,7 @@ antes de descargar o importar.
 | A-03 | Reglas                    | Las celdas vacías de SKU existentes conservan el valor actual |
 | A-04 | Regla de imágenes         | Solo se aceptan URLs; no archivos ni imágenes incrustadas     |
 | A-05 | Descargar plantilla       | Incluye cabeceras oficiales y ejemplos eliminables            |
-| A-06 | Exportar catálogo         | Una fila por SKU/variante                                     |
+| A-06 | Exportar catálogo         | Exportación asíncrona, `export_id`; resultado con una fila por SKU vendible |
 | A-07 | Selector de formato       | Patrón exacto pendiente de decisión Q-03                      |
 
 ### S-02 — Archivo seleccionado y prevalidado
@@ -422,7 +421,7 @@ Obtener confirmación explícita antes de iniciar cambios masivos.
 
 - Al confirmar, deshabilitar temporalmente ambas acciones.
 - Mostrar un estado Enviando.
-- Una respuesta repetida no debe crear lotes duplicados.
+- Una respuesta repetida no debe crear lotes duplicados; se conserva el identificador de operación del lote.
 - El mecanismo técnico de idempotencia debe definirse en el contrato; el\
   wireframe solo representa el bloqueo visible.
 
@@ -554,14 +553,14 @@ rechazadas.
 | Éxito parcial          | Sí            | S-05-P y reporte CSV                   | Descargar reporte                | Corregir y crear nuevo lote       |
 | Error de descarga      | Sí            | Mensaje contextual                     | Reintentar                       | Repetir acción                    |
 | Error de consulta      | Sí            | Aviso sin cambiar estado real del lote | Actualizar estado                | Reconsultar                       |
-| Fallo general del lote | Por confirmar | S-05-F                                 | Acción según política            | Q-05                              |
+| Fallo general del lote | Sí | S-05-F, conservando estados de fila | Reanudar mismo lote de modo idempotente | Mostrar error y detalle |
 | Sin conexión           | Sí            | Aviso persistente                      | Reintentar consulta              | Conservar referencia del lote     |
 | Sin permisos           | Sí            | Explicación segura                     | Volver                           | Solicitar acceso fuera del flujo  |
 | Sesión expirada        | Sí            | Aviso/autenticación                    | Iniciar sesión                   | Recuperar lote cuando sea posible |
 
 ### Reglas para datos remotos
 
-- No se definen acciones optimistas para importación o exportación.
+- No se definen acciones optimistas para importación o exportación. Una fila `FAILED` puede contener cambios ya aplicados: mostrar dominios aplicados, pendientes y rechazados; no afirmar rollback global.
 - La creación del lote debe ser idempotente frente a doble activación.
 - La consulta del estado puede reintentarse sin crear otro lote.
 - Un error de consulta no debe reemplazar un estado final previamente conocido.
@@ -656,8 +655,8 @@ Aplicar DESIGN.md como fuente de representación visual.
 - Formularios/validación: React Hook Form y Zod cuando se implemente el selector\
   y sus validaciones de cliente.
 - Contratos HTTP: OpenAPI/Swagger.
-- Eventos: AsyncAPI para catalog.product.upserted, pricing.price.changed e\
-  inventory.stock.adjusted.
+- Eventos: AsyncAPI para catalog.bulk.upsert.requested, pricing.bulk.price.apply.requested e\
+  inventory.bulk.stock.adjust.requested.
 - La librería de componentes y estrategia CSS están pendientes.
 - El prototipo de wireframe es HTML/CSS/JS estático y no prescribe la\
   implementación del frontend.
@@ -667,22 +666,21 @@ Aplicar DESIGN.md como fuente de representación visual.
 | Tipo    | Operación o referencia                               | Impacto visible                                        |
 | ------- | ---------------------------------------------------- | ------------------------------------------------------ |
 | HTTP    | Descargar plantilla; método/ruta pendientes          | Inicia XLSX o CSV                                      |
-| HTTP    | Exportar catálogo; método/ruta pendientes            | Inicia XLSX o CSV                                      |
+| HTTP    | Solicitar exportación; método/ruta pendientes        | Devuelve `export_id`, consulta estado y descarga el XLSX o CSV generado |
 | HTTP    | Prevalidar/subir archivo; método/ruta pendientes     | Devuelve válido o rechazo                              |
 | HTTP    | Confirmar/crear lote; método/ruta pendientes         | Devuelve referencia y estado                           |
 | HTTP    | Consultar lote; método/ruta pendientes               | Actualiza S-04/S-05                                    |
 | HTTP    | Descargar reporte de errores; método/ruta pendientes | Disponible si hay fallos                               |
-| Evento  | catalog.product.upserted                             | Actualiza producto/variante; no mostrar nombre técnico |
-| Evento  | pricing.price.changed                                | Actualiza precio; no mostrar nombre técnico            |
-| Evento  | inventory.stock.adjusted                             | Ajusta stock/Kardex; no mostrar nombre técnico         |
+| Comando | `catalog.bulk.upsert.requested` | Solicita alta o edición; el resultado confirma/rechaza por fila |
+| Comando | `pricing.bulk.price.apply.requested` | Solicita aplicar precio; `pricing.price.changed` es posterior al commit |
+| Comando | `inventory.bulk.stock.adjust.requested` | Solicita ajuste con `stock_version`; `inventory.stock.adjusted` informa el hecho persistido |
 | Permiso | Importar productos; código pendiente                 | Habilita selección y confirmación                      |
 | Permiso | Exportar productos; código pendiente                 | Habilita descargas                                     |
 
 ## 15. Privacidad, seguridad y acciones sensibles
 
 - Validar extensión y MIME en servidor; la validación del navegador no basta.
-- Rechazar o sanear contenido que pueda producir CSV/Excel Formula Injection,\
-  según la política técnica que se defina.
+- Rechazar en importación cualquier archivo con fórmulas, macros o contenido activo; al exportar, escapar/proteger cadenas que pudieran interpretarse como CSV/Excel Formula Injection.\
 - No ejecutar fórmulas, macros ni contenido activo en el prototipo.
 - No mostrar la ruta local completa del archivo.
 - Usar nombres de archivo y mensajes saneados.
@@ -742,16 +740,28 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 | ID   | Pregunta o decisión                                                                              | Responsable        | Bloquea wireframe                         | Estado    |
 | ---- | ------------------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------- | --------- |
-| Q-01 | ¿Cuáles son las cabeceras exactas, orden, tipos, campos obligatorios y ejemplos de la plantilla? | Producto/Backend   | Sí para copy y ejemplo definitivo         | Abierta   |
+| Q-01 | Resuelto: plantilla general `template_version=1`, 20 columnas y campos condicionales por operación según Spec Requisito 9; ejemplos eliminables. | Spec/HU Bulk | No | Resuelta |
 | Q-02 | ¿Cuál es la ruta, ubicación en navegación y código de permisos de importar/exportar?             | Frontend/Seguridad | No para estructura                        | Abierta   |
 | Q-03 | ¿El formato XLSX/CSV se elige con selector, menú o botones separados?                            | Producto/UX        | No                                        | Abierta   |
 | Q-04 | ¿Qué canal notifica la finalización y a dónde dirige al usuario?                                 | Producto/Frontend  | No                                        | Abierta   |
-| Q-05 | ¿Qué ocurre ante un fallo general del Worker: reintento, nuevo archivo o soporte?                | Backend/Producto   | Sí para S-05-F                            | Abierta   |
+| Q-05 | Resuelto: hasta tres reintentos transitorios, `FAILED_GENERAL` y reanudación con mismo `batch_id` de pendientes sin duplicar confirmados. | Spec/HU Bulk | No | Resuelta |
 | Q-06 | ¿Existe historial de lotes o solo seguimiento del lote actual?                                   | Producto           | No; historial queda fuera                 | Abierta   |
 | Q-07 | ¿El archivo de errores tiene vencimiento o puede regenerarse?                                    | Backend/Producto   | No                                        | Abierta   |
-| Q-08 | ¿El contenido con fórmula se rechaza o se sanea y continúa?                                      | Seguridad/Backend  | Sí para ALT-05                            | Abierta   |
-| Q-09 | ¿La exportación se descarga inmediatamente o también se procesa en segundo plano?                | Backend/Producto   | Sí para el estado de exportación          | Abierta   |
+| Q-08 | Resuelto: fórmulas, macros o contenido activo provocan rechazo total en prevalidación; la exportación protege cadenas contra Formula Injection. | Specs/HU definitivos | No | Resuelta |
+| Q-09 | Resuelto: plantilla inmediata; exportación completa asíncrona, `export_id`, seguimiento y descarga al completar. | Spec/HU Bulk | No | Resuelta |
 | D-01 | Selección de librería UI y estrategia CSS                                                        | Frontend           | No para wireframe; sí para implementación | Pendiente |
+
+### Alineación definitiva de carga masiva (fuente: Spec/HU de Carga Masiva, Productos, Variantes e Inventario)
+
+- **Fila de creación simple:** identifica producto padre y campos requeridos; el `sku_base` es la unidad vendible. **Fila de creación de variante:** identifica padre (existente o creado dentro del mismo lote) y atributos identificadores; Catálogo genera el SKU, no se exige que el usuario invente el SKU de la variante. **Actualización:** identifica el SKU existente; las celdas vacías conservan valores.
+- El formulario y la plantilla explican que **una fila corresponde a un SKU vendible** y varias variantes pueden referir al mismo padre. La plantilla v1 usa exactamente las 20 columnas y reglas por operación del Requisito 9 de Bulk; reflejar encabezados idénticos en CSV y XLSX.
+- Bulk emite **comandos** `catalog.bulk.upsert.requested`, `pricing.bulk.price.apply.requested` e `inventory.bulk.stock.adjust.requested` hacia propietarios; estos confirman/rechazan por `batch_id`/`row_id`. `pricing.price.changed` e `inventory.stock.adjusted` son hechos **emitidos por sus respectivos propietarios después de persistir**, no solicitudes de modificación.
+- Un ajuste **absoluto** de stock sobre SKU existente exige `stock_version`; si cambió por venta concurrente, se rechaza el ajuste obsoleto sin reintento ciego. Al crear SKU se inicializa inventario en cero con versión inicial, según la coordinación definida en los Specs.
+- El estado `FAILED` de una fila no significa rollback distribuido: el resultado informa qué dominios aplicaron cambios y cuáles necesitan conciliación. **No mostrar «todos los cambios de la fila se deshicieron»**. La fila es `COMPLETED` solo tras todas las confirmaciones requeridas.
+- Los límites de hasta 5.000 filas y 10 MB corresponden a importación; la exportación completa del catálogo no debe truncarse al alcanzar el límite de importación.
+
+### Flujo adicional de exportación asíncrona y plantilla v1
+La descarga de plantilla inicia inmediatamente. La exportación completa muestra `export_id`, «En cola», «Procesando», «Lista para descargar» y `FAILED_GENERAL` con reintento recuperable. Un archivo exportado incluye `exported_at` y versiones fuente; puede contener más de 5.000 SKUs porque ese límite aplica a **importación**. La plantilla general v1 usa, en orden: `operacion`, `product_id`, `sku_base`, `sku`, `nombre`, `descripcion`, `categoria_id`, `marca_id`, `tiene_variantes`, `caracteristicas_identificadoras`, `atributos_identificadores`, `atributos_no_identificadores`, `imagen_url`, `precio_regular`, `precio_oferta`, `accion_precio_oferta`, `stock`, `stock_version`, `estado`, `motivo_cambio`. Mostrar tipos y obligatoriedad condicional por operación tal como indica el Spec, no permitir edición manual del SKU de variante nueva. Al fallar el worker, no presentar filas aplicadas como revertidas; ofrecer reanudar pendientes con el mismo `batch_id`.
 
 ## 19. Registro de revisiones
 
@@ -759,6 +769,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 | ------- | ---------- | --------- | --------------------------------------------------------- | ------------ |
 | 0.1     | 2026-09-16 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente    |
 | 0.2     | 2026-09-17 | Asistente | Se separó la documentación del wireframe de la interfaz HTML; se retiró la exigencia de mostrar anotaciones, supuestos, preguntas y controles de dispositivo dentro del prototipo; WF-001 quedó confirmado contra INDEX.md | Pendiente    |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -771,6 +782,8 @@ Aplicar DESIGN.md como fuente de representación visual.
 - [x] Los supuestos y preguntas están registrados.
 - [x] El formato HTML está definido.
 - [x] ID WF-001 confirmado contra INDEX.md.
-- [ ] Resolver Q-01 antes de representar una plantilla definitiva.
+- [x] Q-01 resuelta: cabeceras y obligatoriedad según plantilla general v1.
 - [ ] Confirmar ruta y permisos antes de implementar el frontend.
-- [ ] Confirmar la política de fallo general y de fórmula insegura.
+- [x] Fallo general e inyección de fórmulas regulados: no ejecutar fórmulas; archivo inseguro se rechaza, worker reintenta/reanuda.
+
+---

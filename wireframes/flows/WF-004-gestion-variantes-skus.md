@@ -1,5 +1,7 @@
 # WF-004 — Gestión avanzada de variantes (SKUs)
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la gestión avanzada de
@@ -32,8 +34,7 @@ Si las fuentes se contradicen, un contrato no está definido o una decisión no
 puede deducirse de forma inequívoca, no inventes una resolución. Registra la
 cuestión en **Preguntas y decisiones pendientes**, identifica las pantallas
 afectadas y conserva en el prototipo el comportamiento más neutral que no
-contradiga las fuentes. En particular, no inventes transiciones de activación o
-reactivación de variantes mientras sus reglas permanezcan pendientes.
+contradiga las fuentes. Las transiciones `BORRADOR → ACTIVA`, `ACTIVA → INACTIVA` e `INACTIVA → ACTIVA` están definidas en Specs/HU definitivos. La reactivación exige las mismas validaciones que la activación y conserva el SKU; nunca reactiva automáticamente al producto padre.
 
 Reglas de producción:
 
@@ -72,13 +73,8 @@ Reglas de producción:
 - Distingue los errores de formato no permitido y tamaño excedido cuando el
   contrato proporcione ese detalle. Nunca muestres la ruta local completa del
   archivo.
-- La desactivación es una baja lógica e independiente: no modifica el producto
-  padre, las demás variantes ni los snapshots de pedidos confirmados.
-- Si se desactiva la última variante activa válida, comunica que el producto
-  deja de cumplir la condición necesaria para permanecer o pasar a activo. No
-  inventes aquí una transición automática del producto si no está contratada.
-- No agregues una acción de reactivación de variante mientras su regla no esté
-  documentada.
+- La desactivación es baja lógica y no modifica las demás variantes ni los snapshots de pedidos confirmados. Si se desactiva la **última variante activa**, Catálogo también inactiva el producto padre; de lo contrario el padre conserva su estado.
+- Incluye reactivación de variante INACTIVA mediante validaciones equivalentes a la activación, sin generar un SKU nuevo ni reactivar automáticamente al producto padre.
 - Inventario es el único dueño del stock. No muestres controles editables de
   existencias ni conviertas un error de consulta en disponibilidad 0.
 - Pricing es el dueño del precio específico por SKU y de la herencia del precio
@@ -151,8 +147,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 7. Edición restringida a imagen y atributos no identificadores, manteniendo
    SKU y atributos identificadores como solo lectura.
 8. Errores de archivo y guardado que conserven los datos y la imagen vigente.
-9. Desactivación manual con confirmación, alcance independiente y advertencia
-   cuando se trate de la última variante activa válida.
+9. Activación y reactivación con validación; desactivación confirmada con aviso de inactivación del padre si se trata de la última variante activa.
 10. Estados de carga, error, sin conexión, permisos, sesión expirada, éxito y
     conflicto de datos desactualizados.
 11. Navegación funcional con conservación simulada de filtros, producto padre
@@ -172,7 +167,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Responsable | Gabriel Poma Gutierrez |
 | Rama | `poma` |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
@@ -200,7 +195,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Gestión, cálculo o ajuste de stock; definición o actualización de precios.
 - Parametrización avanzada de nuevos tipos globales de atributos.
 - Edición o procesamiento de imágenes, ofertas, promociones y combos.
-- Eliminación física y reactivación de variantes, al no estar documentada una regla de reactivación.
+- Eliminación física de variantes. La reactivación sí está en alcance y conserva el SKU.
 
 ## 3. Usuario objetivo
 
@@ -285,13 +280,20 @@ La variante se guarda asociada al producto con combinación única, SKU autogene
 4. El sistema valida los cambios y guarda sin alterar el SKU.
 5. La interfaz confirma y actualiza el detalle.
 
-### Flujo D — Desactivar variante
+### Flujo D — Activar o reactivar variante
+
+1. El gestor abre una variante BORRADOR o INACTIVA y selecciona Activar o Reactivar.
+2. El sistema comprueba SKU/atributos/imagen, categoría y marca activas del padre, precio confirmado en Pricing y registro de inventario inicializado.
+3. Si la preparación está completa, confirma ACTIVA sin alterar SKU; **no activa ni reactiva automáticamente el producto padre**.
+4. Si falta preparación, conserva el estado anterior e informa condiciones pendientes.
+
+### Flujo E — Desactivar variante
 
 1. El usuario selecciona **Desactivar** sobre una variante activa.
-2. Un diálogo aclara que la acción no afecta el producto ni otras variantes y conserva pedidos históricos.
+2. Un diálogo aclara que no altera otras variantes ni pedidos históricos; si es la última variante activa, el producto padre también quedará inactivo.
 3. El usuario confirma.
-4. El sistema marca solo esa variante como `Inactiva` y la retira de nuevas ventas.
-5. Si era la última activa, la interfaz advierte que el producto ya no satisface la condición de activación.
+4. El sistema marca la variante como `Inactiva`; si era la última activa, inactiva también el producto padre.
+5. La interfaz actualiza ambos estados y conserva el historial de pedidos.
 
 ### Flujos alternativos
 
@@ -320,6 +322,7 @@ La variante se guarda asociada al producto con combinación única, SKU autogene
 | `S-04` | Editar variante | Modificar solo datos permitidos | Ruta o modo de S-03 | Sí |
 | `S-04-E` | Imagen o guardado inválido | Conservar datos e imagen previa | Variante de S-04 | Sí |
 | `S-05` | Confirmar desactivación | Evitar baja accidental | Diálogo modal | Sí |
+| `S-06` | Activar o reactivar | Validar preparación de borrador/inactiva antes de cambio a ACTIVA | Diálogo/panel | Sí |
 
 ## 8. Mapa de navegación
 
@@ -332,6 +335,8 @@ flowchart LR
   C -->|Cancelar| L
   D -->|Editar| E[S-04 Editar]
   E -->|Guardar| D
+  D -->|Activar o Reactivar| A[S-06 Validación y confirmación]
+  A -->|Éxito o rechazo| D
   D -->|Desactivar| X[S-05 Confirmación]
   X -->|Confirmar| D
   X -->|Cancelar| D
@@ -476,6 +481,8 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 | Acción | Disponibilidad | Resultado |
 |---|---|---|
 | Editar | Permiso correspondiente | S-04 |
+| Activar | Variante en BORRADOR, permiso y preparación comprobable | S-06: confirmación de activación |
+| Reactivar | Variante INACTIVA, permiso y preparación comprobable | S-06: confirmación de reactivación |
 | Desactivar | Variante activa + permiso | S-05 |
 | Volver a variantes | Siempre | S-01 con contexto |
 
@@ -488,6 +495,13 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 | `A-14` | Precio | Pricing puede sobrescribirlo; no se edita aquí |
 | `A-15` | Stock | Inventario es la única fuente; no se edita aquí |
 | `A-16` | Estado inactivo | Conserva registro y puede seguir apareciendo en pedidos históricos |
+
+### `S-06` — Confirmar activación o reactivación de variante
+
+- Disponible para variante `BORRADOR` o `INACTIVA` con autorización. Comprobar SKU y atributos identificadores, imagen, categoría y marca activas del padre, precio confirmado y registro SKU inicializado en Inventario.
+- Mostrar SKU generado (solo lectura), producto padre y validaciones pendientes; bloquear Activar si hay dependencias sin confirmar.
+- Acciones **Activar variante** o **Reactivar variante**, según estado, y **Cancelar**. Conservar SKU y mostrar resultado `ACTIVA` solo tras confirmación. Si el padre sigue `BORRADOR` o `INACTIVO`, explicar que todavía no es vendible hasta activar/reactivar al padre por WF-003.
+- Si el servidor rechaza por condiciones cambiantes, conservar estado original (`BORRADOR` o `INACTIVA`) y señalar los motivos.
 
 ### `S-04` — Editar variante
 
@@ -510,17 +524,17 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 
 - Título: **Desactivar variante {SKU}**.
 - Muestra combinación y producto para evitar confusión.
-- Mensaje: “Dejará de estar disponible para nuevas ventas. El producto, las demás variantes y los pedidos confirmados no se modificarán.”
-- Si es la última variante activa, añadir advertencia: el producto dejará de cumplir la condición de activación.
+- Mensaje: “Dejará de estar disponible para nuevas ventas. Las demás variantes y los pedidos confirmados se conservan. Si era la última variante activa, el producto también quedará inactivo.”
+- Si es la última variante activa, añadir advertencia explícita de que el producto padre también quedará inactivo.
 - Acciones: **Cancelar** y **Desactivar variante**.
 - Foco vuelve al botón de origen; doble envío bloqueado.
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| `A-21` | Alcance de baja | Solo afecta la variante seleccionada |
+| `A-21` | Alcance de baja | Afecta a la variante y al padre únicamente si era la última activa |
 | `A-22` | Historial | No elimina pedidos ni snapshots confirmados |
-| `A-23` | Última variante activa | Expone impacto en la elegibilidad del producto |
-| `A-24` | Reactivación | No agregar: no existe regla documentada |
+| `A-23` | Última variante activa | Advierte que también se inactiva el producto padre |
+| `A-24` | Reactivación | Permitida con mismas validaciones que activación; preserva SKU y no reactiva al padre |
 
 ## 10. Estados de interfaz
 
@@ -638,8 +652,8 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 - [ ] Editar bloquea SKU y atributos identificadores.
 - [ ] Permite modificar imagen y atributos no identificadores.
 - [ ] Una imagen inválida no elimina la imagen previa.
-- [ ] Desactivar afecta solo una variante y conserva historial.
-- [ ] Representa el impacto de no tener ninguna variante activa válida sobre la activación del producto.
+- [ ] Desactivar conserva historial e inactiva el padre si se desactiva la última variante activa.
+- [ ] Representa desactivación de última variante → padre INACTIVO; activación y reactivación de variante validadas sin activar el padre automáticamente.
 - [ ] Stock y precio son solo lectura o están ausentes; nunca editables.
 - [ ] Incluye vacío, filtros sin resultados, carga, error, archivo inválido, permisos, sesión y conflicto.
 - [ ] Funciona con teclado, zoom y sin depender del color.
@@ -649,7 +663,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 
 | Criterio HU | Cobertura |
 |---|---|
-| CA-01 | Permisos en S-01–S-05 |
+| CA-01 | Permisos en S-01–S-06 |
 | CA-02–CA-05 | Creación y conflictos en S-02/S-02-D |
 | CA-06 | Filtros y listado en S-01 |
 | CA-07 | Resultado de creación e integración con Inventario |
@@ -665,7 +679,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 | ID | Supuesto | Motivo | Impacto si es incorrecto | Validar |
 |---|---|---|---|---|
 | `SUP-01` | La gestión de variantes se abre desde el detalle del producto | Dependencia explícita con producto padre | Cambia punto de entrada | Sí |
-| `SUP-02` | La variante creada queda en borrador, según la HU | La spec solo dice disponible por API | Puede cambiar acción posterior y estados | Sí |
+| `SUP-02` | La variante nueva queda BORRADOR según Spec y HU | Estados y transición confirmados | Mantener borrador hasta acción de activar | No |
 | `SUP-03` | Precio y disponibilidad pueden mostrarse solo si sus contratos responden | Ayudan al contexto sin transferir propiedad | Pueden omitirse por completo | Sí |
 
 ## 18. Preguntas y decisiones pendientes
@@ -674,18 +688,29 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 |---|---|---|---|---|
 | `Q-01` | ¿Cuáles son rutas, métodos y esquemas exactos de OpenAPI? | Backend / Arquitectura | No; sí implementación | Abierta |
 | `Q-02` | ¿Qué formatos, tamaño máximo y cantidad de imágenes se permiten? | Producto / Backend | No; sí validación final | Abierta |
-| `Q-03` | ¿Cómo se configuran para cada producto los atributos identificadores y no identificadores? | Producto / Catálogo | Sí para formulario definitivo | Abierta |
-| `Q-04` | ¿Existe activación independiente de la variante y cuál es su transición desde borrador? | Producto / Backend | Sí para ciclo de estado completo | Abierta |
-| `Q-05` | ¿Se permite reactivar una variante inactiva? | Producto | No; se omite hasta definir | Abierta |
+| `Q-03` | Resuelto: antes de la primera variante se selecciona por producto un conjunto no vacío de características LISTA efectivas; desde la primera variante es inmutable. Cada variante aporta valor_id activo para cada característica; otros atributos no identifican el SKU. | Spec/HU Variantes | No | Resuelta |
+| `Q-04` | Resuelto: variante BORRADOR → ACTIVA → INACTIVA; activación por acción explícita con validaciones. | Specs/HU definitivos | No | Resuelta |
+| `Q-05` | Resuelto: se permite reactivar INACTIVA si cumple las validaciones de activación; conserva SKU, padre no se reactiva automáticamente. | Specs/HU definitivos | No | Resuelta |
 | `Q-06` | ¿Qué permisos granulares existen y cómo se informa una colisión interna de SKU? | Seguridad / Backend | No | Abierta |
 | `Q-07` | ¿Cuál es la estrategia de concurrencia para combinaciones y ediciones? | Backend | No; sí conflicto final | Abierta |
 | `D-01` | Selección de librería UI y estrategia CSS | Equipo frontend | No para wireframe; sí implementación | Pendiente |
+
+### Alineación definitiva de Variantes y SKUs
+
+- Incluir en el detalle de variante **acción explícita Activar** para una variante `BORRADOR` que cumpla atributos identificadores válidos y preparación mínima de precio/registro en Inventario; confirmar transición en pantalla sin confundirla con disponibilidad para venta si el padre sigue en `BORRADOR`.
+- Las transiciones normadas son `BORRADOR → ACTIVA`, `ACTIVA → INACTIVA` e `INACTIVA → ACTIVA`; al desactivar la **última variante activa**, el producto padre se inactiva también. Reactivar la variante conserva el SKU y **no** reactiva automáticamente el padre.
+- Al crear variante, Catálogo genera el SKU desde `sku_base` y atributos identificadores. El formulario no incluye edición manual de SKU. Un mismo lote puede crear primero un padre y sus variantes posteriormente; no asumir que el SKU nuevo ya aparece en la plantilla de alta.
+- Disponibilidad es informativa, por SKU, proveniente de Inventario; no editar stock desde Variantes. El producto padre no tiene saldo independiente.
+
+### Configuración de identidad por producto (Q-03 cerrada)
+En la creación del producto con variantes, seleccionar características identificadoras LISTA efectivas de la categoría **antes de crear la primera variante**. Una vez creada, esa selección queda bloqueada aunque se desactive la variante. Al crear una variante, mostrar exactamente un selector de `valor_id` por característica elegida; el SKU se genera desde IDs estables y `sku_base`, nunca a partir de textos editables. Si cambió la categoría y quedó inválida la configuración, bloquear creación/activación nueva y mostrar corrección requerida sin reescribir identidades históricas.
 
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Gabriel Poma Gutierrez | Borrador inicial del flow WF-004 | — |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ## Lista de control antes de generar el HTML
 
@@ -695,3 +720,5 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 - [x] Los criterios CA-01–CA-14 tienen cobertura.
 - [x] Supuestos y preguntas están separados de datos confirmados.
 - [ ] Resolver configuración de atributos, estados, contratos, límites y permisos antes de implementar.
+
+---

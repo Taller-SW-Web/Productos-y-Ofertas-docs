@@ -35,6 +35,9 @@ La salida se ordena primero por `prioridad` ascendente y luego por `orden` ascen
 
 Si el mismo producto recomendado aparece por múltiples reglas, se conserva una sola aparición: la primera según el orden anterior.
 
+### Interpretación del precio en recomendaciones
+El «precio vigente» expuesto por una recomendación es el precio público informativo del SKU vendible elegible (regular u oferta vigente de Pricing, si existe), sin aplicar por anticipado una promoción de carrito ni consumir cupones. En productos con variantes se puede mostrar rango o precio «desde» de SKUs activos con stock; el detalle comercial final se recalcula al cotizar el SKU elegido. La recomendación no garantiza disponibilidad ni precio inmutable hasta confirmar el pedido.
+
 ## 5. Requisitos
 
 ### Requisito 1: Registrar reglas de Cross-sell
@@ -124,7 +127,10 @@ La consulta administrativa DEBE mostrar como mínimo:
 - Historial de navegación o compras.
 - Determinar o verificar automáticamente si una alternativa es “superior”.
 - Agregar o reemplazar automáticamente productos en una compra.
+- Pantalla administrativa «Probar recomendaciones»; las recomendaciones se consultan mediante la API y son consumidas por los canales.
 
 ## Criterio de completitud
 
 La capacidad se considera correctamente implementada cuando todos los requisitos anteriores se cumplen.
+
+---

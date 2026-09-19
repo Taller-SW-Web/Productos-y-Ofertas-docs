@@ -1,5 +1,7 @@
 # WF-007 — Reglas de venta cruzada y upselling
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para administrar reglas de
@@ -37,7 +39,7 @@ Reglas de producción:
 
 - Entrada: `../prototipos/WF-007-reglas-venta-cruzada-upselling/index.html`.
 - HTML, CSS y JavaScript estáticos, navegables y sin servicios externos.
-- Listado, alta/edición, detalle, cambio de estado y prueba de recomendaciones.
+- Listado, alta/edición, detalle y cambio de estado. La consulta de recomendaciones se realiza mediante API desde los canales, no desde una pantalla administrativa de prueba.
 - Responsividad real mediante CSS, sin simulador de dispositivo interno.
 
 ## 1. Metadatos
@@ -50,7 +52,7 @@ Reglas de producción:
 | Estado | En revisión |
 | Responsable | Axel Andree Cueva Alcalá |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
@@ -67,7 +69,7 @@ Reglas de producción:
 - Elegir origen producto/categoría y productos recomendados.
 - Definir prioridad, orden, vigencia y estado.
 - Registrar justificación por producto Upsell.
-- Activar/desactivar y probar recomendaciones resultantes.
+- Activar/desactivar reglas; las recomendaciones resultantes se consumen mediante API desde los canales.
 
 ### Fuera de alcance
 
@@ -108,12 +110,11 @@ Confirmación de guardado y retorno al listado actualizado.
 
 - Sesión válida y permiso de Gestor Comercial.
 - Existen productos y categorías activas.
-- Precios y disponibilidad pueden consultarse para la prueba.
 
 ### Punto de entrada
 
 - Ubicación: Productos y ofertas, sección Reglas.
-- Disparadores: `Crear regla`, `Ver detalle` o `Probar recomendaciones`.
+- Disparadores: `Crear regla` o `Ver detalle`.
 
 ### Salidas
 
@@ -134,7 +135,7 @@ Confirmación de guardado y retorno al listado actualizado.
 6. Añade uno o más productos y define su orden.
 7. Si es Upsell, justifica cada recomendado.
 8. Guarda; el sistema valida y confirma.
-9. Desde el listado consulta, edita, cambia el estado o prueba resultados.
+9. Desde el listado consulta, edita o cambia el estado de la regla.
 
 ### Flujos alternativos
 
@@ -146,9 +147,6 @@ Confirmación de guardado y retorno al listado actualizado.
 | `ALT-04` | Upsell sin justificación | Señalar el producto afectado | Formulario |
 | `ALT-05` | Prioridad u orden inválido | Solicitar entero positivo | Formulario |
 | `ALT-06` | Fin no posterior al inicio | Asociar error al fin | Formulario |
-| `ALT-07` | Recomendado sin stock en consulta | Excluirlo del resultado | Prueba |
-| `ALT-08` | Duplicado entre reglas | Conservar primera aparición | Prueba |
-| `ALT-09` | Sin coincidencias válidas | Mostrar lista vacía | Prueba |
 
 ## 7. Inventario de pantallas y variantes
 
@@ -161,16 +159,14 @@ Confirmación de guardado y retorno al listado actualizado.
 | `S-02-V` | Validación fallida | Corregir sin perder datos | Misma vista | Sí |
 | `S-03` | Seleccionar producto | Añadir un recomendado activo | Diálogo | Sí |
 | `S-04` | Detalle | Revisar configuración y orden | Vista de detalle | Sí |
-| `S-05` | Probar recomendaciones | Revisar salida ordenada | Vista funcional | Sí |
-| `S-05-E` | Sin recomendaciones | Comunicar lista vacía | Misma vista | Sí |
-| `S-06` | Confirmar estado | Evitar cambios accidentales | Diálogo | Sí |
+| `S-05` | Confirmar estado | Evitar cambios accidentales | Diálogo | Sí |
 
 ## 8. Especificación por pantalla
 
 ### `S-01` — Listado de reglas
 
 1. Título `Venta cruzada y upselling`.
-2. Acciones `Probar recomendaciones` y `Crear regla`.
+2. Acción principal `Crear regla`.
 3. Búsqueda y filtros por tipo y estado.
 4. Tabla con regla, tipo, origen, prioridad, recomendados, estado y detalle.
 
@@ -239,26 +235,7 @@ Confirmación de guardado y retorno al listado actualizado.
 | `A-15` | Disponibilidad | Solo lectura; una falla no equivale a stock cero |
 | `A-16` | Nota | Recomendaciones no modifican la compra automáticamente |
 
-### `S-05` — Probar recomendaciones
-
-#### Secuencia
-
-1. El gestor elige un producto consultado.
-2. Selecciona `Consultar recomendaciones`.
-3. El sistema considera reglas activas, vigentes y coincidentes.
-4. Excluye productos inexistentes, inactivos o sin stock.
-5. Ordena por prioridad y orden interno.
-6. Elimina duplicados conservando la primera aparición.
-7. Muestra producto, tipo, precio y disponibilidad, o lista vacía.
-
-| ID | Elemento | Anotación |
-|---|---|---|
-| `A-17` | Ranking | Es resultado de prioridad y orden; no se edita aquí |
-| `A-18` | Tipo | Mantener Cross-sell/Upsell por resultado |
-| `A-19` | Disponibilidad | No mostrar productos sin stock |
-| `A-20` | Vacío | Lista vacía es un resultado válido, no un error técnico |
-
-### `S-06` — Confirmar cambio de estado
+### `S-05` — Confirmar cambio de estado
 
 - Explicar participación en nuevas consultas.
 - Acciones `Confirmar` y `Cancelar`.
@@ -283,16 +260,13 @@ Confirmación de guardado y retorno al listado actualizado.
 | Origen/recomendado inválido | Error contextual | Quitar/cambiar | Formulario |
 | Guardando | Acción bloqueada | Esperar | Reintentar |
 | Éxito | Confirmación | Continuar | N/A |
-| Prueba con resultados | Lista ordenada | Revisar/nueva prueba | N/A |
-| Prueba vacía | Mensaje de lista vacía | Cambiar producto | Nueva prueba |
-| Disponibilidad fallida | Mensaje distinto de sin stock | Reintentar | Nueva consulta |
 | Dato desactualizado | Aviso | Recargar y revisar | Revalidar |
 | Sin permisos | Mensaje seguro | Volver | Solicitar acceso |
 | Sesión expirada | Aviso | Iniciar sesión | Recuperar contexto |
 
 ### Reglas para datos remotos
 
-- Refrescar productos, categorías, precios y stock antes de guardar/probar.
+- Refrescar productos y categorías antes de guardar. Precio, disponibilidad, orden y filtrado de recomendaciones se resuelven al consultar la API desde los canales, no mediante una pantalla administrativa de prueba.
 - No usar guardado optimista para cambios administrativos.
 - Distinguir stock cero, producto inactivo y error de consulta.
 - Conservar el formulario ante errores recuperables.
@@ -307,7 +281,6 @@ Confirmación de guardado y retorno al listado actualizado.
 | Listado | Tabla completa | Scroll contenido | Scroll contenido |
 | Formulario | Dos columnas | Ajustable | Una columna |
 | Recomendados | Tarjetas con dos columnas internas | Tarjetas | Campos apilados |
-| Resultado | Lista ordenada | Lista | Lista |
 | Modal | Centrado | Adaptable | Ancho disponible |
 
 Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil.
@@ -328,7 +301,6 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 - Densidad alta en reglas y recomendados, progresiva en formularios.
 - Sensación: control editorial, trazabilidad y orden.
 - Dominante en formulario: origen y lista ordenada.
-- Dominante en prueba: orden final de recomendaciones.
 - No mostrar IA, scoring, eventos, endpoints, criterios CA ni anotaciones como UI.
 
 ### Microcopy crítica
@@ -339,7 +311,6 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 | Prioridad | `1 representa la mayor prioridad.` |
 | Upsell | `Describe una mejora concreta de su ficha.` |
 | Error | `Explica la mejora concreta de [producto].` |
-| Vacío | `Ninguna regla activa y vigente produjo productos disponibles.` |
 | Desactivar | `Dejará de participar en nuevas consultas.` |
 
 ## 13. Restricciones técnicas relevantes
@@ -370,10 +341,8 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 - [x] Exige justificación por cada recomendado Upsell.
 - [x] No infiere superioridad por precio ni verifica su veracidad.
 - [x] Permite definir orden interno.
-- [x] Prueba reglas activas, vigentes y coincidentes.
-- [x] Excluye inactivos y sin stock.
-- [x] Ordena y deduplica determinísticamente.
-- [x] Representa lista vacía sin agregar productos a la compra.
+- [x] Documenta que la API excluye inactivos y sin stock; el backoffice no incorpora una pantalla de prueba.
+- [x] Documenta el orden y deduplicación deterministas de la API sin convertirlos en una pantalla administrativa de prueba.
 - [x] Separa documentación y detalles técnicos de la interfaz.
 - [x] Es responsivo y consistente con `DESIGN.md`.
 
@@ -384,8 +353,8 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 | CA-01–CA-04 | S-01, S-02, S-03 y permisos |
 | CA-05/CA-12 | S-02-U, S-04 y errores por producto |
 | CA-06 | Orden en S-02 y detalle S-04 |
-| CA-07–CA-10 | S-05, reglas de filtrado, orden y deduplicación |
-| CA-11 | S-05-E y nota de no modificación automática |
+| CA-07–CA-10 | Capacidad API documentada; filtrado, orden y deduplicación no requieren pantalla administrativa |
+| CA-11 | La API devuelve lista vacía cuando no existen recomendaciones válidas; no se representa como pantalla administrativa |
 
 ## 16. Supuestos
 
@@ -394,7 +363,6 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 | `SUP-01` | Escritorio es el dispositivo principal | Repriorizar experiencia móvil | Sí |
 | `SUP-02` | Moneda visible PEN/S/ | Cambiar formato | Sí |
 | `SUP-03` | El selector permite búsqueda por nombre/SKU | Cambiar patrón | Sí |
-| `SUP-04` | La prueba de recomendaciones es administrativa | Retirar o reubicar S-05 | Sí |
 
 ## 17. Preguntas y decisiones pendientes
 
@@ -404,14 +372,21 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 | `Q-02` | ¿Se permiten órdenes repetidos dentro de una regla? | Producto | Validación final | Abierta |
 | `Q-03` | ¿Cuál es la longitud máxima de la justificación? | Producto/Backend | Validación final | Abierta |
 | `Q-04` | ¿Se permite cambiar el tipo de una regla existente? | Producto | Edición final | Abierta |
-| `Q-05` | ¿La prueba administrativa debe mostrar la justificación Upsell? | Producto | S-05 | Abierta |
+| `Q-05` | Resuelto: no existe pantalla administrativa «Probar recomendaciones»; la justificación permanece visible en el detalle administrativo de la regla Upsell. | Decisión de producto | No | Resuelta |
 | `D-01` | Selección de librería UI y estrategia CSS | Frontend | Implementación | Pendiente |
+
+### Alineación definitiva de Venta Cruzada / Upselling
+
+- El precio y la disponibilidad devueltos por la API de recomendaciones son **informativos**, de Pricing/Inventario; la recomendación no fija precio de pedido ni reserva/disminuye stock. El backoffice no incorpora una pantalla administrativa de prueba.
+- Mantener el orden normado por prioridad de regla ascendente, luego orden de producto ascendente y deduplicación de la primera aparición. Solo productos/SKUs comercialmente activos y con stock positivo son elegibles conforme a Spec/HU.
+- No incorporar una acción «Confirmar compra» ni llamadas de pago o consumo dentro de la interfaz de administración de reglas.
 
 ## 18. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Flujo inicial basado en spec, HU, prototipo y `DESIGN.md` | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ## 19. Lista de control
 
@@ -422,3 +397,5 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 - [x] Datos técnicos y documentación excluidos de la interfaz visible.
 - [x] Prototipo HTML disponible.
 - [ ] Resolver preguntas abiertas antes de implementación productiva.
+
+---

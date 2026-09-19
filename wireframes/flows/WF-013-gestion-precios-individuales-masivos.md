@@ -1,5 +1,7 @@
 # WF-013 — Gestión de precios individuales y masivos
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable del flujo descrito en este\
@@ -93,7 +95,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado               | Borrador                                    |
 | Responsable          | Por asignar                                 |
 | Fecha                | 2026-09-17                                  |
-| Última actualización | 2026-09-17                                  |
+| Última actualización | 2026-09-18                                  |
 
 ## 2. Trazabilidad
 
@@ -1081,7 +1083,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 | HTTP    | Confirmar/crear lote masivo; método/ruta pendientes                   | Devuelve referencia y estado (HTTP 201/207/422)                |
 | HTTP    | Consultar lote; método/ruta pendientes                                | Actualiza S-08/S-09-S/S-09-P/S-09-R                             |
 | HTTP    | Descargar reporte de errores del lote; método/ruta pendientes         | Disponible si hay filas fallidas o rechazo total                |
-| Evento  | `pricing.price.changed`                                               | Actualiza precio operativo y sincroniza canales; no mostrar nombre técnico |
+| Evento | `pricing.price.changed` | Notifica precio ya persistido; canales y auditoría actualizan sus lecturas sin exponer nombre técnico |
 | Permiso | Actualizar/programar precios; código pendiente                        | Habilita S-02/S-03                                              |
 | Permiso | Cargar precios en lote; código pendiente                              | Habilita S-05 en adelante                                       |
 | Permiso | Consultar precio histórico; código pendiente                          | Habilita S-04                                                    |
@@ -1155,10 +1157,10 @@ Aplicar DESIGN.md como fuente de representación visual.
 | ------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------- | ------- |
 | SUP-01 | La ruta de detalle de precio es `/productos/{sku}/precio`                        | No se entregó mapa de navegación                            | Cambiar ruta y punto de entrada                  | Sí      |
 | SUP-02 | La ruta de carga masiva es `/precios/carga-masiva`                                | No se entregó mapa de navegación                            | Cambiar ruta y punto de entrada                  | Sí      |
-| SUP-03 | Existe una pantalla dedicada para la consulta as-of (S-04), aunque la spec solo define el contrato de API | El escenario 4 de la HU menciona al gestor como posible invocador | Podría ser solo un contrato de servicio, sin UI | Sí      |
+| SUP-03 | Resuelto: existe una pantalla administrativa dedicada para la consulta as-of (S-04) que consume el contrato oficial de Pricing. | Decisión de producto | Mantener S-04 | No |
 | SUP-04 | El límite de 5,000 filas es un benchmark de rendimiento, no una regla de rechazo estructural explícita | La spec solo lo menciona en requisitos no funcionales      | Podría requerirse un rechazo explícito por exceso de filas | Sí |
 | SUP-05 | Se muestra en S-01 si existe una programación `SCHEDULED` pendiente para el SKU | Necesario para evitar programaciones duplicadas             | Ocultar si no está expuesto por el contrato      | Sí      |
-| SUP-06 | Las celdas vacías de `precio_oferta` en la carga masiva significan "sin oferta", no "conservar el valor anterior" | La spec no define un comportamiento de valores vacíos como en otros flujos de carga | Cambiar el copy y el comportamiento de la fila | Sí |
+| SUP-06 | Resuelto: oferta vacía y acción omitida equivalen a CONSERVAR; ELIMINAR exige acción explícita | Spec/HU Pricing, Requisito 4.1/CA-14 | Reflejado en copia y validación | No |
 | SUP-07 | El batch ID puede mostrarse como referencia visible al gestor                    | Existe en auditoría, no se exige explícitamente en UI        | Ocultarlo si es interno                          | Sí      |
 | SUP-08 | Escritorio es el dispositivo principal para la carga masiva; la actualización individual y la consulta histórica deben funcionar también en tablet/móvil | Uso intensivo de hojas de cálculo solo en el flujo masivo   | Cambiar prioridad responsive de algunas pantallas | Sí |
 
@@ -1169,21 +1171,33 @@ Aplicar DESIGN.md como fuente de representación visual.
 | Q-01 | ¿Cuáles son las rutas exactas y la ubicación en navegación de detalle, edición, consulta histórica y carga masiva? | Frontend/Seguridad    | No para estructura; sí para navegación final       | Abierta    |
 | Q-02 | ¿Cuáles son los códigos exactos de permisos más allá de los roles `GESTOR_COMERCIAL`/`ADMIN_CATALOGO`?        | Backend/Seguridad     | No                                                 | Abierta    |
 | Q-03 | ¿Existe un límite máximo de filas para la carga masiva de precios, o solo aplica el benchmark de 5,000 registros? | Backend/Producto     | Sí para el mensaje de rechazo de ALT-08            | Abierta    |
-| Q-04 | ¿Las celdas vacías de `precio_oferta` en el archivo masivo significan "sin oferta" o "conservar el valor actual"? | Backend/Producto     | Sí para el microcopy de reglas en S-05             | Abierta    |
+| Q-04 | Resuelto: blanco/acción omitida = CONSERVAR; ESTABLECER exige oferta válida; ELIMINAR retira con celda vacía y motivo. | Spec/HU Pricing | No | Resuelta |
 | Q-05 | ¿Cómo debe representarse una programación `SCHEDULED` existente para evitar que el gestor programe dos veces el mismo SKU? | Producto/UX          | No                                                  | Abierta    |
 | Q-06 | ¿Qué canal notifica la finalización del procesamiento masivo y a dónde dirige al gestor?                     | Producto/Frontend     | No                                                  | Abierta    |
-| Q-07 | ¿Existe una pantalla propia para la consulta as-of o solo se documenta el contrato de API para servicios/auditoría? | Producto/Backend     | Sí para confirmar S-04 como pantalla                | Abierta    |
+| Q-07 | Resuelto: existe una pantalla propia S-04 para consulta as-of, de solo lectura, además del contrato API. | Decisión de producto | No | Resuelta |
 | Q-08 | ¿Se permite cancelar una programación de precio (`SCHEDULED`) antes de que se active?                          | Producto/Backend      | No; queda fuera de alcance hasta confirmarse         | Abierta    |
 | Q-09 | ¿Qué ocurre si el archivo contiene fórmulas o contenido potencialmente inseguro?                                | Seguridad/Backend     | No; el wireframe solo prohíbe ejecutar contenido activo | Abierta |
 | Q-10 | ¿El reporte de errores de la carga masiva tiene vencimiento o puede regenerarse?                                | Backend/Producto      | No                                                  | Abierta    |
 | Q-11 | ¿Qué código HTTP corresponde cuando `allow_partial=true` pero todas las filas son válidas?                     | Backend                | No; se asume el mismo resultado que S-09-S           | Abierta    |
 | D-01 | Selección de librería UI y estrategia CSS                                                                      | Frontend               | No para wireframe; sí para implementación            | Pendiente  |
 
+### Alineación definitiva de Pricing y sus dos flujos masivos
+
+- Pricing es propietario de precio base del producto y overrides opcionales por SKU. El detalle debe mostrar **precio regular vigente, precio de oferta opcional y origen heredado/override** sin tratarlos como una sola cifra.
+- `pricing.price.changed` es emitido **por Pricing tras un cambio persistido**; no es un comando que Bulk le envía para cambiar precios. Para la importación general de WF-001 se usa `pricing.bulk.price.apply.requested` y su resultado correlacionado. La carga de precios propia de Pricing continúa como flujo diferenciado, con **All-or-Nothing por defecto** y `allow_partial=true` como alternativa aprobada.
+- La **oferta de Pricing es alternativa** a promociones automáticas/cupones, no su base acumulativa. Los descuentos de Promociones se calculan sobre el regular vigente por SKU; al comparar totales finales de una misma cesta, oferta Pricing gana en empate con promociones o cupones.
+- Auditoría registra primer precio como CREACION con `precio_anterior=null` y `variacion_porcentual=null`; mostrar «Sin precio anterior» en lugar de 0 o de una variación inventada.
+- El importador exclusivo de Pricing utiliza `accion_precio_oferta`: celda vacía sin acción conserva; `ESTABLECER` exige importe; `ELIMINAR` con oferta vacía la retira explícitamente. No se admite borrar oferta mediante un blanco accidental.
+
+### Microcopy obligatorio de oferta en archivo
+«Si dejas vacía la oferta, se conservará. Para establecer una oferta, selecciona ESTABLECER y escribe el importe. Para quitar una oferta, selecciona ELIMINAR y deja vacío el importe. Si el regular nuevo invalida la oferta conservada, la fila se rechazará». El archivo exclusivo de precios incluye `accion_precio_oferta` como columna opcional y acepta CONSERVAR/ESTABLECER/ELIMINAR.
+
 ## 19. Registro de revisiones
 
 | Versión | Fecha      | Autor     | Cambio                                                              | Aprobado por |
 | ------- | ---------- | --------- | -------------------------------------------------------------------- | ------------ |
 | 0.1     | 2026-09-17 | Asistente | Borrador inicial basado en SPEC-013-gestion-precios-individuales-masivos.md, HU-013-gestion-precios-individuales-masivos.md, DESIGN.md y WF-001 como guía de formato | Pendiente    |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -1197,5 +1211,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 - [x] El formato HTML está definido.
 - [ ] Confirmar ID WF-013 contra INDEX.md (no se proporcionó en esta tarea).
 - [ ] Resolver Q-01 antes de confirmar rutas definitivas.
-- [ ] Resolver Q-03 y Q-04 antes de finalizar el copy de reglas de carga masiva.
+- [ ] Resolver Q-03 antes de finalizar los límites de carga masiva; Q-04 ya está resuelta y el copy debe explicar CONSERVAR/ESTABLECER/ELIMINAR.
 - [ ] Confirmar Q-07 antes de tratar S-04 como pantalla obligatoria en vez de solo un contrato de API.
+
+---

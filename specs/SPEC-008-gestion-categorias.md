@@ -1,73 +1,86 @@
 # SPEC-008 — Especificación: Gestión de categorías y subcategorías
 
 ## 1. Contexto
-El catálogo se organiza en categorías y subcategorías para que los clientes y canales de venta puedan navegar y filtrar los productos correctamente. Este documento define el ciclo de vida de las categorías: creación, actualización (incluida la reasignación de padre), baja lógica y reactivación.
+El Marketplace Multicanal organiza los productos en categorías y subcategorías para navegación, filtros y clasificación en Catálogo Core. La estructura se administra centralmente en Taxonomía y se expone por API.
 
 ## 2. Propósito
-Permitir al gestor comercial crear, organizar y mantener la jerarquía de categorías del catálogo bajo reglas claras de profundidad, parentesco y estado.
+Permitir al Gestor Comercial crear, consultar, actualizar, desactivar y reactivar categorías, manteniendo una jerarquía consistente de máximo dos niveles.
 
 ## 3. Alcance
-- Creación de categorías con padre opcional.
-- Actualización de datos editables, incluido `categoria_padre_id`.
-- Jerarquía de máximo 2 niveles (raíz y subcategoría).
-- Baja lógica (nunca eliminación física) y reactivación con validaciones.
-- Exposición del árbol jerárquico completo para canales externos.
+Incluye:
+- Categorías raíz y subcategorías.
+- Máximo dos niveles: raíz e hija.
+- Edición de `categoria_padre_id`.
+- Consulta individual, listado y árbol jerárquico.
+- Baja lógica y reactivación.
+- Validación asíncrona, con confirmación de Catálogo y barrera concurrente, de productos activos antes de desactivar.
+- API de solo lectura para canales y Catálogo Core.
 
 ## 4. Requisitos
 
-### Requisito 1: Creación de categorías
-El sistema DEBE permitir crear una categoría con nombre y descripción, indicando opcionalmente una categoría padre. El nombre NO es único: puede repetirse en distintas ramas.
+### Requisito 1: Crear categoría
+El sistema DEBE permitir crear una categoría con nombre, descripción y `categoria_padre_id` opcional.
 
-### Requisito 2: Jerarquía máxima
-El sistema DEBE limitar la jerarquía a un máximo de 2 niveles: categoría raíz y subcategoría. Una subcategoría no puede tener hijos.
+El nombre NO necesita ser único. La unicidad de URL se resuelve mediante la política de slug definida en `SPEC-012-seo-metadatos.md`.
 
-### Requisito 3: Referencias circulares
-El sistema NO DEBE permitir que una categoría se asigne como su propia categoría padre.
+Si se especifica padre, este debe existir y estar activo.
 
-### Requisito 4: Actualización de campos editables
-El sistema DEBE incluir explícitamente el campo `categoria_padre_id` entre los campos editables al actualizar una categoría (junto con nombre, descripción, orden e imagen), sin afectar los productos ya asociados.
+### Requisito 2: Jerarquía
+La jerarquía admite únicamente:
+1. categoría raíz;
+2. subcategoría.
 
-#### Escenario: Actualización del campo `categoria_padre_id`
-- DADO que existe una subcategoría "Accesorios" y una categoría raíz "Fútbol"
-- CUANDO el gestor actualiza la subcategoría asignando el `categoria_padre_id` de "Fútbol"
-- ENTONCES el sistema cambia su ubicación en el árbol respetando el máximo de 2 niveles
+No se permiten terceros niveles ni referencias circulares.
 
-### Requisito 5: Validación del nuevo padre
-Al cambiar el `categoria_padre_id`, el sistema DEBE validar que el nuevo padre esté activo y que no se superen los 2 niveles de jerarquía.
+### Requisito 3: Actualizar categoría
+El sistema DEBE permitir editar nombre, descripción, orden, imagen y `categoria_padre_id`.
 
-### Requisito 6: Baja lógica
-El sistema DEBE permitir desactivar (baja lógica) una categoría, validando mediante llamada síncrona que no existan productos activos asociados. Si existe al menos un producto activo, la baja se bloquea.
+Al cambiar el padre se valida:
+- existencia y estado activo del nuevo padre;
+- ausencia de autorreferencia/ciclo;
+- cumplimiento del máximo de dos niveles.
 
-#### Escenario: Baja lógica con productos
-- DADO que una categoría tiene al menos un producto activo
-- CUANDO se intenta desactivar
-- ENTONCES se bloquea la acción para no dejar productos huérfanos en canales de venta
+El cambio de ubicación no altera automáticamente los productos ya asociados.
 
-### Requisito 7: Reactivación
-El sistema DEBE permitir reactivar una categoría previamente desactivada, exigiendo que su categoría padre (si la tuviese) esté en estado activo.
+### Requisito 4: Desactivar categoría
+Toda baja es lógica. El sistema NUNCA elimina físicamente una categoría.
 
-#### Escenario: Reactivación de categoría con padre inactivo
-- DADO que la categoría "Running" (hija) y "Zapatillas" (padre) están inactivas
-- CUANDO el gestor solicita reactivar "Running"
-- ENTONCES el sistema arroja un error requiriendo reactivar primero la categoría padre
+La desactivación se bloquea si:
+- posee subcategorías activas; o
+- existen productos activos asociados.
 
-### Requisito 8: Prohibición de eliminación física
-El sistema NUNCA DEBE eliminar físicamente una categoría; toda baja es lógica.
+La existencia de productos activos se verifica mediante la coordinación asíncrona con Catálogo Core definida a continuación. La solicitud puede permanecer pendiente; una validación inexistente, fallida o vencida NUNCA autoriza la baja.
 
-### Requisito 9: Exposición del árbol jerárquico
-El sistema DEBE exponer el árbol jerárquico completo para canales externos.
+### Requisito 5: Reactivar categoría
+Una categoría inactiva puede reactivarse. Si tiene padre, este debe estar activo.
+
+### Requisito 6: Consultar árbol
+El sistema DEBE exponer el árbol jerárquico completo, incluyendo categorías activas e inactivas, para uso administrativo conforme a permisos. Para Catálogo Core y canales externos, la API de consumo DEBE exponer únicamente categorías activas; una categoría inactiva no forma parte del árbol público/consumible.
+
+### Contrato transversal para baja segura de entidades maestras (EDA)
+
+La desactivación de categoría o marca que pueda tener productos asociados es **una operación asíncrona de dos fases funcionales**, no una llamada HTTP entre servicios. Taxonomía registra la operación `PENDING_DEACTIVATION` con `operation_id`, `entity_type`, `entity_id` y `version`, y publica el comando `taxonomy.master.deactivation.check.requested`. Catálogo, en una transacción local, instala una barrera de escritura por entidad (impide crear, activar o reasignar productos a ella mientras dure la operación), revisa todos los productos activos asociados y publica `catalog.master.deactivation.checked` con el mismo `operation_id`, versión y resultado `HAS_ACTIVE_PRODUCTS` o `CLEAR`. La barrera debe participar de las mismas transacciones de escritura de producto para evitar carreras.
+
+Taxonomía **solo confirma la baja lógica tras un resultado `CLEAR` vigente**; si hay productos activos, timeout o error, deja la entidad activa y registra rechazo o estado pendiente recuperable, nunca éxito supuesto. Publica `taxonomy.master.deactivated` o `taxonomy.master.deactivation.rejected`; Catálogo libera la barrera tras procesar idempotentemente ese resultado. La caída de un servicio no autoriza liberar automáticamente una barrera sin reconciliar el estado por `operation_id`. Los consumidores de canales actualizan sus vistas por eventos; durante la propagación no deben prometer visibilidad instantánea global. **No existe transacción distribuida** ni validación HTTP síncrona entre Catálogo y Taxonomía.
+
+La desactivación de una categoría sigue bloqueándose cuando tiene subcategorías activas, comprobación local de Taxonomía. La reactivación vuelve a validar padre y unicidad aplicable según el tipo de entidad. Este protocolo es interno y no presupone contratos confirmados con Ventas y Postventa.
+
+### Requisito 7: Reubicación segura de categoría
+Antes de confirmar el cambio de `categoria_padre_id`, Taxonomía calcula las características **efectivas** (directas + heredadas, sin duplicados) de la categoría trasladada y de todas las subcategorías que pudiera afectar. Rechaza el cambio si alguna excede 20, si relaja una obligatoriedad heredada, si crea un ciclo o si excede dos niveles. El cambio se confirma atómicamente con la actualización de la jerarquía y la versión de taxonomía y emite `taxonomy.category.updated`. Si aparecen nuevas características obligatorias, los productos ya existentes conservan su estado y las completan en el próximo guardado; las nuevas creaciones/activaciones deben satisfacerlas. Catálogo valida escrituras sobre una versión vigente de las reglas, no sobre proyecciones conocidas como obsoletas.
 
 ## 5. Requisitos no funcionales
-- La validación síncrona de productos activos con Catálogo Core es bloqueante.
-- La consulta del árbol jerárquico debe estar disponible de forma constante para canales externos.
+- Rendimiento: árbol completo < 1 s con hasta 500 categorías.
+- Seguridad: escritura restringida a Gestor Comercial.
+- Disponibilidad: API de categorías activas disponible para Catálogo Core y canales.
+- Auditoría: registrar creación y modificación con fecha/hora y usuario.
 
 ## 6. Fuera de alcance
-- Asociación de características a categorías — corresponde a la capacidad "Asociación Categoría-Característica".
-- Configuración de slugs y metadatos SEO de categorías — corresponde a la capacidad "Gestión de SEO y metadatos".
+- CRUD de características y marcas.
+- Asociación categoría-característica, definida en `SPEC-010-asociacion-categoria-caracteristica.md`.
+- Metadatos SEO; el slug y sus colisiones se rigen por `SPEC-012-seo-metadatos.md`.
+- Asociación de productos a categoría, responsabilidad de Catálogo Core.
 
 ## Criterio de completitud
-La capacidad se considera correctamente implementada cuando:
-- Todos los requisitos están implementados.
-- Todos los escenarios definidos se cumplen.
-- Los requisitos no funcionales aplicables se cumplen.
-- No se incorporaron funcionalidades fuera del alcance.
+Se considera completa cuando se cumplen creación, jerarquía de dos niveles, edición de padre, baja lógica, reactivación, validación de productos activos y consulta del árbol.
+
+---

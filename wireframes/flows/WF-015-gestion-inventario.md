@@ -1,5 +1,7 @@
 # WF-015 — Gestión de inventario (control de stock)
 
+> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+
 ## 0. Instrucciones para el agente
 
 Genera un wireframe detallado, anotado y navegable para la gestión de inventario
@@ -58,16 +60,16 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - No uses React ni dependencias del frontend productivo.
 - No requieras conexión a servicios externos.
 - Simula únicamente las interacciones necesarias para validar el flujo.
-- Incluye vistas de escritorio, tablet y móvil o controles para inspeccionarlas.
-- Incluye las anotaciones visibles definidas en cada pantalla.
+- Implementa un diseño responsivo real para escritorio, tablet y móvil mediante CSS y cambios de viewport; no agregues controles internos de dispositivo.
+- Documenta las anotaciones A-xx fuera de la interfaz simulada; no las renderices en el prototipo.
 - Aplica el estilo monocromático y de baja fidelidad de DESIGN.md.
 
 ### Entregables esperados
 
 1. Consulta del listado de SKUs vendibles con estado calculado.
 2. Consulta de disponibilidad de una variante/SKU y su estado.
-3. Registro de consumo de unidades con validación de stock.
-4. Rechazo de consumo por stock insuficiente (sin stock negativo).
+3. Consulta del resultado de consumo ante `order.confirmed` (sin formulario manual de débito).
+4. Estado informativo de rechazo de consumo por stock insuficiente (sin stock negativo).
 5. Evidencia de actualización condicional y control optimista ante consumos
    concurrentes.
 6. Configuración del `umbral_stock_bajo` por SKU.
@@ -87,7 +89,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Estado | Borrador |
 | Responsable | Miguel Ángel Taco Zavala |
 | Fecha | 2026-09-17 |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-18 |
 
 ## 2. Trazabilidad
 
@@ -102,7 +104,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 - Consultar la disponibilidad de un SKU vendible y su estado
   (Disponible, Stock bajo, Agotado).
-- Registrar el consumo de unidades de una variante indicando su SKU.
+- Consultar el resultado de un consumo originado por `order.confirmed`, sin registrar ventas desde el backoffice.
 - Validar la existencia del SKU, la validez de la cantidad y el stock
   suficiente antes de descontar.
 - Evitar stock negativo y rechazar consumos que superen la disponibilidad.
@@ -134,15 +136,15 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Persona | Responsable de inventario del marketplace |
 | Rol en el sistema | Gestor autenticado con permisos sobre inventario |
 | Nivel técnico | Operativo básico/intermedio; usa SKUs y estados calculados |
-| Contexto de uso | Consulta periódica de disponibilidad y registro de consumos |
+| Contexto de uso | Consulta de disponibilidad y resultados de consumos externos |
 | Necesidad principal | Mantener el stock actualizado y consistente por SKU vendible |
-| Permisos relevantes | Consultar disponibilidad y registrar consumos; códigos pendientes |
+| Permisos relevantes | Consultar disponibilidad y configurar umbral según permisos; consumo únicamente contractual |
 | Dispositivo principal | Escritorio como hipótesis; consulta adaptada a tablet/móvil |
 
 ## 4. Objetivo del flujo
 
 El responsable de inventario debe poder consultar la disponibilidad de cada SKU
-vendible y registrar consumos de unidades de forma consistentemente validada,
+vendible y consultar los consumos ejecutados por eventos de ventas de forma verificable,
 de modo que el stock nunca sea negativo y los canales y módulos integrados
 trabajen con la información de disponibilidad actualizada.
 
@@ -173,7 +175,7 @@ cambio de stock se notifica mediante `inventory.stock.changed`.
 - Ruta propuesta del listado: /inventario.
 - Entrada propuesta: opción Inventario dentro del módulo Productos y ofertas.
 - Consultar: acción sobre una fila o el detalle de un SKU.
-- Registrar consumo: acción desde el listado o desde el detalle.
+- Revisar resultado de consumo confirmado: acceso informativo desde el detalle, solo si los datos están disponibles.
 - Configurar umbral: acción desde el detalle de un SKU.
 
 Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
@@ -183,9 +185,9 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 | Resultado | Destino o comportamiento |
 |---|---|
 | Consulta exitosa | S-01 o S-02 con datos vigentes |
-| Consumo aceptado | S-01 con stock actualizado y evento notificado |
-| Consumo rechazado | S-03-R sin cambios en el stock |
-| Consumo en conflicto | S-03-C con decisión de la actualización condicional |
+| Consumo aceptado | S-01 con stock actualizado; resultado externo consultable en S-03 |
+| Consumo rechazado | S-03-R informativo sin cambios en el stock |
+| Consumo en conflicto | S-03-C informativo sobre resultado del evento externo |
 | Umbral actualizado | S-02 con estado recalculado |
 | Cancelación | Regresa a S-01 o S-02 sin cambios |
 | Error recuperable | Permanece en la pantalla y conserva los datos |
@@ -201,14 +203,12 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 4. El responsable abre el detalle de una variante.
 5. El sistema muestra SKU, producto, características, stock, umbral y estado.
 
-### Flujo B — Registrar consumo
+### Flujo B — Consultar resultado de consumo confirmado (solo lectura)
 
-1. Desde S-01 o S-02, el responsable selecciona Registrar consumo.
-2. En el diálogo S-03 confirma el SKU y la cantidad a consumir.
-3. El sistema valida la existencia del SKU, la validez de la cantidad y el
-   stock suficiente mediante una actualización condicional.
-4. Con stock suficiente, descuenta la cantidad y conserva el nuevo stock.
-5. El sistema notifica `inventory.stock.changed` y muestra el resultado.
+1. Ventas/Postventa **provisionalmente** emite `order.confirmed` con identificador de pedido, SKU y cantidad; la UI de Inventario no crea dicho evento.
+2. Inventario valida y aplica la actualización condicional si hay saldo, o registra un rechazo; publica el resultado correlacionado.
+3. El responsable consulta el detalle del SKU y, si se dispone del resultado, abre S-03 para ver pedido, cantidad y estado **sin campos editables ni botón de descuento**.
+4. Si hubo cambio, la UI refleja el stock vigente después de `inventory.stock.changed`; un mensaje pendiente no equivale a venta consumida.
 
 ### Flujo C — Configurar umbral de stock bajo
 
@@ -220,8 +220,8 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 
 | ID | Condición | Comportamiento esperado | Retorno |
 |---|---|---|---|
-| ALT-01 | SKU inexistente | Rechazo: la variante no existe | S-03 |
-| ALT-02 | Cantidad inválida (vacía, cero o negativa) | Error de validación | S-03 |
+| ALT-01 | SKU inexistente en contrato externo | Inventario rechaza el consumo; S-03 muestra el resultado sin permitir ingresarlo | S-03-R |
+| ALT-02 | Cantidad inválida en contrato externo (vacía, cero o negativa) | Inventario rechaza; S-03 informa error de operación, sin campo de edición | S-03-R |
 | ALT-03 | Cantidad mayor al stock disponible | Rechazo que conserva el stock | S-03-R |
 | ALT-04 | Consumos concurrentes sobre el mismo SKU | Actualización condicional: se acepta un consumo y se rechaza el otro | S-03-C |
 | ALT-05 | Consumo deja stock en 0 | El estado pasa a Agotado | S-01 |
@@ -240,9 +240,9 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 | S-01-E | Vacío o error del listado | Diferenciar ausencia de datos de fallo de carga | Variante de S-01 | Sí |
 | S-02 | Detalle de disponibilidad | Consultar SKU, stock, umbral, estado y acciones | /inventario/:sku propuesta | Sí |
 | S-02-U | Editar umbral de stock bajo | Configurar el umbral por SKU | Variante de S-02 | Sí |
-| S-03 | Registrar consumo | Confirmar SKU y cantidad, validar y aplicar | Diálogo modal | Sí |
-| S-03-R | Consumo rechazado | Explicar el rechazo por stock insuficiente | Variante de S-03 | Sí |
-| S-03-C | Conflicto de concurrencia | Mostrar decisión de la actualización condicional | Variante de S-03 | Sí |
+| S-03 | Resultado de consumo confirmado | Consultar SKU, pedido, cantidad y resultado (solo lectura) | Panel informativo | Sí |
+| S-03-R | Consumo rechazado | Informar rechazo sin ofrecer reintento manual | Variante de S-03 | Sí |
+| S-03-C | Conflicto de concurrencia | Informar resultado de la actualización condicional | Variante de S-03 | Sí |
 
 ## 8. Mapa de navegación
 
@@ -252,7 +252,7 @@ flowchart TD
     B --> A
     B --> U["S-02-U Editar umbral"]
     U --> B
-    A --> C["S-03 Registrar consumo"]
+    A --> C["S-03 Resultado de consumo"]
     B --> C
     C --> R["S-03-R Rechazado"]
     C --> M["S-03-C Conflicto"]
@@ -268,7 +268,7 @@ flowchart TD
 #### Propósito
 
 Dar acceso a la consulta de disponibilidad de todos los SKUs vendibles y entrar
-a registrar consumos o ver el detalle de una variante.
+a consultar resultados de consumos confirmados o ver el detalle de una variante.
 
 #### Jerarquía de contenido
 
@@ -284,13 +284,13 @@ a registrar consumos o ver el detalle de una variante.
 | Encabezado | Título + resumen | Gestión de inventario; conteo de SKUs | Información general |
 | Filtros | Búsqueda + selector de estado | Por SKU/producto y por estado | Filtra el listado |
 | Listado | Tabla en escritorio; tarjetas en móvil | Producto, SKU, características, stock, umbral, estado | Abre detalle |
-| Fila/tarjeta | Acciones contextuales | Ver detalle, Registrar consumo, Editar umbral | Según permiso |
+| Fila/tarjeta | Acciones contextuales | Ver detalle, Ver resultado de consumo, Editar umbral | Según permiso |
 
 #### Acciones
 
 | Prioridad | Acción | Etiqueta | Disponibilidad | Resultado |
 |---|---|---|---|---|
-| Primaria | Registrar consumo | Registrar consumo | Permiso de registro | Abre S-03 |
+| Primaria | Ver resultado de consumo | Ver resultado | Permiso de consulta | Abre S-03 (solo lectura) |
 | Secundaria | Consultar detalle | Ver | Permiso de consulta | Abre S-02 |
 | Secundaria | Editar umbral | Umbral | Permiso de gestión | Abre S-02-U |
 
@@ -342,7 +342,7 @@ reglas estén confirmadas.
 #### Propósito
 
 Mostrar la información de disponibilidad de un SKU vendible, su umbral y su
-estado, y ofrecer registrar consumo o editar el umbral.
+estado, y ofrecer consultar el resultado de un consumo externo o editar el umbral.
 
 #### Jerarquía de contenido
 
@@ -356,13 +356,13 @@ estado, y ofrecer registrar consumo o editar el umbral.
 |---|---|---|---|
 | Encabezado | Título + estado | Producto, variante/SKU | Vuelve a S-01 |
 | Datos | Pares etiqueta/valor | Stock, características, umbral | Lectura |
-| Acciones | Botones | Registrar consumo, Editar umbral | Según permiso |
+| Acciones | Botones | Ver resultado de consumo, Editar umbral | Según permiso |
 
 #### Acciones
 
 | Prioridad | Acción | Etiqueta | Disponibilidad | Resultado |
 |---|---|---|---|---|
-| Primaria | Registrar consumo | Registrar consumo | Permiso de registro | Abre S-03 |
+| Primaria | Ver resultado de consumo | Ver resultado | Permiso de consulta | Abre S-03 (solo lectura) |
 | Secundaria | Editar umbral | Editar umbral | Permiso de gestión | Abre S-02-U |
 | Secundaria | Volver | Volver a inventario | Siempre | Abre S-01 |
 
@@ -412,55 +412,39 @@ Configurar el `umbral_stock_bajo` para un SKU específico.
 | A-11 | Per SKU | No existe valor global obligatorio |
 | A-12 | Recalculo | El estado se recalcula con el nuevo umbral |
 
-### S-03 — Registrar consumo
+### S-03 — Resultado de consumo confirmado (solo lectura)
 
 #### Propósito
 
-Confirmar el SKU y la cantidad a consumir, validar la existencia y el stock
-suficiente y aplicar la actualización condicional.
+Mostrar el resultado correlacionado de un consumo causado únicamente por el contrato provisional `order.confirmed` de Ventas/Postventa, sin ofrecer una operación administrativa de débito.
 
 #### Jerarquía de contenido
 
-1. Título Registrar consumo.
-2. SKU de la variante (solo lectura desde S-02 o editable en S-01).
-3. Cantidad a consumir.
-4. Resultado del consumo.
-
-#### Contenido
-
-- Nota: El consumo definitivo corresponde a una venta confirmada
-  (`order.confirmed`). No se aplican reservas en `order.created`.
-- Acciones Confirmar consumo y Cancelar.
-
-#### Formulario y validaciones
-
-| Campo | Tipo | Obligatorio | Validación | Mensaje propuesto |
-|---|---|---|---|---|
-| Variante/SKU | Texto | Sí | Debe existir un SKU vendible | El SKU no existe. |
-| Cantidad | Número | Sí | Entero mayor a 0 y menor o igual al stock | La cantidad debe ser mayor a 0. / No hay stock suficiente. |
-
-- Momento de validación: al confirmar.
-- Prevención de envío duplicado: deshabilitar mientras se procesa.
+1. Título Resultado de consumo.
+2. Referencia del pedido, si el contrato externo la entrega.
+3. SKU y cantidad **no editables**.
+4. Estado: confirmado y aplicado / rechazado por insuficiencia / en proceso / resultado no disponible.
+5. Saldo vigente y momento de actualización cuando estén disponibles.
 
 #### Navegación y foco
 
-- Foco inicial: campo de cantidad.
-- Escape o Cancelar cierra sin cambios.
+- Acciones únicamente Volver al SKU o Actualizar consulta; actualizar no reenvía consumo.
+- La UI nunca emite `order.confirmed` ni ofrece «Confirmar consumo».
 
 #### Anotaciones
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| A-13 | Actualización condicional | El descuento se aplica solo si el stock alcanza al momento de aplicar |
-| A-14 | Concurrencia | Mismo control optimista de las operaciones masivas |
-| A-15 | Sin stock negativo | Un consumo nunca supera el saldo disponible |
-| A-16 | Evento | Tras el consumo se emite `inventory.stock.changed` |
+| A-13 | Solo lectura | El resultado proviene de la operación contractual de Ventas |
+| A-14 | Concurrencia | Inventario valida y descuenta con actualización condicional |
+| A-15 | Rechazo | No hay débito si el saldo no alcanza |
+| A-16 | Evento de salida | `inventory.stock.changed` se emite tras el cambio efectivamente persistido |
 
 ### S-03-R — Consumo rechazado
 
 - Mensaje: No hay stock suficiente.
 - Comportamiento: se conserva el stock actual; no se descuenta nada.
-- Acción: Ajustar la cantidad o cerrar.
+- Acción: Volver al detalle o actualizar consulta; no reintentar manualmente un pedido.
 
 #### Anotaciones
 
@@ -486,14 +470,14 @@ suficiente y aplicar la actualización condicional.
 |---|---|---|---|---|
 | Listado cargando | Sí | Skeleton/indicador | Esperar | Reintento si falla |
 | Listado vacío | Sí | Mensaje y orientación | Volver a consultar | N/A |
-| Listado con datos | Sí | Tabla/tarjetas | Ver, registrar consumo, umbral | N/A |
+| Listado con datos | Sí | Tabla/tarjetas | Ver, resultado de consumo, umbral | N/A |
 | Sin resultados por filtros | Sí | Mensaje contextual | Limpiar filtros | N/A |
 | Detalle cargando | Sí | Skeleton/indicador | Esperar | Reintento si falla |
 | Detalle por SKU inexistente | Sí | Error de no encontrado | Volver | S-01 |
-| Formulario de consumo inicial | Sí | Campos listos | Completar/cancelar | N/A |
-| Validando consumo | Sí | Procesando | Esperar | Reintento |
+| Consulta de resultado inicial | Si hay contrato de consulta | Panel informativo, sin campos editables | Volver/actualizar consulta | N/A |
+| Consumo externo en procesamiento | Sí | Estado pendiente y referencia de pedido si disponible | Actualizar lectura | Esperar resultado de servicio |
 | Consumo aceptado | Sí | Confirmación + stock actualizado | Continuar | N/A |
-| Consumo rechazado | Sí | S-03-R | Corregir/cerrar | N/A |
+| Consumo rechazado | Sí | S-03-R | Consultar resultado/cerrar | Resolución corresponde a Ventas/Postventa |
 | Conflicto de concurrencia | Sí | S-03-C | Consultar/cerrar | N/A |
 | Umbral guardando | Sí | Acción deshabilitada | Esperar | Reintento |
 | Error de guardado | Sí | Mensaje sin perder datos | Reintentar | Repetir envío |
@@ -503,7 +487,7 @@ suficiente y aplicar la actualización condicional.
 ### Reglas para datos remotos
 
 - Consultar el stock vigente al cargar y tras cada cambio de stock.
-- No aplicar guardado optimista en el consumo: la actualización condicional
+- No aplicar resultado optimista de consumo en la interfaz: la actualización condicional
   decide al aplicar.
 - Distinguir ausencia de variantes de fallo de carga.
 
@@ -517,7 +501,7 @@ adaptación sin fijar breakpoints definitivos.
 | Navegación | Completa | Condensada | Patrón global móvil |
 | Listado | Tabla | Tabla reducida | Tarjetas |
 | Filtros | En línea | Apilados | Apilados |
-| Dialogo de consumo | Centrado | Margen lateral | Casi completo |
+| Panel informativo de consumo | Centrado | Margen lateral | Casi completo |
 | Detalle | Columnas | Apilado | Una columna |
 | Anotaciones | Panel lateral | Debajo | Lista/colapsable |
 | Contenido omitido | Ninguno | Ninguno | Ninguno; reorganizar |
@@ -548,13 +532,13 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - Densidad: media-alta (listado de inventario).
 - Sensación buscada: control confiable del stock y prevención de negativos.
 - Elemento dominante en S-01: listado y estados.
-- Elemento dominante en S-03: validación y decisión del consumo.
+- Elemento dominante en S-03: resultado del consumo externo, en solo lectura.
 
 ### Microcopy crítica
 
 | Contexto | Texto propuesto | Observación |
 |---|---|---|
-| Acción principal | Registrar consumo | Resultado concreto |
+| Acción informativa | Ver resultado de consumo | Resultado concreto |
 | Consulta | Stock disponible y estado actuales para el SKU | CA-03 |
 | Rechazo | No hay stock suficiente para consumir esa cantidad. | CA-07 |
 | Concurrencia | El stock ya no alcanza; otro consumo se aplicó primero. | CA-10 |
@@ -578,13 +562,13 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Tipo | Operación o referencia | Impacto visible |
 |---|---|---|
 | HTTP | Consultar disponibilidad por SKU; pendiente | S-01/S-02 |
-| HTTP | Registrar consumo (actualización condicional); pendiente | S-03 |
+| Lectura HTTP | Consultar resultado de consumo confirmado, si se expone; contrato pendiente | S-03 solo lectura |
 | Evento | `order.confirmed` (Ventas/Postventa) | Consumo definitivo |
 | Evento | `order.created` (Ventas/Postventa) | Sin efecto en stock |
 | Evento | `order.cancelled` (previa al despacho) | Compensación |
 | Evento | `order.returned` (devolución aceptada) | Reposición |
 | Evento | `inventory.stock.changed` (salida) | Dashboard y componentes |
-| Permiso | Consultar/registrar consumo/editar umbral; código pendiente | Acciones condicionadas |
+| Permiso | Consultar inventario / editar umbral (códigos pendientes) | No habilita débito manual |
 
 ## 15. Privacidad, seguridad y acciones sensibles
 
@@ -600,8 +584,8 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 - [ ] Permite consultar la disponibilidad de un SKU vendible.
 - [ ] Muestra stock, umbral y estado (Disponible, Stock bajo, Agotado).
-- [ ] Permite registrar un consumo validando existencia, cantidad y stock.
-- [ ] Rechaza consumos que dejarían el stock en negativo sin modificar el saldo.
+- [ ] Muestra el resultado de consumo originado por `order.confirmed` sin permitir débito manual.
+- [ ] Muestra rechazo de consumo externo por stock insuficiente sin modificar el saldo.
 - [ ] Representa consumos concurrentes con actualización condicional.
 - [ ] Representa el consumo por `order.confirmed` y la ausencia de reservas.
 - [ ] Representa compensación por `order.cancelled` y reposición por
@@ -620,14 +604,14 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | CA-01 | S-01/S-02 (SKU vendible como unidad) |
 | CA-02 | S-01/S-02 y A-04 |
 | CA-03 | S-01/S-02 y A-02/A-03 |
-| CA-04 | S-03 con SKU y cantidad |
-| CA-05 | S-03 (existencia, validez y stock) |
-| CA-06 | Flujo B, S-03 |
+| CA-04 | Contrato de consumo externo; S-03 solo lectura |
+| CA-05 | Resultado validado en servidor y representado en S-03 |
+| CA-06 | Evento externo y detalle S-03 de resultado |
 | CA-07 | ALT-03 y S-03-R |
 | CA-08 | ALT-05/ALT-06 y S-01 |
 | CA-09 | A-05 y sección de contratos |
-| CA-10 | ALT-04 y S-03-C |
-| CA-11 | Flujo B, A-13–A-16 y sección de contratos |
+| CA-10 | ALT-04 y S-03-C; procesamiento concurrente en servidor, vista de solo lectura |
+| CA-11 | Flujo B y S-03 solo lectura; contrato provisional de Ventas |
 | CA-12 | ALT-10/ALT-11 y sección de contratos |
 
 ## 17. Supuestos
@@ -638,22 +622,30 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | SUP-02 | La ruta será /inventario | No se entregó mapa de navegación | Cambiar rutas/entrada | Sí |
 | SUP-03 | Escritorio es el dispositivo principal | Gestión administrativa | Cambiar prioridad responsive | Sí |
 | SUP-04 | El umbral se edita desde inventario | CA-03 lo exige como configuración por SKU | Ubicar la edición en otro módulo | Sí |
-| SUP-05 | El registro manual de consumo es una operación administrativa del módulo | CA-04 lo describe como capacidad del sistema | Ajustar la pantalla S-03 a la vía real disparada por el evento | Sí |
+| SUP-05 | No hay consumo manual en UI: solo `order.confirmed` inicia el débito | Specs/HU definitivos | S-03 es resultado informativo | No |
 
 ## 18. Preguntas y decisiones pendientes
 
 | ID | Pregunta o decisión | Responsable | Bloquea wireframe | Estado |
 |---|---|---|---|---|
-| Q-01 | ¿Dónde se edita el `umbral_stock_bajo`: aquí o en Gestión de variantes? | Producto | No para wireframe base | Abierta |
-| Q-02 | ¿El consumo se registra manualmente por el responsable o solo por `order.confirmed`? | Producto | No para wireframe base | Abierta |
+| Q-01 | Resuelto: el `umbral_stock_bajo` se edita por SKU en Gestión de Inventario; Gestión de Variantes solo puede consultarlo. | Decisión de producto | No | Resuelta |
+| Q-02 | Resuelto: consumo definitivo solo ante `order.confirmed` externo, nunca desde botón administrativo. | Specs/HU definitivos | No | Resuelta |
 | Q-03 | ¿Existe búsqueda, filtros u orden adicionales en el listado? | Producto | No para flujo base | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |
+
+### Alineación definitiva de Inventario y contratos provisionales
+
+- Toda edición administrativa en este wireframe se limita al `umbral_stock_bajo` por SKU, conforme al alcance del flujo. **Gestión de Inventario es la propietaria de esta configuración; Gestión de Variantes no la edita.** **No existe formulario manual de débito comercial**; el débito se desencadena únicamente tras confirmación de Ventas `order.confirmed`, nombre y payload sujetos a homologación.
+- S-03 y sus variantes son paneles **de consulta de resultado**, no formularios que solicitan o repiten consumos. En fallos, informar el rechazo sin simular que Inventario puede resolver estados de pago/pedido. Confirmar con Ventas si y cómo se expondrán identificadores/resultados al gestor.
+- Un SKU nuevo comienza en saldo cero con versión inicial; el producto simple usa `sku_base`, producto padre con variantes no tiene stock. Los ajustes absolutos de Bulk requieren `stock_version`, y rechazan versiones obsoletas sin reintento ciego.
+- Despacho no descuenta stock; `order.cancelled` previo al despacho y `order.returned` de devolución aceptada pueden compensar si existió un consumo previo no compensado. No representar reposición ante anulación posterior a despacho sin devolución.
 
 ## 19. Registro de revisiones
 
 | Versión | Fecha | Autor | Cambio | Aprobado por |
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente |
+| 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
 
 ---
 
@@ -670,3 +662,5 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Confirmar el ID WF-015 contra INDEX.md.
 - [ ] Resolver Q-01 y Q-02 antes del diseño definitivo.
 - [ ] Confirmar rutas y permisos antes de implementar el frontend.
+
+---
