@@ -400,7 +400,7 @@
         <aside class="section summary" aria-live="polite"><h2>Resumen</h2>
           <div class="metric"><span class="metric-label">Tipo</span><span class="metric-value">${type||'—'}</span></div>
           <div class="metric"><span class="metric-label">Regla</span><span class="metric-value">${type==='NUMERO'?(state.unitValue||'Unidad pendiente'):type==='TEXTO'?'Máx. 100 caracteres':type==='LISTA'?'Máx. '+MAX_VALUES+' valores':'—'}</span></div>
-          <div class="metric"><span class="metric-label">Uso</span><span class="metric-value">Catálogo Core</span><span class="metric-detail">Formularios de producto por categoría (WF-010).</span></div>
+          <div class="metric"><span class="metric-label">Uso</span><span class="metric-value">Catálogo general</span><span class="metric-detail">Formularios de producto por categoría.</span></div>
         </aside>
       </div>
       <div class="form-actions"><button class="btn" type="button" data-action="cancel-form">Cancelar</button><button id="saveCharBtn" class="btn btn-primary" type="submit" ${(errors.length||state.saving)?'disabled':''}>${state.saving?'Guardando…':mode==='create'?'Crear característica':'Guardar cambios'}</button></div>
@@ -429,7 +429,7 @@
         </dl></section>
         ${c.type==='LISTA'?`<section class="section"><h2>Valores${activeValues(c)===MAX_VALUES?' (límite alcanzado)':''}</h2><div class="table-wrap"><table><thead><tr><th>Valor</th><th>Estado</th></tr></thead><tbody>${valuesRows}</tbody></table></div></section>`:''}
       </div><aside class="section summary"><h2>Sobre este módulo</h2>
-        <p class="muted small" style="margin:0">Marcas (WF-011) y Asociación Categoría-Característica (WF-010) se gestionan en flujos propios.</p>
+        <p class="muted small" style="margin:0">Marcas y asociaciones por categoría se gestionan en sus secciones correspondientes.</p>
       </aside></div>`;
   }
 
@@ -549,8 +549,8 @@
       else if(action==='back-list'){state.queryState='';setView('list');}
       else if(action==='cancel-form'){state.view='list';render();focusMain();}
       else if(action==='retry-list'){state.queryState='';state.listLoading=true;render();}
-      else if(action==='safe-back'){showToast('Regreso simulado al módulo de productos.');}
-      else if(action==='login'){state.queryState='';state.listLoading=true;render();showToast('Sesión recuperada para el prototipo.');}
+      else if(action==='safe-back'){showToast('Redirigiendo al catálogo de productos...');}
+      else if(action==='login'){state.queryState='';state.listLoading=true;render();showToast('Sesión restaurada correctamente.');}
     }));
 
     const form=document.getElementById('charForm');

@@ -369,9 +369,9 @@
   </header>
 
   <nav class="nav-tabs" aria-label="Secciones del flujo WF-013">
-    <button class="nav-tab active" id="tab-detail" type="button">Detalle de precio (S-01)</button>
-    <button class="nav-tab" id="tab-history" type="button">Consulta histórica as-of (S-04)</button>
-    <button class="nav-tab" id="tab-bulk" type="button">Carga masiva (S-05)</button>
+    <button class="nav-tab active" id="tab-detail" type="button">Detalle de precio</button>
+    <button class="nav-tab" id="tab-history" type="button">Consulta histórica (as-of)</button>
+    <button class="nav-tab" id="tab-bulk" type="button">Carga masiva</button>
   </nav>
 
   <main id="app" class="page" tabindex="-1"></main>
@@ -630,7 +630,7 @@
       <!-- Selector para demo rápida de otros SKUs -->
       <div class="card" style="padding:14px 20px; background:var(--neutral-10); border-style:dashed;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-          <span class="small"><strong>Demostración de estados:</strong> Selecciona un SKU para inspeccionar diferentes resoluciones de precio:</span>
+          <span class="small"><strong>Seleccionar producto / SKU a consultar:</strong></span>
           <select id="sku-quick-select" style="max-width:320px;" aria-label="Cambiar SKU activo">
             ${skus.map(s => `<option value="${s.sku}" ${s.sku === state.activeSku ? 'selected' : ''}>${s.sku} — ${s.product_name.slice(0, 30)}... (${s.origin})</option>`).join('')}
           </select>
@@ -1111,15 +1111,7 @@
               <input type="file" id="real-file-input" accept=".xlsx,.csv" style="display:none;">
             </div>
 
-            <div style="margin-top:20px; border-top:1px solid var(--neutral-30); padding-top:16px;">
-              <span class="small muted" style="display:block; margin-bottom:8px; font-weight:600;">O prueba directamente con un escenario simulado:</span>
-              <div class="button-row">
-                <button class="btn btn-quiet small" type="button" id="demo-file-ok">Archivo válido (142 filas)</button>
-                <button class="btn btn-quiet small" type="button" id="demo-file-partial">Con errores (14 err / 128 ok)</button>
-                <button class="btn btn-quiet small" type="button" id="demo-file-bad-header">Cabeceras erróneas (S-05-R)</button>
-                <button class="btn btn-quiet small" type="button" id="demo-file-oversize">>10 MB Excedido (S-05-R)</button>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -1470,10 +1462,7 @@
           </table>
         </div>
 
-        <div style="margin-top:16px; border-top:1px solid var(--neutral-30); padding-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <span class="small muted">Simulación de fallos de red en consulta:</span>
-          <button class="btn btn-quiet small" id="btn-trigger-poll-err" type="button">Simular error de consulta (S-08-E)</button>
-        </div>
+        
       </div>
     `;
 

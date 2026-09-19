@@ -270,7 +270,7 @@
     app.innerHTML=`<div class="page-header">
         <div><h1>Dashboard de inventario</h1><p>Monitoreo del estado del inventario a nivel de SKU vendible, alertas de stock y Top 5 de productos más vendidos.</p></div>
       </div>
-      ${lastEvent?`<div class="event-banner"><span class="live-dot" aria-hidden="true"></span><div><span class="mono">inventory.stock.changed</span> · ${escapeHtml(lastEvent)}</div></div>`:''}
+      ${lastEvent?`<div class="event-banner"><span class="live-dot" aria-hidden="true"></span><div><span class="badge">Actualización en tiempo real</span> · ${escapeHtml(lastEvent)}</div></div>`:''}
       ${filtersBlock()}
       ${emptyBlock}
       <div class="section">
@@ -380,8 +380,8 @@
       const action=e.currentTarget.dataset.action;
       if(action==='retry'){ state.queryState=''; state.loading=true; render(); }
       else if(action==='retry-top5'){ state.queryState=''; render(); }
-      else if(action==='safe-back'){ showToast('Regreso simulado al módulo de productos.'); }
-      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión recuperada para el prototipo.'); }
+      else if(action==='safe-back'){ showToast('Redirigiendo al catálogo de productos...'); }
+      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión restaurada correctamente.'); }
     }));
   }
 
@@ -394,7 +394,7 @@
     }else{
       lastEvent='Panel recalculado ante cambio de stock notificado por inventario.';
     }
-    showToast('inventory.stock.changed recibido · panel recalculado.');
+    showToast('Existencias sincronizadas · Indicadores actualizados.');
   }
 
   function render(){

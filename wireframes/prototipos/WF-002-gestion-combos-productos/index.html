@@ -611,8 +611,8 @@
       else if(action==='add-components')openSelector(e.currentTarget);
       else if(action==='retry-availability'){const c=comboById(id);if(c){c.availabilityStatus='ok';render();showToast('Disponibilidad actualizada.');}}
       else if(action==='retry-list'){state.queryState='';state.listLoading=true;render();}
-      else if(action==='safe-back'){showToast('Regreso simulado al módulo de productos.');}
-      else if(action==='login'){state.queryState='';state.listLoading=true;render();showToast('Sesión recuperada para el prototipo.');}
+      else if(action==='safe-back'){showToast('Redirigiendo al catálogo de productos...');}
+      else if(action==='login'){state.queryState='';state.listLoading=true;render();showToast('Sesión restaurada correctamente.');}
     }));
 
     const form=document.getElementById('comboForm');

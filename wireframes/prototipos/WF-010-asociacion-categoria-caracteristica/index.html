@@ -381,7 +381,7 @@
       return `<tr><td class="name-cell"><strong>${escapeHtml(c.name)}</strong><div class="small muted">${escapeHtml(c.type)}</div></td><td>${isDirect?'<span class="tag strong">Directa</span>':'<span class="tag">Heredada</span>'}</td><td><span class="tag">${condLabel}</span></td><td><span class="status ${isActive?'active':'off'}">${isActive?'Activa':'No activa'}</span></td><td><div class="row-actions">${actions}</div></td></tr>`;
     }
     const empty=all.length===0?`<div class="empty-state"><div class="placeholder" aria-hidden="true"></div><h2>Aún no hay características asociadas.</h2><p>Asocia una característica para esta categoría o verifica sus categorías padre.</p><button class="btn btn-primary" data-action="associate">Asociar característica</button></div>`:'';
-    const inactiveNotice=!cat.active?`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Categoría inactiva.</h3><p>Sus asociaciones no se consideran activas en Catálogo Core. Se mantienen registradas sin eliminarse.</p></div></div>`:'';
+    const inactiveNotice=!cat.active?`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Categoría inactiva.</h3><p>Las características asociadas no se aplicarán a nuevos productos mientras la categoría permanezca inactiva.</p></div></div>`:'';
     return `<div class="layout">
       <nav class="tree-nav" aria-label="Categorías"><h2>Categorías</h2>${treeItems}</nav>
       <div>
@@ -475,8 +475,8 @@
       else if(action==='condition')openCondition(id,e.currentTarget);
       else if(action==='dissociate')openDissociate(id,e.currentTarget);
       else if(action==='retry-load'){state.queryState='';state.loading=true;render();}
-      else if(action==='safe-back'){showToast('Regreso simulado al módulo de productos.');}
-      else if(action==='login'){state.queryState='';state.loading=true;render();showToast('Sesión recuperada para el prototipo.');}
+      else if(action==='safe-back'){showToast('Redirigiendo al catálogo de productos...');}
+      else if(action==='login'){state.queryState='';state.loading=true;render();showToast('Sesión restaurada correctamente.');}
     }));
   }
 

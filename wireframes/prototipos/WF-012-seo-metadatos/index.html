@@ -225,7 +225,7 @@
       return;
     }
     if(categories.length===0){
-      app.innerHTML=`<div class="page-header"><div><h1>SEO por categoría</h1><p>Consulta el estado de configuración SEO de cada categoría y entra a editarla.</p></div></div><div class="empty-state"><h2>Aún no hay categorías.</h2><p>La gestión de categorías ocurre en el flujo de categorías del catálogo (WF-008).</p></div>`;
+      app.innerHTML=`<div class="page-header"><div><h1>SEO por categoría</h1><p>Consulta el estado de configuración SEO de cada categoría y entra a editarla.</p></div></div><div class="empty-state"><h2>Aún no hay categorías.</h2><p>La gestión de categorías ocurre en el módulo de categorías.</p></div>`;
       bindPage(); return;
     }
     const rows=categories.map(c=>`
@@ -440,8 +440,8 @@
         ${histMarkup}
       </div>
       <section class="section">
-        <h2>Endpoint público de metadatos</h2>
-        <p class="muted">Simula la consulta por slug activo. Responde 200, 301 o 404.</p>
+        <h2>Comprobador de URL y metadatos públicos</h2>
+        <p class="muted">Verifica cómo responden los motores de búsqueda y clientes web al consultar el enlace público de la categoría.</p>
         <div class="endpoint-bar">
           <div class="mono" style="border:1px solid var(--neutral-30);background:var(--neutral-10);padding:11px 12px;color:var(--neutral-70)">GET /api/seo/</div>
           <input type="text" id="endpointSlug" value="${c.configured?escapeHtml(c.slug):''}" placeholder="escribe un slug">
@@ -501,8 +501,8 @@
       if(action==='list'){ state.view='list'; state.editingId=null; state.historyId=null; state.form=null; render(); }
       else if(action==='edit'){ state.view='edit'; state.editingId=id; state.form=null; render(); }
       else if(action==='history'){ state.view='history'; state.historyId=id; render(); }
-      else if(action==='safe-back'){ showToast('Regreso simulado al módulo de productos.'); }
-      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión recuperada para el prototipo.'); }
+      else if(action==='safe-back'){ showToast('Redirigiendo al catálogo de productos...'); }
+      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión restaurada correctamente.'); }
     }));
   }
 
