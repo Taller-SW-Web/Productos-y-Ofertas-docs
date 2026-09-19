@@ -50,16 +50,18 @@
       justify-content: space-between;
       gap: 16px;
     }
-    .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; font-weight: 700; }
     .brand-mark {
-      width: 32px;
-      height: 32px;
-      border: 1px solid var(--neutral-90);
+      width: 34px;
+      height: 34px;
+      border: 2px solid var(--neutral-90);
       display: grid;
       place-items: center;
+      flex: 0 0 auto;
       font-family: "Roboto Mono", monospace;
-      font-size: 11px;
+      font-size: 12px;
     }
+    .brand-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
     .crumb { color: var(--neutral-50); font-size: 14px; }
     .nav-tabs {
       display: flex;
@@ -361,16 +363,16 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <span class="brand-mark" aria-hidden="true">PO</span>
-        <span>Productos y ofertas</span>
+        <div class="brand-mark" aria-hidden="true">PO</div>
+        <span class="brand-text">PO Productos y ofertas</span>
       </div>
       <div class="crumb">Catálogo / Precios</div>
     </div>
   </header>
 
-  <nav class="nav-tabs" aria-label="Secciones del flujo WF-013">
+  <nav class="nav-tabs" aria-label="Secciones de precios">
     <button class="nav-tab active" id="tab-detail" type="button">Detalle de precio</button>
-    <button class="nav-tab" id="tab-history" type="button">Consulta histórica (as-of)</button>
+    <button class="nav-tab" id="tab-history" type="button">Consulta histórica</button>
     <button class="nav-tab" id="tab-bulk" type="button">Carga masiva</button>
   </nav>
 
