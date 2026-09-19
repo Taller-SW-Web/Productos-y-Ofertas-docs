@@ -7,8 +7,8 @@ características del catálogo descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_caracteristicas.md.
-2. Consulta ../../hu/hu_gestion_caracteristicas.md.
+1. Consulta ../../specs/SPEC-009-gestion-caracteristicas.md.
+2. Consulta ../../hu/HU-009-gestion-caracteristicas.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -84,14 +84,14 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_caracteristicas.md, secciones 1–6 | Tipos, límites y reglas de valores |
-| Historia de usuario | hu_gestion_caracteristicas.md, CA-01 a CA-06 | Criterios de característica y valores |
+| Spec | SPEC-009-gestion-caracteristicas.md, secciones 1–6 | Tipos, límites y reglas de valores |
+| Historia de usuario | HU-009-gestion-caracteristicas.md, CA-01 a CA-06 | Criterios de característica y valores |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
 > CA-05/CA-06 (Marcas) y CA-07/CA-08/CA-09 (Asociación) no se cubren aquí:
-> las propias fuentes remiten a `hu_gestion_marcas.md` y
-> `hu_asociacion_categoria_caracteristica.md` (WF-011 y WF-010).
+> las propias fuentes remiten a `HU-011-gestion-marcas.md` y
+> `HU-010-asociacion-categoria-caracteristica.md` (WF-011 y WF-010).
 
 ### Funcionalidades incluidas
 

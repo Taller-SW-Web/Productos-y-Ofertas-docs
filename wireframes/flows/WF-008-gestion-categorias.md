@@ -7,8 +7,8 @@ y subcategorías descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_categorias.md.
-2. Consulta ../../hu/hu_gestion_categorias.md.
+1. Consulta ../../specs/SPEC-008-gestion-categorias.md.
+2. Consulta ../../hu/HU-008-gestion-categorias.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -88,8 +88,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_categorias.md, secciones 1–9 | Alcance, requisitos y reglas de baja/reactivación |
-| Historia de usuario | hu_gestion_categorias.md, CA-01 a CA-09 | Criterios de aceptación y escenarios |
+| Spec | SPEC-008-gestion-categorias.md, secciones 1–9 | Alcance, requisitos y reglas de baja/reactivación |
+| Historia de usuario | HU-008-gestion-categorias.md, CA-01 a CA-09 | Criterios de aceptación y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 

@@ -7,8 +7,8 @@ las alertas de stock descritas en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_dashboard_alertas_stock.md.
-2. Consulta ../../hu/hu_dashboard_alertas_stock.md.
+1. Consulta ../../specs/SPEC-016-dashboard-alertas-stock.md.
+2. Consulta ../../hu/HU-016-dashboard-alertas-stock.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -95,8 +95,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_dashboard_alertas_stock.md, secciones 1–5 | Indicadores, alertas, visualización, Top 5 y actualización |
-| Historia de usuario | hu_dashboard_alertas_stock.md, CA-01 a CA-09 | Criterios y escenarios |
+| Spec | SPEC-016-dashboard-alertas-stock.md, secciones 1–5 | Indicadores, alertas, visualización, Top 5 y actualización |
+| Historia de usuario | HU-016-dashboard-alertas-stock.md, CA-01 a CA-09 | Criterios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 

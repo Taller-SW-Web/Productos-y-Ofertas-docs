@@ -7,8 +7,8 @@ descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_marcas.md.
-2. Consulta ../../hu/hu_gestion_marcas.md.
+1. Consulta ../../specs/SPEC-011-gestion-marcas.md.
+2. Consulta ../../hu/HU-011-gestion-marcas.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -87,8 +87,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_marcas.md, secciones 1–6 | Alcance, requisitos y NFR |
-| Historia de usuario | hu_gestion_marcas.md, CA-01 a CA-08 | Criterios y escenarios |
+| Spec | SPEC-011-gestion-marcas.md, secciones 1–6 | Alcance, requisitos y NFR |
+| Historia de usuario | HU-011-gestion-marcas.md, CA-01 a CA-08 | Criterios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 

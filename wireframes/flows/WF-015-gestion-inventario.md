@@ -7,8 +7,8 @@ descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_inventario.md.
-2. Consulta ../../hu/hu_gestion_inventario.md.
+1. Consulta ../../specs/SPEC-015-gestion-inventario.md.
+2. Consulta ../../hu/HU-015-gestion-inventario.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -93,8 +93,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | spec_gestion_inventario.md, secciones 1–5 | Unidad de inventario, consulta, consumo, validación e integración |
-| Historia de usuario | hu_gestion_inventario.md, CA-01 a CA-12 | Criterios y escenarios |
+| Spec | SPEC-015-gestion-inventario.md, secciones 1–5 | Unidad de inventario, consulta, consumo, validación e integración |
+| Historia de usuario | HU-015-gestion-inventario.md, CA-01 a CA-12 | Criterios y escenarios |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 

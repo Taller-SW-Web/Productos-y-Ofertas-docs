@@ -7,8 +7,8 @@ archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec\_carga\_exportacion\_masiva\_productos.md.
-2. Consulta ../../hu/hu\_carga\_exportacion\_masiva\_productos.md.
+1. Consulta ../../specs/SPEC-001-carga-exportacion-masiva-productos.md.
+2. Consulta ../../hu/HU-001-carga-exportacion-masiva-productos.md.
 3. Consulta ../DESIGN.md.
 4. Usa este documento como definición específica de interacción.
 
@@ -81,8 +81,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente              | Identificador o sección                                       | Aporte al flujo                                               |
 | ------------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
-| Spec                | spec\_carga\_exportacion\_masiva\_productos.md, secciones 1–6 | Alcance, límites, reglas, procesamiento asíncrono y seguridad |
-| Historia de usuario | hu\_carga\_exportacion\_masiva\_productos.md, CA-01 a CA-10   | Resultados observables y escenarios de aceptación             |
+| Spec                | SPEC-001-carga-exportacion-masiva-productos.md, secciones 1–6 | Alcance, límites, reglas, procesamiento asíncrono y seguridad |
+| Historia de usuario | HU-001-carga-exportacion-masiva-productos.md, CA-01 a CA-10   | Resultados observables y escenarios de aceptación             |
 | Diseño              | DESIGN.md                                                     | Lenguaje visual monocromático de baja fidelidad               |
 | Backlog             | No proporcionado                                              | No se asignan IDs de backlog                                  |
 

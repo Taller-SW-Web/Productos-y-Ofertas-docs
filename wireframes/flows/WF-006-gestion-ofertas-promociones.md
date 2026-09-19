@@ -7,8 +7,8 @@ evaluación de promociones descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta `../../specs/spec_gestion_ofertas_promociones.md`.
-2. Consulta `../../hu/hu_gestion_ofertas_promociones.md`.
+1. Consulta `../../specs/SPEC-006-gestion-ofertas-promociones.md`.
+2. Consulta `../../hu/HU-006-gestion-ofertas-promociones.md`.
 3. Consulta `../DESIGN.md`.
 4. Usa este documento para composición, navegación y estados del flujo.
 
@@ -54,7 +54,7 @@ Reglas de producción:
 
 | Fuente | Identificador o sección | Aporte |
 |---|---|---|
-| Spec | `spec_gestion_ofertas_promociones.md`, secciones 3–6 | Alcance, cálculo, selección y restricciones |
+| Spec | `SPEC-006-gestion-ofertas-promociones.md`, secciones 3–6 | Alcance, cálculo, selección y restricciones |
 | Historia de usuario | `HU-PROM-01`, CA-01 a CA-10 | Necesidad y escenarios verificables |
 | Diseño | `DESIGN.md` | Lenguaje visual y reglas responsivas |
 

@@ -7,8 +7,8 @@ vida de productos descrita en este archivo.
 
 Antes de diseñar:
 
-1. Consulta `../../specs/spec_gestion_productos_crud.md`.
-2. Consulta `../../hu/hu_gestion_productos_crud.md`.
+1. Consulta `../../specs/SPEC-003-gestion-productos-crud.md`.
+2. Consulta `../../hu/HU-003-gestion-productos-crud.md`.
 3. Consulta `../DESIGN.md`.
 4. Consulta `../INDEX.md` para conservar el ID `WF-003`, el nombre del flujo y
    las rutas reservadas de sus artefactos.
@@ -156,8 +156,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Qué aporta al flujo |
 |---|---|---|
-| [`spec_gestion_productos_crud.md`](../../specs/spec_gestion_productos_crud.md) | Requisitos 1–4; secciones 5 y 6 | Ciclo de vida, reglas de integridad, seguridad y fuera de alcance |
-| [`hu_gestion_productos_crud.md`](../../hu/hu_gestion_productos_crud.md) | MDPYO-6; CA-01–CA-12; escenarios 1–10 | Necesidad del gestor y resultados verificables |
+| [`SPEC-003-gestion-productos-crud.md`](../../specs/SPEC-003-gestion-productos-crud.md) | Requisitos 1–4; secciones 5 y 6 | Ciclo de vida, reglas de integridad, seguridad y fuera de alcance |
+| [`HU-003-gestion-productos-crud.md`](../../hu/HU-003-gestion-productos-crud.md) | MDPYO-6; CA-01–CA-12; escenarios 1–10 | Necesidad del gestor y resultados verificables |
 | [`DESIGN.md`](../DESIGN.md) | Layout, componentes, contraste y accesibilidad | Lenguaje visual neutral de baja fidelidad |
 | [`INDEX.md`](../INDEX.md) | Fila WF-003 | ID, nombre, responsable y rutas reservadas |
 

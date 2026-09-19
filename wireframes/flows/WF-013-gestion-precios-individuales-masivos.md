@@ -7,8 +7,8 @@ archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/spec_gestion_precios.md.
-2. Consulta ../../hu/hu_gestion_precios.md.
+1. Consulta ../../specs/SPEC-013-gestion-precios-individuales-masivos.md.
+2. Consulta ../../hu/HU-013-gestion-precios-individuales-masivos.md.
 3. Consulta ../DESIGN.md.
 4. Usa este documento como definición específica de interacción.
 
@@ -99,8 +99,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente              | Identificador o sección              | Aporte al flujo                                                          |
 | -------------------- | -------------------------------------- | --------------------------------------------------------------------------- |
-| Spec                | spec_gestion_precios.md, secciones 1–6 | Alcance, jerarquía de precios, validaciones, atomicidad, seguridad         |
-| Historia de usuario | hu_gestion_precios.md, CA-01 a CA-09   | Resultados observables, escenarios de aceptación y matriz de interacción  |
+| Spec                | SPEC-013-gestion-precios-individuales-masivos.md, secciones 1–6 | Alcance, jerarquía de precios, validaciones, atomicidad, seguridad         |
+| Historia de usuario | HU-013-gestion-precios-individuales-masivos.md, CA-01 a CA-09   | Resultados observables, escenarios de aceptación y matriz de interacción  |
 | Diseño              | DESIGN.md                              | Lenguaje visual monocromático de baja fidelidad                           |
 | Backlog             | No proporcionado                       | No se asignan IDs de backlog                                              |
 
@@ -1183,7 +1183,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 | Versión | Fecha      | Autor     | Cambio                                                              | Aprobado por |
 | ------- | ---------- | --------- | -------------------------------------------------------------------- | ------------ |
-| 0.1     | 2026-09-17 | Asistente | Borrador inicial basado en spec_gestion_precios.md, hu_gestion_precios.md, DESIGN.md y WF-001 como guía de formato | Pendiente    |
+| 0.1     | 2026-09-17 | Asistente | Borrador inicial basado en SPEC-013-gestion-precios-individuales-masivos.md, HU-013-gestion-precios-individuales-masivos.md, DESIGN.md y WF-001 como guía de formato | Pendiente    |
 
 ---
 
