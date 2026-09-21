@@ -907,8 +907,8 @@
       const item = getCurrentSku();
       const conflict = existingScheduledIntervals.find(sch => {
         if (sch.sku !== item.sku) return false;
-        const channelOverlap = sch.channel === 'GLOBAL' || channelVal === 'GLOBAL' || sch.channel === channelVal;
-        if (!channelOverlap) return false;
+        const sameChannel = sch.channel === channelVal;
+        if (!sameChannel) return false;
         const schStart = new Date(sch.from).getTime();
         const schEnd = sch.to ? new Date(sch.to).getTime() : Infinity;
         return (startTime < schEnd && endTime > schStart);
