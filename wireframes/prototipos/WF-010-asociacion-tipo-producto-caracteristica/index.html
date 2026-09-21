@@ -352,6 +352,7 @@
     function closeModal(){
       document.getElementById('modal-associate').classList.remove('open');
       document.getElementById('persist-error').style.display = 'none';
+      if(state.queryState === 's02-e') state.queryState = '';
     }
     document.getElementById('btn-close-modal').onclick = closeModal;
     document.getElementById('btn-cancel-modal').onclick = closeModal;
@@ -379,6 +380,7 @@
         mandatory: isMandatory
       });
 
+      state.queryState = '';
       closeModal();
       renderTypes();
       renderDetail();

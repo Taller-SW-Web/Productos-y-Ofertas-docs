@@ -615,6 +615,7 @@
 
       if (mode === 'default') {
         item.use_default_umbral = true;
+        state.queryState = '';
         closeUmbral();
         render();
         showToast(`Umbral restablecido a valor global (${DEFAULT_GLOBAL_UMBRAL}) para ${item.sku}.`);
@@ -627,6 +628,7 @@
         }
         item.use_default_umbral = false;
         item.umbral = v;
+        state.queryState = '';
         closeUmbral();
         render();
         showToast(`Umbral personalizado guardado (${v} unidades) para ${item.sku}.`);
@@ -645,6 +647,9 @@
     umbralOverlay.classList.remove('open');
     umbralOverlay.setAttribute('aria-hidden', 'true');
     umbralTarget = null;
+    if (state.queryState === 's02-e') {
+      state.queryState = '';
+    }
   }
 
   function bindPage(){
