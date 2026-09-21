@@ -1044,8 +1044,8 @@
         if (kind === 'template') {
           const fmt = format.toLowerCase();
           const filename = `plantilla_carga_masiva_v2.${fmt}`;
-          const headers = 'catalog_version,price_version,stock_version,batch_row_id,operation_type,sku_base,product_name,brand_id,category_id,product_type_id,short_description,long_description,has_variants,variant_id,commercial_sku,attr_size,attr_color,price_regular,price_offer,currency,channel_scope,location_id,initial_stock,min_stock_threshold,image_url';
-          const sample = '2,1,1,1,CREACION,ZAP-RUN-01,Zapatilla Running Pro,BRD-001,CAT-005,PT-002,Zapatilla running avanzada,Descripción detallada,true,var_8f9a1b2c,ZAP-RUN-01-42-BLK,42,Negro,299.90,249.90,PEN,ECOMMERCE,LOC-DEFAULT,25,5,https://img.tienda.com/p1.jpg';
+          const headers = 'operacion,product_id,variant_id,sku_base,sku,nombre,descripcion,categoria_id,tipo_producto_id,marca_id,tiene_variantes,caracteristicas_identificadoras,atributos_identificadores,atributos_no_identificadores,imagen_url,precio_regular,precio_oferta,accion_precio_oferta,location_id,stock,catalog_version,price_version,stock_version,estado,motivo_cambio';
+          const sample = 'CREAR_VARIANTE,prod_991,,NK-AM-PRO,NK-AM-PRO-42-BLK,Nike Air Max Pro,Zapatilla deportiva para running de alto impacto,CAT-001,PT-001,BRD-002,true,Talla;Color,Talla=42;Color=Negro,Material=Malla transpirable,https://img.tienda.com/nike_air_max_42.jpg,299.90,249.90,ESTABLECER,LOC-LIMA-CENTRAL,25,1,1,0,ACTIVO,Carga masiva inicial de temporada';
           const content = fmt === 'csv' ? `${headers}\n${sample}\n` : `Plantilla oficial v2 (25 columnas con hojas protegidas y listas auxiliares):\n${headers}\n${sample}`;
           const blob = new Blob([content], { type: fmt === 'csv' ? 'text/csv;charset=utf-8' : 'application/octet-stream' });
           const url = URL.createObjectURL(blob);
@@ -1056,7 +1056,7 @@
           a.click();
           a.remove();
           URL.revokeObjectURL(url);
-          toast(`Descargando plantilla v2 (${fmt.toUpperCase()}) con 25 columnas y validaciones.`);
+          toast(`Descargando plantilla v2 (${fmt.toUpperCase()}) con 25 columnas oficiales.`);
           announce('La descarga de la plantilla v2 fue iniciada.');
           return;
         }
@@ -1083,10 +1083,10 @@
         if (!state.exportJob) return;
         const fmt = state.exportJob.format || 'xlsx';
         const filename = `catalogo_exportado_${state.exportJob.id}.${fmt}`;
-        const headers = 'catalog_version,price_version,stock_version,batch_row_id,operation_type,sku_base,product_name,brand_id,category_id,product_type_id,short_description,long_description,has_variants,variant_id,commercial_sku,attr_size,attr_color,price_regular,price_offer,currency,channel_scope,location_id,initial_stock,min_stock_threshold,image_url';
+        const headers = 'operacion,product_id,variant_id,sku_base,sku,nombre,descripcion,categoria_id,tipo_producto_id,marca_id,tiene_variantes,caracteristicas_identificadoras,atributos_identificadores,atributos_no_identificadores,imagen_url,precio_regular,precio_oferta,accion_precio_oferta,location_id,stock,catalog_version,price_version,stock_version,estado,motivo_cambio';
         const rows = [
-          '2,1,1,1,CREACION,NK-AM-BLK,Nike Air Max,BRD-002,CAT-001,PT-001,Zapatilla deportiva casual,Excelente amortiguación,true,var_001,NK-AM-BLK-40,40,Negro,299.90,249.90,PEN,ECOMMERCE,LOC-DEFAULT,10,2,https://img.tienda.com/nike.jpg',
-          '2,1,1,2,CREACION,AD-UB-WHT,Adidas Ultraboost,BRD-003,CAT-001,PT-001,Zapatilla de alto rendimiento,Boost completo,true,var_002,AD-UB-WHT-42,42,Blanco,450.00,399.00,PEN,ECOMMERCE,LOC-DEFAULT,15,3,https://img.tienda.com/adidas.jpg'
+          'ACTUALIZAR,prod_001,var_001,NK-AM-BLK,NK-AM-BLK-40,Nike Air Max,Zapatilla deportiva casual con amortiguación,CAT-001,PT-001,BRD-002,true,Talla;Color,Talla=40;Color=Negro,Material=Cuero sintético,https://img.tienda.com/nike_40.jpg,299.90,249.90,CONSERVAR,LOC-LIMA-CENTRAL,10,2,1,1,ACTIVO,Exportación de catálogo activo',
+          'ACTUALIZAR,prod_002,var_002,AD-UB-WHT,AD-UB-WHT-42,Adidas Ultraboost,Zapatilla de alto rendimiento con Boost completo,CAT-001,PT-001,BRD-003,true,Talla;Color,Talla=42;Color=Blanco,Material=Primeknit,https://img.tienda.com/adidas_42.jpg,450.00,399.00,CONSERVAR,LOC-LIMA-CENTRAL,15,2,1,1,ACTIVO,Exportación de catálogo activo'
         ];
         const content = fmt === 'csv'
           ? `${headers}\n${rows.join('\n')}\n`

@@ -472,6 +472,13 @@
     { sku: 'SKU-BAL-005', from: '2026-01-01T00:00', to: '2099-12-31T23:59', regular: 120.00, currency: 'PEN', vigencia_id: 'VIG-2026-01-BAL' }
   ];
 
+  // Programaciones futuras existentes para validación de solapamiento
+  const existingScheduledIntervals = [
+    { sku: 'SKU-RUN-001-42', channel: 'GLOBAL', from: '2026-10-01T00:00', to: '2026-10-31T23:59', regular: 330.00, oferta: null, motivo: 'Campaña Primavera Octubre' },
+    { sku: 'SKU-RUN-001-42', channel: 'ECOMMERCE', from: '2026-11-15T00:00', to: '2026-11-30T23:59', regular: 320.00, oferta: 280.00, motivo: 'Black Friday Online' },
+    { sku: 'SKU-BAL-005', channel: 'GLOBAL', from: '2026-10-01T00:00', to: '2026-10-15T23:59', regular: 99.90, oferta: null, motivo: 'Liquidación especial de balones' }
+  ];
+
   // Estado general de la UI
   const state = {
     view: 'detail', // 'detail', 'edit', 'history', 'bulk', 'bulk_prevalidated', 'bulk_rejected', 'bulk_processing', 'bulk_result'
@@ -722,6 +729,20 @@
       </div>
 
       <div class="card" style="max-width:760px;">
+        ${err.overlap ? `
+          <div class="notice error" role="alert" style="margin-bottom:20px; border-width:2px;">
+            <span class="notice-icon" aria-hidden="true">!</span>
+            <div>
+              <h3 style="margin:0 0 6px;">Conflicto de vigencia: Intervalos de precio superpuestos</h3>
+              <p style="margin:0 0 8px;">No pueden existir intervalos de vigencia superpuestos para el mismo SKU, canal y tipo de precio.</p>
+              <div style="background:var(--neutral-10); padding:10px 14px; border:1px solid var(--neutral-30); font-size:13px;" class="mono">
+                <div><strong>Programación existente:</strong> ${escapeHtml(err.overlap.existingFrom)} — ${escapeHtml(err.overlap.existingTo)} (${escapeHtml(err.overlap.existingChannel)} · S/ ${err.overlap.existingPrice.toFixed(2)})</div>
+                <div style="margin-top:4px;"><strong>Nuevo intervalo solicitado:</strong> ${escapeHtml(err.overlap.newFrom)} — ${escapeHtml(err.overlap.newTo)} (${escapeHtml(err.overlap.newChannel)})</div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
         <form id="price-edit-form" novalidate>
           <div class="grid-2">
             <div class="field">
@@ -854,6 +875,7 @@
     }
 
     let startTime = Date.now();
+    let startIso = new Date().toISOString().slice(0, 16);
     if (vigMode === 'scheduled') {
       if (!dateVal) {
         errors.validFrom = 'Debes especificar la fecha y hora de vigencia.';
@@ -863,14 +885,45 @@
           errors.validFrom = 'La fecha de vigencia debe ser posterior a la fecha y hora actuales.';
         } else {
           startTime = selectedTime;
+          startIso = dateVal;
         }
       }
     }
 
+    let endTime = Infinity;
+    let endIso = null;
     if (validUntilVal) {
       const untilTime = new Date(validUntilVal).getTime();
       if (isNaN(untilTime) || untilTime <= startTime) {
         errors.validUntil = 'La fecha de fin (valid_until) debe ser estrictamente posterior al inicio de vigencia.';
+      } else {
+        endTime = untilTime;
+        endIso = validUntilVal;
+      }
+    }
+
+    // Validación de no solapamiento de intervalos para el mismo SKU y canal
+    if (!errors.validFrom && !errors.validUntil) {
+      const item = getCurrentSku();
+      const conflict = existingScheduledIntervals.find(sch => {
+        if (sch.sku !== item.sku) return false;
+        const channelOverlap = sch.channel === 'GLOBAL' || channelVal === 'GLOBAL' || sch.channel === channelVal;
+        if (!channelOverlap) return false;
+        const schStart = new Date(sch.from).getTime();
+        const schEnd = sch.to ? new Date(sch.to).getTime() : Infinity;
+        return (startTime < schEnd && endTime > schStart);
+      });
+
+      if (conflict) {
+        errors.overlap = {
+          existingFrom: conflict.from.replace('T', ' '),
+          existingTo: conflict.to ? conflict.to.replace('T', ' ') : 'Indefinido',
+          existingChannel: conflict.channel,
+          existingPrice: conflict.regular,
+          newFrom: startIso.replace('T', ' '),
+          newTo: endIso ? endIso.replace('T', ' ') : 'Indefinido',
+          newChannel: channelVal
+        };
       }
     }
 

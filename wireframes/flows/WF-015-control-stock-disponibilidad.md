@@ -1,6 +1,6 @@
 # WF-015 — Control de stock y disponibilidad
 
-> **Fuente normativa de esta revisión:** `SPEC-015-gestion-inventario.md` y `HU-015-gestion-inventario.md`. Los contratos de reservas y consumos con Ventas y Postventa son asíncronos y están desacoplados mediante eventos. Este documento define la consulta operativa de stock por ubicación, la determinación determinista de estados de disponibilidad, la administración de umbrales de stock bajo (global y override por SKU) y la simulación de recepción de eventos de inventario. Las anotaciones, supuestos y referencias técnicas no se muestran como elementos de la interfaz simulada.
+> **Fuente normativa de esta revisión:** `SPEC-015-control-stock-disponibilidad.md` y `HU-015-control-stock-disponibilidad.md`. Los contratos de reservas y consumos con Ventas y Postventa son asíncronos y están desacoplados mediante eventos. Este documento define la consulta operativa de stock por ubicación, la determinación determinista de estados de disponibilidad, la administración de umbrales de stock bajo (global y override por SKU) y la simulación de recepción de eventos de inventario. Las anotaciones, supuestos y referencias técnicas no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -9,8 +9,8 @@ disponibilidad descrito en este archivo.
 
 Antes de diseñar:
 
-1. Consulta ../../specs/SPEC-015-gestion-inventario.md.
-2. Consulta ../../hu/HU-015-gestion-inventario.md.
+1. Consulta ../../specs/SPEC-015-control-stock-disponibilidad.md.
+2. Consulta ../../hu/HU-015-control-stock-disponibilidad.md.
 3. Consulta ../../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
@@ -79,8 +79,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | SPEC-015-gestion-inventario.md, secciones 1–6 | Modelo `(sku, location_id)`, saldos `on_hand`/`reserved`/`available`, umbrales y consumo |
-| Historia de usuario | HU-015-gestion-inventario.md, CA-01 a CA-10 | Criterios de aceptación y escenarios Gherkin |
+| Spec | SPEC-015-control-stock-disponibilidad.md, secciones 1–6 | Modelo `(sku, location_id)`, saldos `on_hand`/`reserved`/`available`, umbrales y consumo |
+| Historia de usuario | HU-015-control-stock-disponibilidad.md, CA-01 a CA-10 | Criterios de aceptación y escenarios Gherkin |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 

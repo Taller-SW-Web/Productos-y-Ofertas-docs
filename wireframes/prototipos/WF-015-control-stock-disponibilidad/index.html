@@ -110,9 +110,7 @@
     .sk-line{height:14px;background:var(--neutral-10);margin:8px 0}
     .sk-line.w30{width:30%}.sk-line.w50{width:50%}.sk-line.w80{width:80%}
 
-    .event-feed{border-top:1px solid var(--neutral-30);margin-top:24px;padding-top:16px}
-    .event-feed h3{font-size:13px;font-family:"Roboto Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--neutral-50);margin-bottom:10px}
-    .event-item{font-family:"Roboto Mono",monospace;font-size:12px;padding:8px 0;border-bottom:1px dashed var(--neutral-30);color:var(--neutral-70)}
+    .sync-footer{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--neutral-30);font-size:13px;color:var(--neutral-50)}
 
     @media (max-width:900px){
       .desktop-table{display:none}
@@ -197,10 +195,7 @@
     queryState: new URLSearchParams(location.search).get('state') || ''
   };
 
-  const events = [
-    'inventory.stock.changed · AD-PR-42-RD · LOC-LIMA-CENTRAL · on_hand: 20 → 18, available: 17 → 15 · v114',
-    'inventory.stock.changed · NK-AM-BLK-41 · LOC-LIMA-CENTRAL · on_hand: 5 → 4, available: 4 → 3 · v108'
-  ];
+  let lastSyncTime = '14:25:10';
 
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
@@ -237,14 +232,8 @@
     return `<span class="status ${st}">${labelOf(st)}</span>`;
   }
 
-  function pushEvent(text){
-    events.unshift(text);
-    if (events.length > 5) events.length = 5;
-  }
-
-  function eventFeed(){
-    if (!events.length) return '';
-    return `<div class="event-feed"><h3>Eventos asíncronos recibidos (inventory.stock.changed)</h3>${events.map(e => `<div class="event-item">${escapeHtml(e)}</div>`).join('')}</div>`;
+  function syncFooter(){
+    return `<div class="sync-footer"><span class="small">Saldos de stock y disponibilidad actualizados.</span><span class="mono small">Última sincronización: ${lastSyncTime}</span></div>`;
   }
 
   function renderGlobalState(){
@@ -451,7 +440,7 @@
         <div class="mobile-list">${cards}</div>
       `}
 
-      ${eventFeed()}
+      ${syncFooter()}
     `;
 
     bindControls();
