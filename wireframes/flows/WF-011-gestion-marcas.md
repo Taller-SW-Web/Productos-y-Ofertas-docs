@@ -228,7 +228,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 | ID | Condición | Comportamiento esperado | Retorno |
 |---|---|---|---|
 | ALT-01 | Nombre vacío | Error y guardado bloqueado | S-02/S-03 |
-| ALT-02 | Nombre duplicado (case-insensitive) | Error: ya existe una marca activa con ese nombre | S-02/S-03 |
+| ALT-02 | Nombre duplicado (case-insensitive) | Error: ya existe una marca registrada con ese nombre | S-02/S-03 |
 | ALT-03 | Logo mayor a 5 MB | Rechazo con motivo del límite | S-02/S-03 |
 | ALT-04 | Marca inexistente al editar | Error de no encontrado | S-01 |
 | ALT-05 | Desactivar con productos activos | Bloqueo explicando el requisito | S-04-B |
@@ -370,7 +370,7 @@ Capturar nombre, descripción, logo y país de origen.
 
 | Campo | Tipo | Obligatorio | Validación | Mensaje propuesto |
 |---|---|---|---|---|
-| Nombre | Texto | Sí | Requerido y único (case-insensitive) | Ingresa un nombre para la marca. / Ya existe una marca activa con ese nombre. |
+| Nombre | Texto | Sí | Requerido y único (case-insensitive, activas e inactivas) | Ingresa un nombre para la marca. / Ya existe una marca registrada con ese nombre. |
 | Descripción | Texto multilínea | No | Sin regla definida | N/A |
 | Logo | Archivo | No | Máximo 5 MB | El logo no debe superar los 5 MB. |
 | País de origen | Texto o lista | No | Formato pendiente; Q-03 | N/A |
@@ -581,7 +581,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Contexto | Texto propuesto | Observación |
 |---|---|---|
 | Acción principal | Crear marca | Resultado concreto |
-| Unicidad | Ya existe una marca activa con ese nombre. | Case-insensitive |
+| Unicidad | Ya existe una marca registrada con ese nombre. | Case-insensitive (incluye marcas inactivas) |
 | Logo | El logo no debe superar los 5 MB. | CA-08 |
 | Baja | La marca dejará de mostrarse en los filtros de los canales. | Efecto comercial |
 | Bloqueo | No se puede desactivar porque la marca tiene productos activos. | Motivo accionable |

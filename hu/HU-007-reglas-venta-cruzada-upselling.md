@@ -18,9 +18,9 @@ Reglas de venta cruzada: Cross-sell y Upsell — Valor agregado.
 **para** que los canales de venta presenten recomendaciones pertinentes durante la compra.
 
 **Cross-sell:** complemento del producto consultado.
-**Upsell:** alternativa que el gestor comercial clasifica explícitamente como superior y justifica mediante una mejora concreta.
+**Upsell:** alternativa que el gestor comercial clasifica explícitamente como superior seleccionando obligatoriamente un `criterio_superioridad` controlado (por ejemplo, mejor material, mayor rendimiento o funcionalidad adicional) y, opcionalmente, una breve `justificacion_comercial`.
 
-La clasificación es una decisión comercial manual: por cada alternativa Upsell, el gestor registra una justificación que mencione una característica o prestación identificable en la ficha del producto recomendado (por ejemplo, mejor amortiguación, material más resistente o funcionalidad adicional). Cuando el origen es una categoría, la mejora se justifica respecto del tipo de productos de esa categoría. El sistema comprueba que exista una justificación, pero no comprueba automáticamente su veracidad ni infiere superioridad por un precio mayor.
+La clasificación es una decisión comercial manual: por cada alternativa Upsell, el gestor selecciona obligatoriamente un `criterio_superioridad` del catálogo controlado y puede añadir opcionalmente una justificación comercial breve para uso administrativo. Cuando el origen es una categoría, el criterio se define respecto del tipo de productos de esa categoría. El sistema comprueba que se haya seleccionado un criterio de superioridad válido, pero no comprueba automáticamente su veracidad ni infiere superioridad por un precio mayor.
 
 ## Modelo de ordenamiento consolidado
 
@@ -42,14 +42,14 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 | CA-02 | Cada regla debe incluir nombre, tipo —Cross-sell o Upsell—, origen que la activa, prioridad, fecha/hora de inicio y fin, estado y al menos un producto recomendado. |
 | CA-03 | El origen puede ser un producto específico o una categoría. |
 | CA-04 | Los productos configurados deben existir y estar activos. No se permite recomendar el mismo producto de origen ni repetir un producto dentro de la misma regla. |
-| CA-05 | En una regla UPSELL, el gestor clasifica el candidato mediante un `criterio_superioridad` controlado (por ejemplo, material, capacidad, desempeño o prestación) y puede añadir una `criterio_superioridad` descriptiva opcional. El precio mayor por sí solo no convierte al producto en superior. Esta funcionalidad administra **candidatos de merchandising**, no infiere intención ni personaliza recomendaciones por lenguaje natural. |
+| CA-05 | En una regla UPSELL, el gestor clasifica obligatoriamente el candidato mediante un `criterio_superioridad` controlado (por ejemplo, material, capacidad, desempeño o prestación) y puede añadir una `justificacion_comercial` descriptiva opcional. El precio mayor por sí solo no convierte al producto en superior. Esta funcionalidad administra **candidatos de merchandising**, no infiere intención ni personaliza recomendaciones por lenguaje natural. |
 | CA-06 | El gestor puede establecer el orden de los productos recomendados dentro de cada regla. |
 | CA-07 | Una regla solo participa si está activa, vigente y su condición de producto o categoría coincide con la consulta. |
 | CA-08 | La respuesta excluye productos inactivos o sin stock y elimina duplicados entre reglas. |
 | CA-09 | La respuesta identifica producto recomendado, tipo de recomendación, prioridad de regla, orden de presentación, precio vigente y disponibilidad. |
 | CA-10 | Las recomendaciones se ordenan por prioridad de regla y luego por orden de producto. |
 | CA-11 | Si no existen recomendaciones válidas, se devuelve una lista vacía. Las recomendaciones no agregan ni reemplazan productos automáticamente. |
-| CA-12 | En UPSELL, cada candidato requiere `criterio_superioridad`; la `criterio_superioridad` es opcional. La API entrega candidatos comerciales y metadatos de regla, mientras que la interpretación conversacional, personalización o recomendación por necesidades expresadas corresponde al módulo Chatbot. |
+| CA-12 | En UPSELL, cada candidato requiere obligatoriamente `criterio_superioridad`; la `justificacion_comercial` es opcional. La API entrega candidatos comerciales y metadatos de regla, mientras que la interpretación conversacional, personalización o recomendación por necesidades expresadas corresponde al módulo Chatbot. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -62,14 +62,14 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 ### Escenario 2: Configurar una relación Upsell
 
 * **DADO** que existen unas zapatillas básicas y otras con una tecnología de amortiguación identificable en su ficha,
-* **CUANDO** el gestor registra una regla UPSELL vigente, clasifica las segundas como alternativa superior y guarda para ellas la justificación «incorporan tecnología de amortiguación adicional»,
+* **CUANDO** el gestor registra una regla UPSELL vigente, clasifica las segundas como alternativa superior con el criterio de superioridad `MAYOR_RENDIMIENTO` y opcionalmente guarda para ellas la justificación «incorporan tecnología de amortiguación adicional»,
 * **ENTONCES** el sistema guarda la relación y su justificación para revisión administrativa, sin reemplazar automáticamente el producto elegido por el cliente.
 
-### Escenario 2A: Rechazar un Upsell sin justificación concreta
+### Escenario 2A: Rechazar un Upsell sin criterio de superioridad
 
 * **DADO** que el gestor configura una regla UPSELL con un producto recomendado,
-* **CUANDO** intenta guardarla sin `criterio_superioridad`,
-* **ENTONCES** el sistema rechaza la operación, indica qué producto carece de justificación y conserva los datos para corregirlos.
+* **CUANDO** intenta guardarla sin seleccionar un `criterio_superioridad`,
+* **ENTONCES** el sistema rechaza la operación, indica qué producto carece de criterio de superioridad y conserva los datos para corregirlos.
 
 ### Escenario 2B: Clasificar un Upsell cuyo origen es una categoría
 

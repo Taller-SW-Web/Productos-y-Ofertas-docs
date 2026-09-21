@@ -25,7 +25,7 @@ Reglas de producción:
 - Exige prioridad de regla y orden por producto recomendado.
 - Prioridad 1 es mayor que prioridad 2; ordenar ascendentemente.
 - No permitas recomendar el producto origen ni duplicar un producto en la regla.
-- Para cada recomendado Upsell exige una justificación comercial concreta.
+- Para cada recomendado Upsell exige seleccionar un `criterio_superioridad` del catálogo controlado; la `justificacion_comercial` es opcional para uso administrativo interno.
 - No infieras superioridad por precio ni intentes verificar automáticamente la
   justificación.
 - Las recomendaciones no agregan ni reemplazan productos automáticamente.
@@ -68,7 +68,7 @@ Reglas de producción:
 - Crear y editar reglas Cross-sell o Upsell.
 - Elegir origen producto/categoría y productos recomendados.
 - Definir prioridad, orden, vigencia y estado.
-- Registrar justificación por producto Upsell.
+- Seleccionar `criterio_superioridad` obligatorio y registrar `justificacion_comercial` opcional por producto Upsell.
 - Activar/desactivar reglas; las recomendaciones resultantes se consumen mediante API desde los canales.
 
 ### Fuera de alcance
@@ -144,7 +144,7 @@ Confirmación de guardado y retorno al listado actualizado.
 | `ALT-01` | Sin recomendados | Bloquear y solicitar al menos uno | Formulario |
 | `ALT-02` | Origen incluido como recomendado | Identificar conflicto | Formulario |
 | `ALT-03` | Recomendado duplicado | Impedir segunda selección | Selector |
-| `ALT-04` | Upsell sin justificación | Señalar el producto afectado | Formulario |
+| `ALT-04` | Upsell sin criterio de superioridad | Señalar el producto afectado y solicitar criterio | Formulario |
 | `ALT-05` | Prioridad u orden inválido | Solicitar entero positivo | Formulario |
 | `ALT-06` | Fin no posterior al inicio | Asociar error al fin | Formulario |
 
@@ -155,7 +155,7 @@ Confirmación de guardado y retorno al listado actualizado.
 | `S-01` | Listado de reglas | Consultar y entrar a acciones | Vista principal | Sí |
 | `S-01-E` | Sin resultados | Recuperar filtros | Misma vista | Sí |
 | `S-02` | Crear/editar regla | Configurar relación y recomendados | Formulario | Sí |
-| `S-02-U` | Upsell | Exigir justificaciones por producto | Variante de S-02 | Sí |
+| `S-02-U` | Upsell | Criterio de superioridad obligatorio y justificación opcional | Variante de S-02 | Sí |
 | `S-02-V` | Validación fallida | Corregir sin perder datos | Misma vista | Sí |
 | `S-03` | Seleccionar producto | Añadir un recomendado activo | Diálogo | Sí |
 | `S-04` | Detalle | Revisar configuración y orden | Vista de detalle | Sí |
@@ -192,12 +192,13 @@ Confirmación de guardado y retorno al listado actualizado.
 | Inicio/fin | Fecha/hora | Sí | Inicio anterior al fin | Mensajes específicos |
 | Recomendados | Lista | Sí | Al menos uno, activos, sin origen ni duplicados | Error contextual |
 | Orden | Entero | Sí | Mayor o igual que 1 | Error por producto |
-| Justificación | Texto | Solo Upsell | No vacía y describe mejora concreta | `Explica la mejora concreta de [producto]` |
+| Criterio de superioridad | Selector | Solo Upsell (Sí) | Catálogo controlado | `Selecciona un criterio de superioridad para [producto]` |
+| Justificación comercial | Texto | Solo Upsell (No) | Opcional, uso administrativo | N/A |
 
-- Al cambiar a Upsell aparecen justificaciones por producto.
+- Al cambiar a Upsell aparecen los campos de criterio de superioridad (obligatorio) y justificación (opcional) por producto.
 - No borrar datos al detectar un error.
 - Bloquear envíos duplicados.
-- La interfaz exige texto, pero no verifica automáticamente su veracidad.
+- La interfaz exige seleccionar criterio de superioridad, sin inferir superioridad por precio.
 
 | ID | Elemento | Anotación |
 |---|---|---|
@@ -205,7 +206,7 @@ Confirmación de guardado y retorno al listado actualizado.
 | `A-06` | Origen | Producto y categoría son mutuamente excluyentes |
 | `A-07` | Prioridad | Ordena reglas, no productos internos |
 | `A-08` | Orden | Ordena productos dentro de una regla |
-| `A-09` | Justificación | Una por recomendado Upsell; precio mayor no basta |
+| `A-09` | Criterio / Justificación | Criterio de superioridad obligatorio por recomendado Upsell; justificación comercial opcional |
 | `A-10` | Guardado | Conserva datos e identifica cada producto incompleto |
 
 ### `S-03` — Seleccionar producto recomendado
@@ -224,14 +225,14 @@ Confirmación de guardado y retorno al listado actualizado.
 ### `S-04` — Detalle de la regla
 
 - Mostrar tipo, origen, prioridad, estado, vigencia y recomendados ordenados.
-- Para Upsell, mostrar justificación por recomendado en consulta administrativa.
+- Para Upsell, mostrar criterio de superioridad y justificación comercial (si existe) por recomendado en consulta administrativa.
 - Mostrar precio vigente y disponibilidad como datos consultados.
 - Acciones `Editar`, `Activar/Desactivar` y `Volver`.
 
 | ID | Elemento | Anotación |
 |---|---|---|
 | `A-13` | Orden | Representar el orden interno explícitamente |
-| `A-14` | Justificación | Visible en detalle administrativo, no obligatoria para canales |
+| `A-14` | Superioridad | Criterio y justificación visibles en detalle administrativo, no obligatorios para canales |
 | `A-15` | Disponibilidad | Solo lectura; una falla no equivale a stock cero |
 | `A-16` | Nota | Recomendaciones no modifican la compra automáticamente |
 
@@ -338,7 +339,7 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 - [x] Exige nombre, tipo, origen, prioridad, fechas, estado y recomendados.
 - [x] Admite origen producto o categoría.
 - [x] Bloquea origen como recomendado y duplicados internos.
-- [x] Exige justificación por cada recomendado Upsell.
+- [x] Exige criterio de superioridad por cada recomendado Upsell (justificación comercial opcional).
 - [x] No infiere superioridad por precio ni verifica su veracidad.
 - [x] Permite definir orden interno.
 - [x] Documenta que la API excluye inactivos y sin stock; el backoffice no incorpora una pantalla de prueba.
@@ -370,15 +371,16 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 |---|---|---|---|---|
 | `Q-01` | ¿Las prioridades deben ser únicas o pueden repetirse? | Producto | Orden definitivo | Abierta |
 | `Q-02` | ¿Se permiten órdenes repetidos dentro de una regla? | Producto | Validación final | Abierta |
-| `Q-03` | ¿Cuál es la longitud máxima de la justificación? | Producto/Backend | Validación final | Abierta |
+| `Q-03` | ¿Cuál es la longitud máxima de la justificación comercial opcional? | Producto/Backend | Validación final | Abierta |
 | `Q-04` | ¿Se permite cambiar el tipo de una regla existente? | Producto | Edición final | Abierta |
-| `Q-05` | Resuelto: no existe pantalla administrativa «Probar recomendaciones»; la justificación permanece visible en el detalle administrativo de la regla Upsell. | Decisión de producto | No | Resuelta |
+| `Q-05` | Resuelto: no existe pantalla administrativa «Probar recomendaciones»; el criterio y justificación permanecen visibles en el detalle administrativo de la regla Upsell. | Decisión de producto | No | Resuelta |
 | `D-01` | Selección de librería UI y estrategia CSS | Frontend | Implementación | Pendiente |
 
 ### Alineación definitiva de Venta Cruzada / Upselling
 
 - El precio y la disponibilidad devueltos por la API de recomendaciones son **informativos**, de Pricing/Inventario; la recomendación no fija precio de pedido ni reserva/disminuye stock. El backoffice no incorpora una pantalla administrativa de prueba.
 - Mantener el orden normado por prioridad de regla ascendente, luego orden de producto ascendente y deduplicación de la primera aparición. Solo productos/SKUs comercialmente activos y con stock positivo son elegibles conforme a Spec/HU.
+- Para Upsell, se exige seleccionar obligatoriamente un `criterio_superioridad` controlado, siendo opcional la `justificacion_comercial` descriptiva.
 - No incorporar una acción «Confirmar compra» ni llamadas de pago o consumo dentro de la interfaz de administración de reglas.
 
 ## 18. Registro de revisiones
@@ -387,13 +389,14 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 |---|---|---|---|---|
 | 0.1 | 2026-09-17 | Asistente | Flujo inicial basado en spec, HU, prototipo y `DESIGN.md` | Pendiente |
 | 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
+| 0.4 | 2026-09-21 | Asistente | Alinear criterio de superioridad obligatorio y justificación comercial opcional según SPEC-007 | Aprobado |
 
 ## 19. Lista de control
 
 - [x] Fuentes, alcance y pantallas identificados.
 - [x] Criterios CA-01 a CA-12 cubiertos.
 - [x] Reglas de prioridad, orden y deduplicación documentadas.
-- [x] Justificación Upsell representada sin verificación automática.
+- [x] Criterio de superioridad y justificación Upsell representados sin verificación automática.
 - [x] Datos técnicos y documentación excluidos de la interfaz visible.
 - [x] Prototipo HTML disponible.
 - [ ] Resolver preguntas abiertas antes de implementación productiva.

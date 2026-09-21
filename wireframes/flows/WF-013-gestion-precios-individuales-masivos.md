@@ -147,16 +147,16 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Rol en el sistema     | `GESTOR_COMERCIAL` o `ADMIN_CATALOGO`, autenticado mediante JWT                                |
 | Nivel técnico         | No especificado; diseñar para uso operativo básico/intermedio                                  |
 | Contexto de uso       | Ajustes de precio frecuentes por campañas, tipo de cambio, liquidaciones o acuerdos con proveedores |
-| Necesidad principal   | Mantener precios calibrados en todos los canales, con trazabilidad y sin errores de margen       |
+| Necesidad principal   | Mantener precios calibrados en todos los canales, con trazabilidad y sin errores operativos extraordinarios de precio |
 | Permisos relevantes   | Debe poder consultar, actualizar, programar y cargar precios; el código exacto del permiso está pendiente |
 | Dispositivo principal | Escritorio como hipótesis para la carga masiva por el uso de hojas de cálculo; consulta y edición individual deben permitir tablet/móvil |
 
 ## 4. Objetivo del flujo
 
-El gestor comercial debe poder actualizar, programar y consultar precios de\
-forma individual o masiva, con motivo obligatorio, validaciones de rango y\
-trazabilidad temporal, para mantener los canales de venta sincronizados y\
-prevenir márgenes negativos.
+El gestor comercial debe poder actualizar, programar y consultar precios de
+forma individual o masiva, con motivo obligatorio, validaciones de rango y
+trazabilidad temporal, para mantener los canales de venta sincronizados y
+prevenir errores operativos o de configuración.
 
 ### Resultado exitoso
 

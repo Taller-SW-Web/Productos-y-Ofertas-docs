@@ -109,4 +109,4 @@
 
 - [x] **Contrato interno completo:** Resuelto. Se capturan `canal_origen`, `motivo_cambio`, `batch_id` y `variacion_porcentual` (nula en CREACION o RETIRO_OFERTA, cuando no existe importe de referencia o final); no se afirma homologación con módulos externos.
 - [x] **Formatos de exportación:** Resuelto. CSV habilitado hasta 100,000 registros y PDF limitado a 500 filas para reportes ejecutivos.
-- [x] **Retención y archivado:** Resuelto. Al menos 24 meses completos en base operativa; archivado mensual verificado en Parquet y cinco años adicionales desde archivado.
+- [x] **Retención y archivado:** Resuelto. Valores iniciales del MVP: 24 meses completos en base operativa (`AUDIT_HOT_RETENTION_MONTHS`), archivado mensual verificado en Parquet y cinco años adicionales (`AUDIT_ARCHIVE_RETENTION_YEARS`), sujetos a configuración administrativa.
