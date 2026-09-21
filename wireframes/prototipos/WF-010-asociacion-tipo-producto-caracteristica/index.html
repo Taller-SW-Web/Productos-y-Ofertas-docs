@@ -198,8 +198,20 @@
       <div class="notice error" id="limit-error" style="display:none;margin-top:16px;">
         <div class="notice-icon">!</div>
         <div>
-          <h3>Límite Operativo Alcanzado (S-02-E)</h3>
+          <h3>Límite operativo alcanzado</h3>
           <p>Este tipo de producto ya alcanzó el límite máximo de 20 características activas asignadas.</p>
+        </div>
+      </div>
+
+      <div class="notice error" id="persist-error" style="display:none;margin-top:16px;" role="alert">
+        <div class="notice-icon" aria-hidden="true">!</div>
+        <div>
+          <h3>No pudimos guardar la asociación</h3>
+          <p>Ocurrió un error al persistir la asociación en el servidor. Tus cambios y selecciones se conservaron.</p>
+          <div class="button-row" style="margin-top:10px;">
+            <button class="btn btn-primary" id="btn-retry-persist" type="button">Reintentar guardado</button>
+            <button class="btn btn-quiet" id="btn-cancel-persist" type="button">Cancelar</button>
+          </div>
         </div>
       </div>
 
@@ -246,7 +258,8 @@
           ]
         }
       ],
-      selectedTypeId: 'TP-01'
+      selectedTypeId: 'TP-01',
+      queryState: new URLSearchParams(location.search).get('state') || ''
     };
 
     function showToast(msg){
@@ -326,20 +339,25 @@
       }
     };
 
-    document.getElementById('btn-open-associate').onclick = () => {
+    function openModal(){
       const cur = state.types.find(t => t.id === state.selectedTypeId);
       document.getElementById('modal-type-subtitle').textContent = `Tipo de producto: ${cur.name}`;
       document.getElementById('limit-error').style.display = 'none';
+      document.getElementById('persist-error').style.display = 'none';
       document.getElementById('modal-associate').classList.add('open');
-    };
+    }
+
+    document.getElementById('btn-open-associate').onclick = openModal;
 
     function closeModal(){
       document.getElementById('modal-associate').classList.remove('open');
+      document.getElementById('persist-error').style.display = 'none';
     }
     document.getElementById('btn-close-modal').onclick = closeModal;
     document.getElementById('btn-cancel-modal').onclick = closeModal;
+    document.getElementById('btn-cancel-persist').onclick = closeModal;
 
-    document.getElementById('btn-save-assoc').onclick = () => {
+    function executeSave(){
       const cur = state.types.find(t => t.id === state.selectedTypeId);
       if(cur.attrs.length >= 20){
         document.getElementById('limit-error').style.display = 'flex';
@@ -365,10 +383,19 @@
       renderTypes();
       renderDetail();
       showToast(`Característica "${name}" asociada exitosamente.`);
-    };
+    }
+
+    document.getElementById('btn-save-assoc').onclick = executeSave;
+    document.getElementById('btn-retry-persist').onclick = executeSave;
 
     renderTypes();
     renderDetail();
+
+    // Estado S-02-E configurable vía URL ?state=s02-e
+    if(state.queryState === 's02-e'){
+      openModal();
+      document.getElementById('persist-error').style.display = 'flex';
+    }
   </script>
 </body>
 </html>

@@ -535,7 +535,7 @@
     bindPage();
   }
 
-  function openUmbral(item){
+  function openUmbral(item, isSimulatedError = false){
     umbralTarget = item;
     const currentU = getEffectiveUmbral(item);
     umbralMeta.textContent = `${item.sku} · ${item.location_id}`;
@@ -564,6 +564,18 @@
           <span id="umbralError" class="field-error" style="display:none"></span>
         </div>
 
+        <div class="notice error" id="umbralPersistError" style="${isSimulatedError ? 'display:flex;' : 'display:none;'} margin-top:16px;" role="alert">
+          <div class="notice-icon" aria-hidden="true">!</div>
+          <div>
+            <h3 style="margin:0 0 4px; font-size:16px;">No pudimos guardar el umbral</h3>
+            <p style="margin:0; font-size:14px;">Ocurrió un error al persistir la configuración del umbral. Tus cambios se conservaron.</p>
+            <div class="button-row" style="margin-top:10px;">
+              <button class="btn btn-primary" type="button" id="btnRetryUmbralSave">Reintentar</button>
+              <button class="btn btn-quiet" type="button" id="btnCancelUmbralError">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
         <div class="button-row end" style="margin-top:20px; border-top:1px solid var(--neutral-30); padding-top:16px;">
           <button class="btn btn-quiet" type="button" data-umbral-cancel>Cancelar</button>
           <button class="btn btn-primary" type="submit" id="saveUmbral">Guardar umbral</button>
@@ -577,6 +589,9 @@
     const form = document.getElementById('umbralForm');
     const customWrap = document.getElementById('customInputWrap');
     const radios = form.querySelectorAll('input[name="umbralMode"]');
+    const persistErr = document.getElementById('umbralPersistError');
+    const retryBtn = document.getElementById('btnRetryUmbralSave');
+    const cancelErrBtn = document.getElementById('btnCancelUmbralError');
 
     radios.forEach(r => {
       r.addEventListener('change', () => {
@@ -590,12 +605,13 @@
 
     const cancel = form.querySelector('[data-umbral-cancel]');
     cancel.addEventListener('click', closeUmbral);
+    if (cancelErrBtn) cancelErrBtn.addEventListener('click', closeUmbral);
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
+    const performSave = () => {
       const mode = form.querySelector('input[name="umbralMode"]:checked').value;
       const err = document.getElementById('umbralError');
       err.style.display = 'none';
+      if (persistErr) persistErr.style.display = 'none';
 
       if (mode === 'default') {
         item.use_default_umbral = true;
@@ -615,6 +631,13 @@
         render();
         showToast(`Umbral personalizado guardado (${v} unidades) para ${item.sku}.`);
       }
+    };
+
+    if (retryBtn) retryBtn.addEventListener('click', performSave);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      performSave();
     });
   }
 
@@ -645,6 +668,13 @@
 
   function render(){
     if (renderGlobalState()){ bindPage(); return; }
+    if (state.queryState === 's02-e'){
+      state.view = 'detail';
+      state.selectedId = 'inv-1';
+      renderDetail();
+      openUmbral(invById('inv-1'), true);
+      return;
+    }
     if (state.view === 'detail'){ renderDetail(); return; }
     renderList();
   }
