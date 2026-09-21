@@ -25,8 +25,8 @@ Reglas de producción:
   elegible, no por unidad.
 - Ningún descuento puede producir un importe resultante negativo.
 - Exige al menos un producto activo, inicio anterior al fin y estado inicial.
-- No acumules promociones automáticas entre sí, con cupones ni con precio de oferta de Pricing.
-- Si hay empate entre promoción automática y cupón, prioriza el cupón.
+- Configura modalidad (`AUTOMATICA | CUPON`), prioridad, canales habilitados y política de combinación (`politica_combinacion`).
+- La combinación con otras promociones, cupones u ofertas de Pricing se rige por las políticas declaradas, evaluando la mejor alternativa sobre la misma cesta.
 - Modificar o desactivar no cambia pedidos ya confirmados.
 - No muestres criterios CA, endpoints, supuestos, decisiones técnicas ni
   anotaciones `A-xx` dentro de la interfaz simulada; son documentación.
@@ -335,7 +335,8 @@ Verificar 320 px, zoom 200 %, nombres largos, importes y fechas completas.
 
 - **Modalidad obligatoria `AUTOMATICA | CUPON`** distinta del tipo de descuento (porcentaje/monto fijo). Una promoción `CUPON` no se ofrece automáticamente: solo entra en la evaluación mediante un código válido. La modalidad solo se edita antes de primera activación, sin cupones asociados ni usos; en los otros casos mostrar control bloqueado y explicación, sin inventar una transición.
 - Selector de alcance por **producto completo o SKU vendible específico**: a nivel producto aplica a todos sus SKUs activos; al coincidir producto y SKU, se deduplica el beneficio por unidad elegible.
-- La base de los descuentos es el **precio regular vigente por SKU × cantidad**. Comparar el **total final de la misma cesta**, conservando líneas no elegibles. La oferta Pricing es alternativa independiente, no base acumulativa. Empate cupón/automática: cupón; empate con oferta Pricing: oferta Pricing y no se consume cupón. Usar importe monetario final, no porcentaje nominal.
+- Configuración de `prioridad`, `canales_habilitados` y `politica_combinacion` (declarando explícitamente si combina con oferta de Pricing, otras promociones automáticas o cupones).
+- La base de los descuentos es el **precio regular vigente por SKU × cantidad**. La combinación de beneficios se rige por las políticas de combinación declaradas, evaluando combinaciones autorizadas sobre el total de la misma cesta para obtener el menor importe final. En empate exacto, se prioriza la opción que no consuma cupón y luego la de menor valor de prioridad.
 - La evaluación comercial de promociones permanece en la API y en los flujos reales de los canales. **No existe una pantalla administrativa para simularla**; el backoffice se limita a configurar, consultar y cambiar el estado de promociones. Los contratos con Ventas siguen sujetos a homologación.
 
 ## 18. Registro de revisiones

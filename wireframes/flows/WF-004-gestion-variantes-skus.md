@@ -47,22 +47,18 @@ Reglas de producción:
 - Mantén visible el contexto del producto padre —nombre y `sku_base`— durante
   listado, creación, detalle, edición y desactivación para evitar operar sobre
   el producto equivocado.
-- El SKU de la variante se genera automáticamente a partir de `sku_base` y de
-  los atributos identificadores. Nunca agregues un campo editable para
-  ingresarlo, modificarlo o forzar su regeneración.
-- No presentes una vista previa del SKU como resultado contractual si el
-  algoritmo exacto no está definido. Antes de guardar basta con explicar que
-  será generado; después del éxito se muestra el valor confirmado.
+- Cada variante recibe un `variant_id` interno generado por Catálogo e inmutable.
+  El SKU comercial de la variante puede ingresarse opcionalmente (para códigos externos/ERP)
+  o generarse automáticamente si se deja vacío, validando siempre su unicidad global.
+  En edición ordinaria, el SKU comercial y los atributos identificadores son inmutables.
 - Cada variante nueva debe definir todos los atributos identificadores
   configurados para el producto y adjuntar al menos una imagen propia.
 - Impide registrar dos variantes del mismo producto con la misma combinación
   de atributos identificadores. El error debe distinguirse de una colisión
-  excepcional del SKU autogenerado a nivel global.
-- Una colisión interna de SKU rechaza toda la creación y no expone la variante.
-  No solicites al gestor que escriba un SKU alternativo; muestra un mensaje
-  seguro y una vía de recuperación o referencia de soporte si el contrato la
-  proporciona.
-- Los atributos identificadores y el SKU son inmutables después de crear la
+  de SKU a nivel global.
+- Una colisión de SKU rechaza toda la creación y no expone la variante,
+  permitiendo al gestor corregir el SKU comercial ingresado o reintentar la generación automática.
+- Los atributos identificadores, el `variant_id` y el SKU son inmutables después de crear la
   variante. En edición se muestran como información de solo lectura, con la
   indicación de desactivar la variante y crear otra para corregirlos.
 - Solo permite editar la imagen y los atributos no identificadores
@@ -137,15 +133,14 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 2. Estados diferenciados de listado vacío, filtros sin resultados, error de
    carga y producto con `tiene_variantes = false`.
 3. Formulario de creación con atributos identificadores, imagen propia
-   obligatoria y explicación de SKU autogenerado.
-4. Resultado exitoso que muestre el SKU confirmado y el estado de la nueva
+   obligatoria, campo opcional para SKU comercial o generación automática, y asignación de `variant_id` interno.
+4. Resultado exitoso que muestre el `variant_id`, SKU confirmado y el estado de la nueva
    variante.
-5. Rechazo por combinación duplicada y estado independiente de colisión del
-   SKU autogenerado.
-6. Detalle de variante con combinación, SKU, imagen, estado, datos heredados y
+5. Rechazo por combinación duplicada y estado independiente de colisión de SKU.
+6. Detalle de variante con combinación, `variant_id`, SKU comercial, imagen, estado, datos heredados y
    datos informativos de integraciones cuando correspondan.
 7. Edición restringida a imagen y atributos no identificadores, manteniendo
-   SKU y atributos identificadores como solo lectura.
+   `variant_id`, SKU comercial y atributos identificadores como solo lectura.
 8. Errores de archivo y guardado que conserven los datos y la imagen vigente.
 9. Activación y reactivación con validación; desactivación confirmada con aviso de inactivación del padre si se trata de la última variante activa.
 10. Estados de carga, error, sin conexión, permisos, sesión expirada, éxito y
@@ -173,7 +168,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Qué aporta al flujo |
 |---|---|---|
-| [`SPEC-004-gestion-variantes-skus.md`](../../specs/SPEC-004-gestion-variantes-skus.md) | Requisitos 1–5; secciones 5 y 6 | Creación, SKU, imagen, edición, consulta y baja lógica |
+| [`SPEC-004-gestion-variantes-skus.md`](../../specs/SPEC-004-gestion-variantes-skus.md) | Requisitos 1–5; secciones 5 y 6 | Creación, variant_id, SKU, imagen, edición, consulta y baja lógica |
 | [`HU-004-gestion-variantes-skus.md`](../../hu/HU-004-gestion-variantes-skus.md) | CA-01–CA-14; escenarios 1–10 | Permisos, integración y resultados esperados |
 | [`DESIGN.md`](../DESIGN.md) | Layout, componentes, contraste y accesibilidad | Lenguaje visual neutral |
 | [`INDEX.md`](../INDEX.md) | Fila WF-004 | ID, nombre, responsable y rutas reservadas |
@@ -182,16 +177,16 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 ### Funcionalidades incluidas
 
 - Consultar variantes activas, inactivas y en borrador de un producto, con filtros por característica o estado.
-- Crear una variante con atributos identificadores e imagen propia.
-- Mostrar el SKU autogenerado por el sistema después de la creación.
-- Editar imagen y atributos no identificadores sin alterar el SKU.
+- Crear una variante con atributos identificadores, imagen propia, `variant_id` interno y SKU comercial opcional/generado.
+- Mostrar el `variant_id` y el SKU comercial confirmado por el sistema.
+- Editar imagen y atributos no identificadores sin alterar el `variant_id` ni el SKU.
 - Desactivar una variante de forma independiente y conservarla para historial.
 - Comunicar que Inventario inicializa stock en 0 y que Pricing puede definir un precio, sin ofrecer edición local.
 
 ### Fuera de alcance
 
 - Productos con `tiene_variantes = false`.
-- Ingreso manual o modificación de SKU y atributos identificadores.
+- Modificación de `variant_id`, SKU y atributos identificadores en variantes ya publicadas.
 - Gestión, cálculo o ajuste de stock; definición o actualización de precios.
 - Parametrización avanzada de nuevos tipos globales de atributos.
 - Edición o procesamiento de imágenes, ofertas, promociones y combos.
@@ -211,15 +206,15 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 ## 4. Objetivo del flujo
 
-**El usuario debe poder** consultar, crear, actualizar y desactivar variantes de un producto habilitado **para** ofrecer en los canales una combinación exacta, identificada por un SKU único y una imagen propia.
+**El usuario debe poder** consultar, crear, actualizar y desactivar variantes de un producto habilitado **para** ofrecer en los canales una combinación exacta, identificada por un `variant_id` interno, un SKU único y una imagen propia.
 
 ### Resultado exitoso
 
-La variante se guarda asociada al producto con combinación única, SKU autogenerado, imagen y estado. En creación queda en `Borrador`, se notifica a Inventario para inicializar stock en 0 y la operación queda trazable. Las ediciones preservan SKU y atributos identificadores.
+La variante se guarda asociada al producto con combinación única, `variant_id` interno generado, SKU comercial validado o generado, imagen y estado. En creación queda en `Borrador`, se notifica a Inventario para inicializar stock en 0 y la operación queda trazable. Las ediciones preservan SKU y atributos identificadores.
 
 ### Indicadores de finalización
 
-- Confirmación que incluye el SKU generado o la operación realizada.
+- Confirmación que incluye el SKU generado/asignado o la operación realizada.
 - Listado y detalle actualizados sin perder filtros ni producto padre.
 - La variante desactivada permanece visible administrativamente con estado `Inactiva`.
 - Los fallos conservan el formulario y la imagen anterior cuando corresponda.
@@ -230,7 +225,7 @@ La variante se guarda asociada al producto con combinación única, SKU autogene
 
 - Sesión autenticada y permiso para la acción.
 - Producto existente, en borrador o activo, con `tiene_variantes = true`.
-- `sku_base` y características identificadoras disponibles para generar el SKU.
+- `sku_base` y características identificadoras disponibles para generar o validar el SKU.
 - Servicio de imágenes disponible para crear o reemplazar una imagen.
 
 ### Puntos de entrada
@@ -245,8 +240,8 @@ La variante se guarda asociada al producto con combinación única, SKU autogene
 
 | Resultado | Destino o comportamiento |
 |---|---|
-| Creación exitosa | Detalle o listado con SKU generado y confirmación |
-| Edición exitosa | Detalle actualizado sin cambio de SKU |
+| Creación exitosa | Detalle o listado con `variant_id`, SKU comercial y confirmación |
+| Edición exitosa | Detalle actualizado sin cambio de SKU ni variant_id |
 | Desactivación exitosa | Listado/detalle con estado Inactiva |
 | Cancelación | Retorno al origen; confirma descarte si hubo cambios |
 | Producto simple | Explicación y retorno a WF-003 |
@@ -267,10 +262,9 @@ La variante se guarda asociada al producto con combinación única, SKU autogene
 
 1. El usuario selecciona **Nueva variante**.
 2. El sistema muestra el producto y los atributos identificadores configurados.
-3. El usuario elige un valor para cada atributo identificador y adjunta una imagen propia.
-4. El sistema valida presencia, archivo y unicidad de la combinación.
-5. El sistema genera y valida el SKU; el usuario no lo ingresa.
-6. Guarda la variante como `Borrador`, notifica a Inventario y confirma con el SKU generado.
+3. El usuario elige un valor para cada atributo identificador, adjunta una imagen propia y opcionalmente puede ingresar un SKU comercial.
+4. El sistema valida presencia, archivo, unicidad de la combinación y valida o genera el SKU comercial, asignando el `variant_id` interno.
+5. Guarda la variante como `Borrador`, notifica a Inventario y confirma con el SKU asignado.
 
 ### Flujo C — Editar variante
 
@@ -369,7 +363,8 @@ flowchart LR
 |---|---|---|---|
 | Imagen | Variante | Miniatura/placeholders en wireframe | “Sin imagen” y estado inválido, si dato heredado inconsistente |
 | Combinación | Atributos identificadores | Etiqueta: valor | No aplica |
-| SKU | SKU autogenerado | Monoespaciado, solo lectura | “Pendiente” solo durante creación no confirmada |
+| `variant_id` | Catálogo | Identificador interno | No aplica |
+| SKU | SKU comercial | Monoespaciado, solo lectura | “Pendiente” solo durante creación no confirmada |
 | Estado | Variante | Borrador/Activa/Inactiva | No aplica |
 | Disponibilidad | Inventario, si se consulta | Texto informativo | “No disponible para consulta”; nunca asumir 0 |
 
@@ -393,7 +388,7 @@ flowchart LR
 |---|---|---|
 | `A-01` | Contexto del producto | Evita crear una variante en el producto equivocado |
 | `A-02` | Nueva variante | Solo para `tiene_variantes = true` y usuario autorizado |
-| `A-03` | SKU | Siempre solo lectura y generado por el sistema |
+| `A-03` | SKU / variant_id | `variant_id` interno inmutable; SKU comercial único asignado o generado |
 | `A-04` | Disponibilidad | Es propiedad de Inventario; fallo de consulta no equivale a stock 0 |
 | `A-05` | Filtros | Característica y estado están confirmados; no inventar otros |
 | `A-06` | Estado | Debe expresarse con texto y no solo con color |
@@ -422,14 +417,14 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 1. Producto padre y reglas de la combinación.
 2. Valores de atributos identificadores.
 3. Imagen propia obligatoria.
-4. Nota de SKU automático y acción **Crear variante**.
+4. Campo opcional para SKU comercial (o indicación de generación automática) y acción **Crear variante**.
 
 | Región | Componente | Contenido | Comportamiento |
 |---|---|---|---|
 | Contexto | Resumen | Nombre y `sku_base` | Solo lectura |
 | Identidad | Selectores | Un valor por atributo identificador configurado | Todos obligatorios; no repetir combinación |
 | Imagen | Selector/carga | Archivo y previsualización | Obligatoria; validación segura |
-| SKU | Texto informativo | “Se generará automáticamente” | No es un campo editable ni una vista previa contractual |
+| SKU comercial | Campo de texto | Opcional; si está vacío, se generará automáticamente | Valida formato y unicidad global |
 | Acciones | Botones | Crear variante; Cancelar | Bloquea doble envío |
 
 #### Formulario y validaciones
@@ -438,9 +433,10 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 |---|---|---|---|---|---|
 | Cada atributo identificador | Selector | Sí | Sin selección | Valor válido; combinación única | “Selecciona un valor para {atributo}.” |
 | Imagen propia | Carga de archivo | Sí | Ninguna | Formato/tamaño/contenido permitidos | “Agrega una imagen válida para esta variante.” |
+| SKU comercial | Texto | No | Vacío | Opcional; unicidad global y formato si se ingresa | “El SKU comercial ingresado ya está en uso.” |
 
 - La combinación se valida localmente cuando sea posible y se confirma en servidor al guardar.
-- El SKU solo aparece después del éxito; una colisión interna no se resuelve pidiendo otro SKU al usuario.
+- Si no se ingresa SKU comercial, el sistema genera uno único determinista y asigna el `variant_id` interno.
 - Conservar atributos e imagen seleccionada ante errores recuperables, salvo que la seguridad impida conservar el archivo.
 - Advertir antes de salir con cambios sin guardar.
 
@@ -450,7 +446,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 |---|---|---|
 | `A-07` | Atributos identificadores | La combinación define la identidad y será inmutable |
 | `A-08` | Imagen | Es propia de la variante, no sustituye la imagen general del producto |
-| `A-09` | SKU automático | No agregar campo manual ni botón para regenerar sin contrato |
+| `A-09` | SKU comercial / variant_id | Permite SKU externo opcional o autogeneración; variant_id generado internamente |
 | `A-10` | Crear variante | Al éxito queda en borrador y dispara inicialización de Inventario |
 | `A-11` | Duplicado | La unicidad de combinación se evalúa dentro del mismo producto |
 
@@ -459,7 +455,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 | Caso | Representación | Recuperación |
 |---|---|---|
 | Combinación duplicada | Error junto a los atributos y resumen superior | Cambiar combinación o cancelar |
-| Colisión del SKU autogenerado | Mensaje general seguro; no mostrar variante como creada | Reintentar si se indica o contactar soporte con referencia |
+| Colisión de SKU | Error de unicidad de SKU; permite corregir SKU ingresado o regenerar | Corregir SKU comercial o reintentar generación |
 | Producto desactualizado/inactivo | Aviso de contexto cambiado | Recargar producto y revisar |
 
 ### `S-03` — Detalle de variante
@@ -468,7 +464,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 
 | Región | Contenido | Comportamiento |
 |---|---|---|
-| Encabezado | SKU, combinación, estado, acciones | SKU destacado y copiable sin convertirlo en editable |
+| Encabezado | `variant_id`, SKU, combinación, estado, acciones | SKU y `variant_id` destacados y copiables |
 | Imagen | Imagen propia | Alternativa textual basada en producto/combinación |
 | Identidad | Atributos identificadores | Solo lectura |
 | Otros atributos | Atributos no identificadores | Solo lectura; editables en S-04 |
@@ -490,7 +486,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| `A-12` | SKU | Identidad global, autogenerada e inmutable |
+| `A-12` | SKU / variant_id | `variant_id` interno y SKU comercial inmutables en edición ordinaria |
 | `A-13` | Atributos identificadores | Para corregirlos se desactiva y crea otra variante |
 | `A-14` | Precio | Pricing puede sobrescribirlo; no se edita aquí |
 | `A-15` | Stock | Inventario es la única fuente; no se edita aquí |
@@ -507,7 +503,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 
 #### Formulario y comportamiento
 
-- SKU y atributos identificadores se muestran como información bloqueada, no como controles deshabilitados ambiguos.
+- SKU, `variant_id` y atributos identificadores se muestran como información bloqueada, no como controles deshabilitados ambiguos.
 - Solo la imagen y atributos no identificadores documentados son editables.
 - Al sustituir una imagen, conservar la anterior hasta que el guardado nuevo se complete.
 - Si el archivo es inválido o el guardado falla, no eliminar la imagen vigente.
@@ -604,7 +600,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 | Contexto | Texto propuesto | Observación |
 |---|---|---|
 | Acción primaria | “Crear variante” | Resultado inequívoco |
-| SKU | “El SKU se generará automáticamente al crear la variante.” | Evita ingreso manual |
+| SKU | “Ingresa un SKU comercial o déjalo vacío para autogeneración.” | SKU opcional en creación |
 | Duplicado | “Ya existe una variante con esta combinación.” | Regla recuperable |
 | Identidad inmutable | “Para cambiar estos valores, desactiva esta variante y crea una nueva.” | Explica procedimiento |
 | Vacío | “Este producto todavía no tiene variantes.” | Ofrece crear la primera |
@@ -646,10 +642,10 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 - [ ] Conserva siempre el contexto del producto padre.
 - [ ] Permite consultar y filtrar por característica o estado.
 - [ ] Crear exige valores identificadores e imagen propia.
-- [ ] No existe campo para ingresar o editar el SKU.
+- [ ] Asigna `variant_id` interno y permite ingresar SKU comercial opcional o generarlo automáticamente.
 - [ ] Rechaza combinaciones duplicadas dentro del producto.
-- [ ] Representa colisión excepcional del SKU sin exponer la variante.
-- [ ] Editar bloquea SKU y atributos identificadores.
+- [ ] Representa colisión del SKU sin exponer la variante.
+- [ ] Editar bloquea `variant_id`, SKU comercial y atributos identificadores.
 - [ ] Permite modificar imagen y atributos no identificadores.
 - [ ] Una imagen inválida no elimina la imagen previa.
 - [ ] Desactivar conserva historial e inactiva el padre si se desactiva la última variante activa.
@@ -699,7 +695,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 
 - Incluir en el detalle de variante **acción explícita Activar** para una variante `BORRADOR` que cumpla atributos identificadores válidos y preparación mínima de precio/registro en Inventario; confirmar transición en pantalla sin confundirla con disponibilidad para venta si el padre sigue en `BORRADOR`.
 - Las transiciones normadas son `BORRADOR → ACTIVA`, `ACTIVA → INACTIVA` e `INACTIVA → ACTIVA`; al desactivar la **última variante activa**, el producto padre se inactiva también. Reactivar la variante conserva el SKU y **no** reactiva automáticamente el padre.
-- Al crear variante, Catálogo genera el SKU desde `sku_base` y atributos identificadores. El formulario no incluye edición manual de SKU. Un mismo lote puede crear primero un padre y sus variantes posteriormente; no asumir que el SKU nuevo ya aparece en la plantilla de alta.
+- Al crear variante, Catálogo asigna `variant_id` interno y valida el SKU comercial informado o lo genera desde `sku_base` y atributos identificadores si se deja vacío. En edición ordinaria, el SKU y `variant_id` son inmutables.
 - Disponibilidad es informativa, por SKU, proveniente de Inventario; no editar stock desde Variantes. El producto padre no tiene saldo independiente.
 
 ### Configuración de identidad por producto (Q-03 cerrada)

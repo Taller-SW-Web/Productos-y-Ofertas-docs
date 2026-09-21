@@ -28,13 +28,14 @@ la pantalla afectada.
 Reglas de producción:
 
 - No agregues campos, permisos, endpoints ni reglas no documentadas.
-- La jerarquía se limita a dos niveles: raíz y subcategoría.
-- Una categoría no puede asignarse como su propia categoría padre.
+- El modelo es jerárquico recursivo (`categoria_padre_id`); para el MVP se configura una profundidad máxima de dos niveles (`MAX_CATEGORY_DEPTH = 2`: raíz y subcategoría).
+- Una categoría no puede asignarse como su propia categoría padre ni generar referencias circulares.
 - El nombre de categoría NO es único; no se debe rechazar por duplicidad de
   nombre.
 - `categoria_padre_id` SIEMPRE es editable al actualizar una categoría.
-- Al cambiar el padre, valida que el nuevo padre esté activo y que no se
-  superen los dos niveles.
+- Al cambiar el padre, valida que el nuevo padre esté activo, sin ciclos y que no se
+  supere la profundidad `MAX_CATEGORY_DEPTH = 2` configurada para el MVP.
+- Las categorías son para navegación/clasificación y no definen ni heredan características de producto (responsabilidad de Tipo de Producto en WF-010).
 - La desactivación es baja lógica y solo se completa si la verificación asíncrona correlacionada
   confirma que no hay productos activos asociados.
 - La reactivación exige que el padre (si lo hay) esté activo.
@@ -62,7 +63,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 ### Entregables esperados
 
-1. Árbol de categorías con dos niveles y estados.
+1. Árbol de categorías con modelo recursivo (`MAX_CATEGORY_DEPTH = 2` para MVP) y estados.
 2. Creación de categoría con padre opcional.
 3. Creación de subcategoría preseleccionando el padre.
 4. Edición completa, incluida la reasignación de `categoria_padre_id`.
@@ -101,7 +102,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Crear una categoría con nombre, descripción, imagen, orden y padre opcional.
 - Crear una subcategoría vinculada a una raíz.
 - Editar nombre, descripción, imagen, orden y `categoria_padre_id`.
-- Validar los dos niveles máximos y la referencia circular.
+- Validar la profundidad máxima configurada (`MAX_CATEGORY_DEPTH = 2` en MVP) y la ausencia de referencias circulares.
 - Desactivar (baja lógica) con verificación asíncrona correlacionada de productos activos.
 - Reactivar una categoría exigiendo padre activo.
 - Exponer el árbol jerárquico completo para canales externos.
@@ -110,7 +111,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 - Eliminación física de categorías: prohibida por especificación.
 - Configuración de slugs y metadatos SEO: corresponde a WF-012.
-- Asociación de características a categorías: corresponde a WF-010.
+- Esquema de atributos y asociación de características: desacoplado, corresponde a Tipos de Producto (WF-010).
 - Gestión de productos dentro de la categoría: catálogo Core / WF-003.
 - Gestión de marcas: corresponde a WF-011.
 
@@ -122,21 +123,21 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Rol en el sistema | Gestor comercial autenticado |
 | Nivel técnico | No especificado; diseñar para nivel operativo básico/intermedio |
 | Contexto de uso | Creación y mantenimiento periódico de la estructura de navegación |
-| Necesidad principal | Mantener una jerarquía de dos niveles sin productos huérfanos |
+| Necesidad principal | Mantener una jerarquía de navegación sin productos huérfanos |
 | Permisos relevantes | Consultar, crear, editar, desactivar y reactivar categorías; códigos exactos pendientes |
 | Dispositivo principal | Escritorio como hipótesis; consulta debe adaptarse a tablet/móvil |
 
 ## 4. Objetivo del flujo
 
 El gestor comercial debe poder crear, consultar, reordenar y mantener la
-jerarquía de categorías (máximo dos niveles), reasignar categorías de padre,
+jerarquía de categorías (con profundidad máxima `MAX_CATEGORY_DEPTH = 2` en MVP), reasignar categorías de padre,
 y aplicar bajas lógicas y reactivaciones sin dejar productos huérfanos en los
 canales de venta.
 
 ### Resultado exitoso
 
 La categoría queda registrada o actualizada con su padre correcto dentro de
-los dos niveles permitidos. La baja lógica se confirma solo cuando no existen
+la profundidad configurada del MVP. La baja lógica se confirma solo cuando no existen
 productos activos asociados. La reactivación se completa solo con un padre
 activo. El árbol refleja los cambios y permanece disponible para los canales.
 
@@ -144,7 +145,7 @@ activo. El árbol refleja los cambios y permanece disponible para los canales.
 
 - Creación: mensaje Categoría creada y el nodo aparece en el árbol.
 - Edición: mensaje Cambios guardados con la nueva ubicación en el árbol.
-- Reasignación de padre: el nodo se mueve respetando los dos niveles y la
+- Reasignación de padre: el nodo se mueve respetando la profundidad configurada y la
   validación del nuevo padre.
 - Desactivación: estado inactivo confirmado.
 - Reactivación: estado activo confirmado.
@@ -771,7 +772,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 ### Alineación definitiva de Categorías: baja y jerarquía
 
 - Para desactivar, mostrar **Solicitud recibida → Verificando dependencias → Desactivación confirmada / Rechazada**. Taxonomía coordina mensajes `taxonomy.master.deactivation.check.requested` y `catalog.master.deactivation.checked` con `operation_id`, versión y barrera de escrituras en Catálogo. Si hay productos activos, subcategorías activas o no se obtiene confirmación confiable, **no confirmar la baja**. No simular respuesta HTTP directa entre microservicios.
-- Si se edita `categoria_padre_id`, mostrar validación de padre activo, máximo dos niveles, ausencia de ciclo y recálculo de características efectivas (**directas + heredadas, máximo 20**) sobre la categoría y descendientes afectados. Productos existentes no pierden estado automáticamente por una nueva obligatoriedad heredada; se exige en siguiente guardado.
+- Si se edita `categoria_padre_id`, mostrar validación de padre activo, profundidad máxima configurada (`MAX_CATEGORY_DEPTH = 2` para MVP) y ausencia de ciclos. Las categorías se emplean únicamente para navegación y clasificación; **no definen ni heredan características de producto** (responsabilidad que pertenece al tipo de producto según WF-010).
 - La interfaz administrativa no garantiza desactivación comercial instantánea en canales: señalar estado pendiente hasta confirmación, y actualizarlo con el resultado. No inventar el plazo del mensaje ni el canal de notificación.
 
 ## 19. Registro de revisiones

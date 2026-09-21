@@ -55,8 +55,8 @@ Reglas de producción:
   clara, no como un control que parezca temporalmente deshabilitado.
 - El `slug` lo genera y mantiene el sistema. No agregues un campo editable para
   introducirlo manualmente mientras no exista un contrato que lo permita.
-- Valida la unicidad global de `sku_base` y la unicidad de la combinación
-  nombre + marca. Distingue visualmente cuál de las dos reglas falló.
+- Valida la unicidad global y bloqueante de `sku_base`. La combinación de nombre + marca
+  se evalúa como una advertencia no bloqueante de posible duplicado, permitiendo continuar tras confirmación.
 - Los cambios válidos de un producto activo se publican inmediatamente. Si una
   edición rompe una condición de activación, representa el rechazo completo
   del guardado y conserva la última versión válida.
@@ -132,7 +132,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 7. Desactivación mediante confirmación de baja lógica.
 8. Reactivación con revalidación y variante de rechazo por relaciones o datos
    que dejaron de ser válidos.
-9. Errores de unicidad de `sku_base` y nombre + marca, error de relación y
+9. Error de unicidad bloqueante de `sku_base`, advertencia no bloqueante de posible duplicado por nombre + marca, error de relación y
    conflicto de datos desactualizados.
 10. Estados de carga, error, sin conexión, permisos, sesión expirada y éxito.
 11. Navegación funcional con conservación simulada de filtros y retorno de
@@ -280,8 +280,8 @@ El producto queda creado en borrador, actualizado o en el estado solicitado; la 
 
 | ID | Condición | Comportamiento esperado | Retorno |
 |---|---|---|---|
-| `ALT-01` | `sku_base` duplicado | Error asociado al campo; conserva el formulario | Flujo B, paso 2 |
-| `ALT-02` | Nombre + marca duplicados | Mensaje identifica la combinación en conflicto | Flujo B, paso 2 |
+| `ALT-01` | `sku_base` duplicado | Error bloqueante asociado al campo; conserva el formulario | Flujo B, paso 2 |
+| `ALT-02` | Nombre + marca coincidentes | Advertencia no bloqueante de posible duplicado con productos coincidentes; permite continuar tras confirmación | Flujo B, paso 2 |
 | `ALT-03` | Categoría o marca inactiva | Bloquea guardado e indica relación inválida | Flujo B/C |
 | `ALT-04` | Activación incompleta | Lista requisitos faltantes y conserva el estado | Flujo D, paso 1 |
 | `ALT-05` | Edición invalida un producto activo | Rechaza el guardado y conserva última versión válida | Flujo C, paso 3 |
@@ -393,7 +393,7 @@ flowchart LR
 
 | Campo | Tipo | Obligatorio al crear | Valor inicial | Validación | Mensaje propuesto |
 |---|---|---|---|---|---|
-| Nombre | Texto | Sí | Vacío | Requerido; unicidad con marca | “Ya existe un producto con este nombre y marca.” |
+| Nombre | Texto | Sí | Vacío | Requerido; advertencia si coincide con marca | “Existe un producto con este nombre y marca. Confirma si es una referencia distinta.” |
 | Descripción | Área de texto | Sí | Vacío | Requerida | “Ingresa una descripción.” |
 | Categoría | Selector | Sí | Sin selección | Debe existir y estar activa | “Selecciona una categoría activa.” |
 | Marca | Selector | Sí | Sin selección | Debe existir y estar activa | “Selecciona una marca activa.” |
@@ -423,7 +423,7 @@ flowchart LR
 ### `S-02-V` — Validación o conflicto
 
 - Mostrar resumen superior enlazado a cada campo inválido.
-- Ante unicidad remota, asociar el error a `sku_base` o a nombre/marca.
+- Ante unicidad remota, asociar el error bloqueante a `sku_base` y la advertencia no bloqueante a nombre/marca (permitiendo confirmación explícita).
 - Ante dato desactualizado, explicar que el producto cambió y ofrecer **Recargar datos**; no sobrescribir silenciosamente.
 - Foco en el resumen y luego en el primer campo inválido.
 
@@ -535,7 +535,8 @@ flowchart LR
 | Creación | “Guardar borrador” | No promete publicación |
 | Activación incompleta | “Este producto aún no puede activarse. Revisa los requisitos pendientes.” | Orienta recuperación |
 | Desactivación | “El producto dejará de estar disponible para nuevas ventas. Su historial se conservará.” | Explica impacto |
-| Duplicado | “Este SKU base ya está en uso.” | Identifica regla violada |
+| Duplicado | “Este SKU base ya está en uso.” | Identifica regla violada bloqueante |
+| Posible duplicado | “Existe un producto con este nombre y marca. Confirma si deseas crearlo.” | Advertencia no bloqueante |
 | Vacío | “Aún no hay productos registrados.” | Ofrece el siguiente paso permitido |
 
 ## 14. Restricciones técnicas relevantes
@@ -568,7 +569,7 @@ flowchart LR
 ## 16. Criterios de aceptación del wireframe
 
 - [ ] Permite crear un borrador con los siete datos mínimos sin exigir imagen ni característica.
-- [ ] Representa unicidad de `sku_base` y de nombre + marca.
+- [ ] Representa unicidad bloqueante de `sku_base` y advertencia no bloqueante de posible duplicado de nombre + marca.
 - [ ] Valida categoría y marca activas al crear, editar y reactivar.
 - [ ] Representa listado, filtros y detalle administrativo.
 - [ ] `tiene_variantes` es obligatorio al crear e inmutable después.

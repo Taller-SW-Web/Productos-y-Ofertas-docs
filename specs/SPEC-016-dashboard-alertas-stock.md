@@ -51,17 +51,17 @@ Cuando el dashboard presente una vista comercial, podrá agrupar la información
 
 ## 2. Alertas de stock
 
-El sistema permitirá identificar variantes cuyo stock se encuentre en estado de stock bajo o agotado, según las reglas deterministas de la gestión de inventario:
+El sistema permitirá identificar variantes cuyo stock se encuentre en estado de stock bajo o agotado, según las reglas deterministas de la gestión de inventario por `(sku, location_id)`:
 
 ```text
-0 < stock <= umbral_stock_bajo
+0 < available <= umbral_efectivo
 → STOCK_BAJO → alerta
 
-stock = 0
+available = 0
 → AGOTADO → alerta
 ```
 
-El `umbral_stock_bajo` es configurable por cada Variante/SKU.
+El `umbral_efectivo` se determina mediante la jerarquía: `umbral_efectivo = override SKU ?? umbral_global` (donde existe un umbral global configurable del sistema y un override específico por SKU cuando esté definido).
 
 Cuando la cantidad disponible de una variante alcance el umbral o se encuentre por debajo de él, se mostrará una alerta que permita identificarla oportunamente.
 

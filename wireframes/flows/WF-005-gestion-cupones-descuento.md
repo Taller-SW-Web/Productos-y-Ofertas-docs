@@ -27,11 +27,11 @@ Reglas de producción:
   esos datos pertenecen a la promoción asociada.
 - Solo permite asociar promociones configuradas en modalidad cupón.
 - Normaliza el código quitando espacios extremos y convirtiéndolo a mayúsculas.
-- No permitas reducir el límite por debajo de los usos consumidos.
+- Permite configurar límite máximo global opcional, límite máximo por cliente opcional (`max_usos_por_cliente`) y política de restitución (`RESTAURAR_EN_CANCELACION | NO_RESTAURAR`).
+- No permitas reducir el límite global por debajo de los usos consumidos, ni que el límite por cliente supere al global.
 - La validación de una compra no consume usos.
 - La confirmación de pedidos, la idempotencia y la concurrencia son contexto del
   sistema; no deben transformarse en controles administrativos.
-- No incluyas reposición manual o automática de usos por anulación.
 - Numera las anotaciones `A-01`, `A-02`, etc. Estas anotaciones, los supuestos,
   las preguntas y los criterios de revisión pertenecen a la documentación y no
   deben renderizarse dentro de la interfaz del prototipo HTML.
@@ -61,22 +61,23 @@ Reglas de producción:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | `SPEC-005-gestion-cupones-descuento.md`, secciones 3–7 | Modelo, validaciones, uso, concurrencia y alcance |
+| Spec | `SPEC-005-gestion-cupones-descuento.md`, secciones 3–7 | Modelo, validaciones, límites, restitución, uso, concurrencia y alcance |
 | Historia de usuario | `HU-CUP-01`, CA-01 a CA-13 | Necesidad, reglas y escenarios verificables |
 | Diseño | `DESIGN.md` | Escala de grises, jerarquía, controles y accesibilidad táctil |
 
 ### Funcionalidades incluidas
 
 - Consultar, buscar y filtrar cupones.
-- Crear y modificar un cupón.
-- Asociar una promoción de modalidad cupón.
-- Consultar estado, compra mínima y disponibilidad de usos.
+- Crear y modificar un cupón con límites global y por cliente.
+- Configurar política de restitución ante cancelación (`RESTAURAR_EN_CANCELACION` / `NO_RESTAURAR`).
+- Asociar una promoción de modalidad cupón y reflejar su política de combinación.
+- Consultar estado, compra mínima y disponibilidad de usos (globales y por cliente).
 - Activar o desactivar un cupón con confirmación.
 
 ### Fuera de alcance
 
 - Configurar el descuento, productos elegibles o vigencia de la promoción.
-- Procesar pagos, confirmar pedidos o reponer usos por anulaciones.
+- Procesar pagos o confirmaciones manuales de pedidos.
 - Exponer idempotencia, concurrencia, eventos o contratos como controles de UI.
 
 ## 3. Usuario objetivo
@@ -192,29 +193,30 @@ Mensaje de éxito y retorno al listado actualizado.
 | Campo | Tipo | Obligatorio | Validación | Mensaje esperado |
 |---|---|---|---|---|
 | Código | Texto | Sí | `trim`, mayúsculas, `A-Z`, números, `-`, `_`, unicidad | `Este código ya existe` o `Ingresa un código válido` |
-| Promoción | Selector | Sí | Debe existir y ser modalidad cupón | `Selecciona una promoción mediante cupón` |
+| Promoción | Selector | Sí | Debe existir y ser modalidad cupón (muestra política de combinación) | `Selecciona una promoción mediante cupón` |
 | Compra mínima | Moneda | No | Mayor que 0 cuando exista | `Ingresa un monto mayor que 0` |
-| Límite máximo | Entero | No | Mayor que 0 y no menor a consumidos | `El límite no puede ser menor que N` |
+| Límite global | Entero | No | Mayor que 0 y no menor a consumidos | `El límite no puede ser menor que N` |
+| Límite por cliente | Entero | No | Mayor que 0 y no mayor al límite global | `El límite por cliente no puede superar el límite global` |
+| Política de restitución | Selector | Sí | `RESTAURAR_EN_CANCELACION` o `NO_RESTAURAR` | N/A |
 | Estado | Interruptor | Sí | Activo o inactivo | N/A |
 
 - Validar al enviar; normalizar el código al salir del campo y al guardar.
 - Conservar todos los datos tras un error.
 - Deshabilitar el envío mientras se guarda para evitar duplicados.
-- En edición, mostrar usos consumidos y disponibles como solo lectura.
+- En edición, mostrar usos consumidos globales y por cliente como solo lectura.
 
 #### Anotaciones
 
 | ID | Elemento | Anotación |
 |---|---|---|
 | `A-05` | Ayuda del código | Explicar formato y normalización antes del error |
-| `A-06` | Promoción | El selector no configura el beneficio; solo establece la asociación |
-| `A-07` | Límite | En edición, usar consumidos como límite inferior |
-| `A-08` | Resumen de uso | Nunca permitir edición directa del contador |
+| `A-06` | Promoción | El selector no configura el beneficio; asocia la promoción y muestra su política de combinación |
+| `A-07` | Límites | Límite global no menor a consumidos; límite por cliente no mayor al global |
+| `A-08` | Política restitución | Determina si ante cancelación de pedido se restituye el uso del cupón |
 
 ### `S-03` — Detalle del cupón
 
-- Mostrar código, promoción, estado, compra mínima, usos consumidos, límite y
-  usos disponibles.
+- Mostrar código, promoción (con su política de combinación), estado, compra mínima, límite global, límite por cliente, política de restitución, usos consumidos y usos disponibles.
 - Explicar de forma breve que validar una compra no consume usos.
 - Enlazar conceptualmente a la promoción para consultar beneficio y vigencia;
   la navegación exacta queda pendiente.
@@ -318,10 +320,10 @@ Verificar 320 px, zoom 200 %, códigos largos y mensajes de error multilínea.
 - [x] Representa listado, alta, edición, detalle y cambio de estado.
 - [x] Normaliza y valida el código.
 - [x] Evita promociones no elegibles.
-- [x] Valida compra mínima y límite opcionales.
-- [x] Impide reducir el límite por debajo de consumidos.
+- [x] Valida compra mínima, límite global y límite por cliente opcionales.
+- [x] Configura política de restitución (`RESTAURAR_EN_CANCELACION` / `NO_RESTAURAR`).
+- [x] Impide reducir el límite global por debajo de consumidos o que el límite por cliente supere al global.
 - [x] Distingue validación de consumo.
-- [x] No ofrece reposición de usos.
 - [x] Incluye vacío, filtros, errores, éxito, permisos y sesión.
 - [x] Es responsivo, operable por teclado y consistente con `DESIGN.md`.
 - [x] Separa documentación del wireframe de la interfaz simulada.
@@ -333,7 +335,7 @@ Verificar 320 px, zoom 200 %, códigos largos y mensajes de error multilínea.
 | CA-01–CA-06 | S-01, S-02, S-03 y estados de permisos |
 | CA-07–CA-08 | Contexto de detalle y restricciones; validación sin consumo |
 | CA-09–CA-12 | Restricciones técnicas, sin controles administrativos |
-| CA-13 | Dependencia documentada con promociones, sin acumulación |
+| CA-13 | Dependencia documentada con promociones y política de combinación |
 
 ## 16. Supuestos
 
@@ -355,9 +357,10 @@ Verificar 320 px, zoom 200 %, códigos largos y mensajes de error multilínea.
 
 ### Alineación definitiva de Cupones
 
-- El selector **solo** muestra promociones de modalidad `CUPON`; mostrar nombre, vigencia y estado de la promoción en el detalle del cupón sin duplicar descuento, productos elegibles ni fechas dentro de la edición del código.
-- La evaluación compara **la misma cesta** sobre el precio regular por SKU contra oferta propia de Pricing, mejor promoción automática y cupón: solo una alternativa gana; oferta Pricing gana empates con cualquier descuento, cupón gana empate con promoción automática. La validación no consume usos; solo el cupón elegido consume en la confirmación contractual del pedido.
-- En el detalle administrativo los usos deben diferenciar «validaciones» de «usos consumidos». Anulación posterior **no repone automáticamente** el uso. Cupones protege límite e idempotencia por `order_id + cupon_id`.
+- El selector **solo** muestra promociones de modalidad `CUPON`; mostrar nombre, vigencia, política de combinación y estado de la promoción en el detalle del cupón sin duplicar descuento, productos elegibles ni fechas dentro de la edición del código.
+- Configurar límites globales y por cliente (`max_usos_por_cliente`), además de la política de restitución (`RESTAURAR_EN_CANCELACION` / `NO_RESTAURAR`) ante cancelación.
+- La evaluación de promociones y cupones sigue la política de combinación configurada en la promoción asociada. La validación no consume usos; solo el cupón elegido consume en la confirmación contractual del pedido.
+- En el detalle administrativo los usos deben diferenciar «validaciones» de «usos consumidos». Cupones protege límite e idempotencia por `order_id + cupon_id`.
 - El contrato externo de confirmación/rechazo del consumo sigue **provisional**: no simular confirmación de pago ni recuperación automática de un rechazo como si Ventas ya lo hubiera aprobado. Longitud del código y edición de asociación tras usos siguen pendientes si no se encuentran formalizados.
 
 ## 18. Registro de revisiones

@@ -32,8 +32,9 @@ Reglas de producción:
 - Nunca permita seleccionar un combo como componente de otro combo.
 - Exige al menos dos SKUs vendibles distintos, según el Spec y la HU; no hay decisión pendiente sobre este límite.
 - La cantidad de cada componente debe ser un entero positivo.
-- El precio del combo debe ser mayor que cero y estrictamente menor que la suma
-  de los precios regulares vigentes de sus SKUs multiplicados por sus cantidades.
+- El precio del combo debe ser mayor que cero y estrictamente menor tanto que la suma
+  de los precios regulares vigentes de sus SKUs como que la suma de sus precios públicos vigentes
+  (considerando precios de oferta propios de Pricing cuando existan) multiplicados por sus cantidades.
 - No permitas guardar mientras exista un error bloqueante.
 - No conviertas los eventos order.confirmed, order.cancelled, order.returned o
   catalog.sku.deactivated en acciones manuales de esta interfaz.
@@ -41,7 +42,7 @@ Reglas de producción:
 - No elijas una librería de UI ni una estrategia CSS.
 - Usa datos ficticios y no consumas APIs reales.
 - Numera las anotaciones como A-01, A-02, A-03, etc.
-- Mantén visibles las relaciones entre componente, cantidad, precio regular y
+- Mantén visibles las relaciones entre componente, cantidad, precios vigentes (regular y oferta si existe) y
   disponibilidad proporcional.
 
 ### Formato del entregable
@@ -102,8 +103,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Añadir SKU/variantes o productos simples como componentes.
 - Retirar componentes antes de guardar.
 - Impedir el anidamiento de combos.
-- Calcular la suma de precios regulares vigentes.
-- Validar el precio promocional.
+- Calcular la suma de precios regulares y la suma de precios públicos vigentes de componentes.
+- Validar el precio promocional frente a ambas referencias.
 - Mostrar la disponibilidad proporcional calculada.
 - Desactivar manualmente un combo.
 - Mostrar la desactivación automática causada por un componente inactivo.
@@ -113,7 +114,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 - Facturación, cobro o administración del pedido.
 - Despacho y costos logísticos del paquete.
-- Devolución parcial de componentes.
+- Decidir políticas comerciales de devolución total o parcial (responsabilidad de Ventas y Postventa; Inventario solo procesa las líneas devueltas que el contrato comunique).
 - Edición manual de stock desde el combo.
 - Activación/desactivación manual de SKU individuales.
 - Ejecución manual de compensaciones order.cancelled u order.returned.
@@ -144,7 +145,8 @@ calculada.
 ### Resultado exitoso
 
 El combo queda registrado con sus componentes directos y cantidades. El precio
-es mayor que cero y menor que la suma de precios regulares. En creación, el
+es mayor que cero y menor tanto que la suma de precios regulares como que la suma de precios
+públicos vigentes de sus componentes. En creación, el
 combo queda activo para la venta según la spec. La interfaz confirma el
 resultado y presenta la disponibilidad calculada.
 
@@ -210,9 +212,9 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 5. El sistema impide incluir combos.
 6. El gestor define una cantidad entera positiva para cada componente.
 7. Al existir al menos dos SKUs vendibles distintos, el sistema muestra la suma de precios
-   regulares y calcula la disponibilidad proporcional.
+   regulares y la suma de precios públicos vigentes, y calcula la disponibilidad proporcional.
 8. El gestor ingresa un precio de combo mayor que cero.
-9. El sistema valida que el precio sea estrictamente menor que la suma.
+9. El sistema valida que el precio sea estrictamente menor que la suma de precios regulares y menor que la suma de precios públicos vigentes.
 10. El gestor selecciona Crear combo.
 11. El sistema revalida reglas de creación y precios con la proyección conocida; la confirmación de venta se valida exclusivamente en Inventario.
 12. El combo se registra activo y se muestra S-05.
@@ -384,7 +386,7 @@ precio y disponibilidad antes de guardar.
 
 1. Datos generales: nombre y descripción.
 2. Componentes y cantidades.
-3. Resumen de precios regulares.
+3. Resumen de precios regulares y precios públicos vigentes de componentes.
 4. Precio del combo y validación.
 5. Disponibilidad calculada.
 6. Acción Crear combo o Guardar cambios.
@@ -394,9 +396,9 @@ precio y disponibilidad antes de guardar.
 | Región | Componente | Contenido | Comportamiento |
 |---|---|---|---|
 | Datos generales | Campos | Nombre, descripción | Ambos obligatorios según CA-02 |
-| Componentes | Tabla/lista editable | SKU, producto/variante, precio, stock, cantidad, disponibilidad proporcional | Mínimo dos SKUs distintos |
+| Componentes | Tabla/lista editable | SKU, producto/variante, precios vigentes (regular y oferta si existe), stock, cantidad, disponibilidad proporcional | Mínimo dos SKUs distintos |
 | Selección | Botón | Añadir componentes | Abre S-03 |
-| Precio | Resumen + campo | Suma regular vigente y precio del combo | Validación bloqueante |
+| Precio | Resumen + campo | Suma regular, suma pública vigente y precio del combo | Validación bloqueante |
 | Disponibilidad | Resultado calculado | Unidades disponibles del combo y componente limitante | Solo lectura |
 | Acciones | Botones | Crear/Guardar; Cancelar | Guardar condicionado |
 
@@ -406,7 +408,7 @@ precio y disponibilidad antes de guardar.
 |---|---|---|---|---|
 | Nombre | Texto | Sí | Contenido requerido; longitud pendiente | Ingresa un nombre para el combo. |
 | Descripción | Texto multilínea | Sí | Contenido requerido; longitud pendiente | Ingresa una descripción. |
-| Precio del combo | Moneda/decimal | Sí | Mayor que 0 y menor que suma vigente | El precio debe ser mayor que cero y menor que la suma de los componentes. |
+| Precio del combo | Moneda/decimal | Sí | Mayor que 0 y menor que suma regular y suma pública vigente | El precio debe ser mayor que cero y menor que la suma de los componentes. |
 
 #### Tabla de componentes
 
@@ -414,13 +416,13 @@ precio y disponibilidad antes de guardar.
 |---|---|---|---|
 | SKU | Código del SKU o producto simple | No | Debe ser componente directo |
 | Producto/variante | Nombre descriptivo | No | No puede ser combo |
-| Precio regular | Precio regular vigente por SKU | No | Participa en la suma multiplicado por cantidad |
+| Precios vigentes | Precio regular y precio oferta si existe por SKU | No | Participan en las sumas multiplicados por cantidad |
 | Stock | Último saldo conocido en proyección y fecha de cálculo | No | Dato informativo, no reserva ni garantía |
 | Cantidad | Unidades requeridas por combo | Sí | Entero mayor que 0 |
 | Aporte de disponibilidad | floor(stock/cantidad) | No | Determina el mínimo |
 | Acción | Quitar | Sí | No permitir guardar con menos de dos SKUs distintos |
 
-La suma de componentes se calcula como la suma de precio_regular por cantidad.
+La suma regular se calcula como `SUM(precio_regular * cantidad)` y la suma pública vigente como `SUM(min(precio_regular, precio_oferta) * cantidad)`.
 La disponibilidad del combo es el mínimo entero de stock dividido entre la
 cantidad requerida de cada componente.
 
@@ -436,7 +438,7 @@ Resultado: 7 combos disponibles, limitados por SKU-MED-W.
 #### Validaciones y guardado
 
 - Validar campos requeridos al salir y al intentar guardar.
-- Recalcular suma y disponibilidad al añadir/quitar un componente o cambiar
+- Recalcular sumas y disponibilidad al añadir/quitar un componente o cambiar
   una cantidad.
 - Validar el precio después de cada cambio relevante.
 - Revalidar precio y estado en servidor al guardar; mostrar stock proyectado como información, sin garantía de consumo.
@@ -460,9 +462,9 @@ Resultado: 7 combos disponibles, limitados por SKU-MED-W.
 | A-08 | Nombre y descripción | Ambos son obligatorios; límites pendientes |
 | A-09 | Añadir componentes | Solo SKU/variantes o productos simples |
 | A-10 | Cantidad | Entero positivo por componente |
-| A-11 | Precio regular | Usar precio regular vigente del SKU y multiplicarlo por cantidad |
-| A-12 | Suma regular | Se recalcula ante cambios de componentes, cantidades o precios |
-| A-13 | Precio del combo | Debe cumplir 0 < precio_combo < suma_componentes |
+| A-11 | Precios vigentes | Usar precios vigentes (regular y oferta si existe) del SKU y multiplicarlos por cantidad |
+| A-12 | Sumas de referencia | Se recalculan ante cambios de componentes, cantidades o precios |
+| A-13 | Precio del combo | Debe cumplir 0 < precio_combo < suma_regular y precio_combo < suma_publica_vigente |
 | A-14 | Disponibilidad | min(floor(stock_i/cantidad_i)) |
 | A-15 | Componente limitante | Identificar qué SKU determina la disponibilidad |
 | A-16 | Guardar | Bloqueado con menos de dos SKUs distintos o cualquier error |
@@ -595,7 +597,7 @@ Consultar el estado comercial, composición, precio y disponibilidad calculada.
 1. Nombre, estado y precio.
 2. Disponibilidad del combo.
 3. Componentes y cantidades.
-4. Suma de precios regulares y validación del descuento.
+4. Suma de precios regulares, suma de precios públicos vigentes y validación del descuento.
 5. Acciones Editar y Desactivar según permisos.
 
 #### Regiones y componentes
@@ -603,9 +605,9 @@ Consultar el estado comercial, composición, precio y disponibilidad calculada.
 | Región | Componente | Contenido | Comportamiento |
 |---|---|---|---|
 | Encabezado | Título, estado y acciones | Nombre; Activo/Inactivo/Agotado | Acciones por permiso/estado |
-| Comercial | Resumen | Precio del combo y suma regular | Solo lectura |
+| Comercial | Resumen | Precio del combo, suma regular y suma pública vigente | Solo lectura |
 | Disponibilidad | Métrica + explicación | Unidades disponibles y componente limitante | Cálculo dinámico |
-| Componentes | Tabla/lista | SKU, variante, cantidad, precio, stock, aporte | No editable en detalle |
+| Componentes | Tabla/lista | SKU, variante, cantidad, precios vigentes (regular/oferta), stock, aporte | No editable en detalle |
 | Alerta | Mensaje contextual | Baja automática o error | Visible cuando aplica |
 
 #### Datos mostrados
@@ -616,6 +618,7 @@ Consultar el estado comercial, composición, precio y disponibilidad calculada.
 | Estado | Combo | Texto | Alta | No disponible |
 | Precio del combo | Combo/Pricing | Moneda | Alta | No disponible |
 | Suma regular | Pricing vigente | Moneda | Alta | No disponible |
+| Suma pública vigente | Pricing vigente | Moneda | Alta | No disponible |
 | Disponibilidad | Inventario + cantidades | Entero | Alta | No disponible; nunca 0 por defecto |
 | Componente limitante | Cálculo | SKU/nombre | Media | Omitir si no calculable |
 | Componentes | Combo/Catálogo | Lista | Alta | Mostrar error |
@@ -831,16 +834,16 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Cada componente tiene una cantidad entera positiva.
 - [ ] Solo permite SKU/variantes o productos simples directos.
 - [ ] Bloquea combos como componentes.
-- [ ] Muestra precios regulares vigentes y su suma.
+- [ ] Muestra precios regulares y precios públicos vigentes y sus sumas.
 - [ ] Bloquea precio menor o igual a cero.
-- [ ] Bloquea precio igual o superior a la suma.
+- [ ] Bloquea precio igual o superior a la suma regular o a la suma pública vigente.
 - [ ] Recalcula ante cambios de componentes o cantidades.
 - [ ] Muestra disponibilidad proporcional y componente limitante.
 - [ ] Representa disponibilidad 0 cuando un componente se agota.
 - [ ] No confunde error técnico con stock 0.
 - [ ] Confirma la desactivación manual.
 - [ ] Representa desactivación automática y alerta de revisión.
-- [ ] No incluye devoluciones parciales.
+- [ ] Respeta que la política de devolución parcial o total pertenece a Ventas/Postventa e Inventario solo repone lo aceptado.
 - [ ] No expone controles para eventos o movimientos de Kardex.
 - [ ] Incluye carga, vacío, error, conflicto, permisos y sesión.
 - [ ] Funciona con teclado y no depende del color.
@@ -860,7 +863,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | CA-06 | ALT-06, S-05 y microcopy de agotado |
 | CA-07 | Restricción/evento documentado sin control manual |
 | CA-08 | Restricción/evento documentado sin control manual |
-| CA-09 | Restricción/evento documentado; devolución parcial fuera de alcance |
+| CA-09 | Restricción/evento documentado; reposición idempotente de devoluciones aceptadas por Postventa |
 | CA-10 | Flujo E, S-05-A y notificación |
 
 ## 17. Supuestos
@@ -894,8 +897,9 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 ### Alineación definitiva de Combos (Specs/HU definitivos)
 
-- Dos o más **SKUs vendibles distintos**, cantidades enteras positivas y ningún combo anidado. Precio de comparación = suma de **precios regulares vigentes por SKU × cantidad** (incluye override de variante resuelto por Pricing), estrictamente superior al precio del combo. El precio del combo no se acumula con promociones, cupones ni precio de oferta de Pricing.
+- Dos o más **SKUs vendibles distintos**, cantidades enteras positivas y ningún combo anidado. Precios de comparación = suma de **precios regulares vigentes** y suma de **precios públicos vigentes de compra individual** (`min(precio_regular, precio_oferta)`), ambas estrictamente superiores al precio del combo. El precio del combo no se acumula con promociones, cupones ni precio de oferta de Pricing.
 - Solo `order.confirmed` de Ventas/Postventa inicia el débito definitivo **en Inventario**. `order.created` no genera reserva ni consumo. La confirmación/rechazo del consumo es provisional y se debe homologar con Ventas; el wireframe de administración nunca confirma ni descuenta una venta.
+- Reposición por devolución: Inventario repone de forma idempotente las cantidades y SKUs devueltos comunicados por Postventa (`order.returned`), sin decidir si la política comercial permitía devolución parcial o total.
 - Disponibilidad mostrada es una lectura informativa, potencialmente atrasada si usa eventos: **no prometer stock garantizado hasta el débito atómico**. Tras `catalog.sku.deactivated` la baja comercial se refleja por eventos y puede tener latencia de propagación; evitar «instantáneamente» como garantía temporal.
 - La reactivación de un combo no está definida por sus fuentes y no se agrega un botón. Las preguntas genuinas de diseño y condiciones no normadas permanecen señaladas como pendientes.
 

@@ -740,7 +740,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 | ID   | Pregunta o decisión                                                                              | Responsable        | Bloquea wireframe                         | Estado    |
 | ---- | ------------------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------- | --------- |
-| Q-01 | Resuelto: plantilla general `template_version=1`, 20 columnas y campos condicionales por operación según Spec Requisito 9; ejemplos eliminables. | Spec/HU Bulk | No | Resuelta |
+| Q-01 | Resuelto: plantilla general `template_version=2`, 25 columnas y campos condicionales por operación según Spec Requisito 9; ejemplos eliminables. | Spec/HU Bulk | No | Resuelta |
 | Q-02 | ¿Cuál es la ruta, ubicación en navegación y código de permisos de importar/exportar?             | Frontend/Seguridad | No para estructura                        | Abierta   |
 | Q-03 | ¿El formato XLSX/CSV se elige con selector, menú o botones separados?                            | Producto/UX        | No                                        | Abierta   |
 | Q-04 | ¿Qué canal notifica la finalización y a dónde dirige al usuario?                                 | Producto/Frontend  | No                                        | Abierta   |
@@ -753,15 +753,15 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 ### Alineación definitiva de carga masiva (fuente: Spec/HU de Carga Masiva, Productos, Variantes e Inventario)
 
-- **Fila de creación simple:** identifica producto padre y campos requeridos; el `sku_base` es la unidad vendible. **Fila de creación de variante:** identifica padre (existente o creado dentro del mismo lote) y atributos identificadores; Catálogo genera el SKU, no se exige que el usuario invente el SKU de la variante. **Actualización:** identifica el SKU existente; las celdas vacías conservan valores.
-- El formulario y la plantilla explican que **una fila corresponde a un SKU vendible** y varias variantes pueden referir al mismo padre. La plantilla v1 usa exactamente las 20 columnas y reglas por operación del Requisito 9 de Bulk; reflejar encabezados idénticos en CSV y XLSX.
+- **Fila de creación simple:** identifica producto padre y campos requeridos; el `sku_base` es la unidad vendible. **Fila de creación de variante:** identifica padre (existente o creado dentro del mismo lote), `tipo_producto_id` y atributos identificadores; Catálogo genera el `variant_id` interno y valida/asigna el `sku` comercial. **Actualización:** identifica el SKU existente (`sku`), requiere `catalog_version` si se modifican datos de catálogo, `price_version` y `motivo_cambio` si se modifica precio, y `location_id` + `stock_version` si se modifica stock; las celdas vacías conservan valores.
+- El formulario y la plantilla explican que **una fila corresponde a un SKU vendible** y varias variantes pueden referir al mismo padre. La plantilla v2 usa exactamente las 25 columnas y reglas por operación del Requisito 9 de Bulk; reflejar encabezados idénticos en CSV y XLSX.
 - Bulk emite **comandos** `catalog.bulk.upsert.requested`, `pricing.bulk.price.apply.requested` e `inventory.bulk.stock.adjust.requested` hacia propietarios; estos confirman/rechazan por `batch_id`/`row_id`. `pricing.price.changed` e `inventory.stock.adjusted` son hechos **emitidos por sus respectivos propietarios después de persistir**, no solicitudes de modificación.
-- Un ajuste **absoluto** de stock sobre SKU existente exige `stock_version`; si cambió por venta concurrente, se rechaza el ajuste obsoleto sin reintento ciego. Al crear SKU se inicializa inventario en cero con versión inicial, según la coordinación definida en los Specs.
-- El estado `FAILED` de una fila no significa rollback distribuido: el resultado informa qué dominios aplicaron cambios y cuáles necesitan conciliación. **No mostrar «todos los cambios de la fila se deshicieron»**. La fila es `COMPLETED` solo tras todas las confirmaciones requeridas.
+- Un ajuste **absoluto** de stock sobre SKU existente exige `stock_version` y `location_id`; si cambió por venta concurrente, se rechaza el ajuste obsoleto sin reintento ciego (`VERSION_CONFLICT`). Al crear SKU se inicializa inventario en cero con versión inicial, según la coordinación definida en los Specs.
+- El estado `FAILED` de una fila no significa rollback distribuido: el resultado informa qué dominios aplicaron cambios y cuáles necesitan conciliación (`needs_reconciliation`). **No mostrar «todos los cambios de la fila se deshicieron»**. La fila es `COMPLETED` solo tras todas las confirmaciones requeridas.
 - Los límites de hasta 5.000 filas y 10 MB corresponden a importación; la exportación completa del catálogo no debe truncarse al alcanzar el límite de importación.
 
-### Flujo adicional de exportación asíncrona y plantilla v1
-La descarga de plantilla inicia inmediatamente. La exportación completa muestra `export_id`, «En cola», «Procesando», «Lista para descargar» y `FAILED_GENERAL` con reintento recuperable. Un archivo exportado incluye `exported_at` y versiones fuente; puede contener más de 5.000 SKUs porque ese límite aplica a **importación**. La plantilla general v1 usa, en orden: `operacion`, `product_id`, `sku_base`, `sku`, `nombre`, `descripcion`, `categoria_id`, `marca_id`, `tiene_variantes`, `caracteristicas_identificadoras`, `atributos_identificadores`, `atributos_no_identificadores`, `imagen_url`, `precio_regular`, `precio_oferta`, `accion_precio_oferta`, `stock`, `stock_version`, `estado`, `motivo_cambio`. Mostrar tipos y obligatoriedad condicional por operación tal como indica el Spec, no permitir edición manual del SKU de variante nueva. Al fallar el worker, no presentar filas aplicadas como revertidas; ofrecer reanudar pendientes con el mismo `batch_id`.
+### Flujo adicional de exportación asíncrona y plantilla v2
+La descarga de plantilla inicia inmediatamente. La exportación completa muestra `export_id`, «En cola», «Procesando», «Lista para descargar» y `FAILED_GENERAL` con reintento recuperable. Un archivo exportado incluye `exported_at` y versiones fuente (`catalog_version`, `price_version`, `stock_version`); puede contener más de 5.000 SKUs porque ese límite aplica a **importación**. La plantilla general v2 usa, en orden: `operacion`, `product_id`, `variant_id`, `sku_base`, `sku`, `nombre`, `descripcion`, `categoria_id`, `tipo_producto_id`, `marca_id`, `tiene_variantes`, `caracteristicas_identificadoras`, `atributos_identificadores`, `atributos_no_identificadores`, `imagen_url`, `precio_regular`, `precio_oferta`, `accion_precio_oferta`, `location_id`, `stock`, `catalog_version`, `price_version`, `stock_version`, `estado`, `motivo_cambio`. Mostrar tipos y obligatoriedad condicional por operación tal como indica el Spec, no exigir edición manual del identificador interno `variant_id`. Al fallar el worker, no presentar filas aplicadas como revertidas; ofrecer reanudar pendientes con el mismo `batch_id`.
 
 ## 19. Registro de revisiones
 
@@ -770,6 +770,7 @@ La descarga de plantilla inicia inmediatamente. La exportación completa muestra
 | 0.1     | 2026-09-16 | Asistente | Borrador inicial basado en spec, HU, template y DESIGN.md | Pendiente    |
 | 0.2     | 2026-09-17 | Asistente | Se separó la documentación del wireframe de la interfaz HTML; se retiró la exigencia de mostrar anotaciones, supuestos, preguntas y controles de dispositivo dentro del prototipo; WF-001 quedó confirmado contra INDEX.md | Pendiente    |
 | 0.3 | 2026-09-18 | Asistente | Alineación de wireframe con Specs/HU definitivos y contratos externos provisionales; ver registro de cambios. | Pendiente de revisión del equipo |
+| 0.4 | 2026-09-21 | Asistente | Actualización narrativa de plantilla v2 (25 columnas), catalog_version, price_version, stock_version y variant_id. | Aprobado |
 
 ---
 
@@ -782,7 +783,9 @@ La descarga de plantilla inicia inmediatamente. La exportación completa muestra
 - [x] Los supuestos y preguntas están registrados.
 - [x] El formato HTML está definido.
 - [x] ID WF-001 confirmado contra INDEX.md.
-- [x] Q-01 resuelta: cabeceras y obligatoriedad según plantilla general v1.
+- [x] Q-01 resuelta: cabeceras y obligatoriedad según plantilla general v2.
+- [ ] Confirmar ruta y permisos antes de implementar el frontend.
+- [x] Fallo general e inyección de fórmulas regulados: no ejecutar fórmulas; archivo inseguro se rechaza, worker reintenta/reanuda.
 - [ ] Confirmar ruta y permisos antes de implementar el frontend.
 - [x] Fallo general e inyección de fórmulas regulados: no ejecutar fórmulas; archivo inseguro se rechaza, worker reintenta/reanuda.
 

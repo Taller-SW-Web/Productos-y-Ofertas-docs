@@ -29,9 +29,9 @@ Reglas de producción:
 
 - No agregues campos, permisos, endpoints ni reglas no documentadas.
 - Los tipos son exactamente `TEXTO`, `NUMERO` y `LISTA`.
-- `TEXTO`: el valor que capture un producto se limita a 100 caracteres.
+- `TEXTO`: el valor que capture un producto se limita operativamente por configuración a `MAX_TEXT_ATTRIBUTE_LENGTH` (valor inicial del MVP: 100 caracteres).
 - `NUMERO`: exige unidad de medida y validación estricta de formato numérico.
-- `LISTA`: máximo 50 valores activos por característica.
+- `LISTA`: límite operativo configurable `MAX_ACTIVE_LIST_VALUES` (valor inicial del MVP: 50 valores activos por característica) para proteger rendimiento y usabilidad.
 - Renombrar un valor en uso lo actualiza por ID: los productos conservan el
   vínculo y muestran el nuevo texto; no se debe romper la asociación.
 - No manejes aquí el CRUD de marcas: corresponde a WF-011.
@@ -40,7 +40,7 @@ Reglas de producción:
 - No elijas una librería de UI ni una estrategia CSS.
 - Usa datos ficticios y no consumas APIs reales.
 - Numera las anotaciones como A-01, A-02, A-03, etc.
-- Mantén visibles las reglas de límite (100, 50 y unidad) donde aplique.
+- Mantén visibles las reglas de límite operativo (100 caracteres iniciales en TEXTO, 50 activos iniciales en LISTA y unidad de medida en NUMERO) donde aplique.
 
 ### Formato del entregable
 
@@ -62,7 +62,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 2. Creación con selección de tipo y unidad de medida condicional.
 3. Edición de nombre y datos de la característica.
 4. Gestión de valores de tipo `LISTA` (agregar, renombrar, baja lógica).
-5. Control de los límites (50 valores activos, 100 caracteres TEXTO, unidad
+5. Control de los límites operativos configurables (50 valores activos iniciales en LISTA, 100 caracteres iniciales en TEXTO, unidad
    numérica).
 6. Baja lógica y reactivación de una característica.
 7. Estados de carga, vacío, error, permisos y conflicto.
@@ -86,7 +86,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | SPEC-009-gestion-caracteristicas.md, secciones 1–6 | Tipos, límites y reglas de valores |
+| Spec | SPEC-009-gestion-caracteristicas.md, secciones 1–6 | Tipos, límites operativos y reglas de valores |
 | Historia de usuario | HU-009-gestion-caracteristicas.md, CA-01 a CA-06 | Criterios de característica y valores |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
@@ -100,7 +100,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Consultar características y su tipo.
 - Crear una característica `TEXTO`, `NUMERO` o `LISTA`.
 - Exigir unidad de medida en `NUMERO`.
-- Gestionar hasta 50 valores activos en `LISTA`.
+- Gestionar hasta 50 valores activos en `LISTA` (límite operativo configurable `MAX_ACTIVE_LIST_VALUES`).
 - Agregar, renombrar y dar de baja valores por ID.
 - Renombrar una característica.
 - Baja lógica y reactivación de características activas/inactivas.
@@ -128,13 +128,13 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 El gestor comercial debe poder crear y mantener características tipadas
 (`TEXTO`, `NUMERO`, `LISTA`), gestionar los valores de las de tipo lista bajo
-límites estrictos y dar de baja o reactivar características, para alimentar la
+los límites operativos configurados y dar de baja o reactivar características, para alimentar la
 posterior asociación con categorías.
 
 ### Resultado exitoso
 
 La característica queda registrada con su tipo. Si es `NUMERO`, tiene unidad de
-medida. Si es `LISTA`, sus valores activos no superan 50 y el renombrado se
+medida. Si es `LISTA`, sus valores activos respetan el límite operativo configurable (inicial MVP: 50) y el renombrado se
 propaga por ID a los productos existentes sin romper datos.
 
 ### Indicadores de finalización
@@ -675,7 +675,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 ### Alineación definitiva de Características
 
-- Este wireframe administra exclusivamente características y valores `TEXTO` (máximo 100 caracteres), `NUMERO` (unidad obligatoria) y `LISTA` (máximo 50 valores activos). La asociación/herencia y el límite de 20 efectivos corresponden al **WF-010**, y el CRUD de marcas al **WF-011**; no incluir pantallas CRUD redundantes.
+- Este wireframe administra exclusivamente características y valores `TEXTO` (límite operativo configurable `MAX_TEXT_ATTRIBUTE_LENGTH`, inicial 100 caracteres), `NUMERO` (unidad obligatoria) y `LISTA` (límite operativo configurable `MAX_ACTIVE_LIST_VALUES`, inicial 50 valores activos). La asociación/herencia y el límite de 20 efectivos corresponden al **WF-010**, y el CRUD de marcas al **WF-011**; no incluir pantallas CRUD redundantes.
 - Renombrar un valor conserva su ID y no altera SKU. La baja de valores LISTA usados por SKU ACTIVO o producto ACTIVO requerido se rechaza con verificación asíncrona segura; el tipo es inmutable.
 
 ### Estados de verificación asíncrona al desactivar valor LISTA

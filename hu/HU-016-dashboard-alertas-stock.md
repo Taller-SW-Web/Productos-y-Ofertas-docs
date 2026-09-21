@@ -38,13 +38,13 @@ La unidad primaria de inventario del dashboard es el **SKU vendible**. El Produc
 
 ### Escenario 2: Identificar una variante con stock bajo
 
-* **DADO** que el `umbral_stock_bajo` de una variante está configurado y la variante se encuentra en o por debajo de dicho umbral,
+* **DADO** que el `umbral_efectivo` (`override SKU ?? umbral_global`) de una variante en una ubicación está configurado y la variante tiene `0 < available <= umbral_efectivo`,
 * **CUANDO** el responsable de inventario consulta el dashboard,
 * **ENTONCES** el sistema muestra una alerta indicando que la variante presenta **Stock bajo**.
 
 ### Escenario 3: Identificar una variante agotada
 
-* **DADO** que una variante tiene un stock de 0 unidades,
+* **DADO** que una variante tiene `available = 0` unidades en una ubicación,
 * **CUANDO** el responsable de inventario consulta el dashboard,
 * **ENTONCES** el sistema muestra la variante como **Agotada** y genera la alerta correspondiente.
 
@@ -56,21 +56,21 @@ La unidad primaria de inventario del dashboard es el **SKU vendible**. El Produc
 
 ### Escenario 5: Actualización de una alerta después de un consumo (Disponible → Stock bajo)
 
-* **DADO** que una variante tiene 6 unidades disponibles y su `umbral_stock_bajo` está configurado en 5 unidades,
+* **DADO** que una variante tiene `available = 6` unidades y su `umbral_efectivo` está configurado en 5 unidades,
 * **CUANDO** se registra el consumo de 1 unidad,
-* **ENTONCES** el stock se actualiza a 5 unidades, la variante pasa de **Disponible** a **Stock bajo** y aparece como **Stock bajo** en el dashboard.
+* **ENTONCES** el saldo disponible se actualiza a `available = 5`, la variante pasa de **Disponible** a **Stock bajo** y aparece como **Stock bajo** en el dashboard.
 
 ### Escenario 6: Actualización del dashboard después de agotar una variante (Stock bajo → Agotado)
 
-* **DADO** que una variante tiene 1 unidad disponible y su `umbral_stock_bajo` está configurado en 5 unidades (por lo que se encuentra en estado **Stock bajo**),
-* **CUANDO** se registra correctamente el consumo de esa unidad,
+* **DADO** que una variante tiene `available = 1` unidad y su `umbral_efectivo` está configurado en 5 unidades (por lo que se encuentra en estado **Stock bajo**),
+* **CUANDO** se registra correctamente el consumo de esa unidad pasando a `available = 0`,
 * **ENTONCES** el dashboard actualiza la información de la variante a **Agotado** y muestra la alerta correspondiente.
 
 ### Escenario 7: Actualización reactiva del dashboard ante un cambio de stock
 
-* **DADO** que la gestión de inventario modifica el stock de una variante (por ejemplo, su stock queda en o por debajo de su `umbral_stock_bajo`),
+* **DADO** que la gestión de inventario modifica el stock disponible de una variante (por ejemplo, `available <= umbral_efectivo`),
 * **CUANDO** la gestión de inventario notifica el cambio mediante el contrato de evento `inventory.stock.changed`,
-* **ENTONCES** el dashboard recalcula los indicadores y alertas con el saldo y el estado vigentes de la variante.
+* **ENTONCES** el dashboard recalcula los indicadores y alertas con el saldo y el estado vigentes de la variante por `(sku, location_id)`.
 
 ## Interacción con otros módulos
 

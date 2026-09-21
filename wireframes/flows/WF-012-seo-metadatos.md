@@ -37,7 +37,7 @@ Reglas de producción:
   recomendado 160 caracteres. Superar el límite PERMITE guardar pero muestra
   una advertencia visible.
 - Si el slug de una categoría indexada cambia, se guarda el historial y se
-  mantiene una redirección 301 hacia el nuevo slug.
+  expone la resolución permanente `old_slug -> new_slug`; el canal Marketplace es el responsable de ejecutar la respuesta HTTP 301 en su capa pública.
 - El endpoint público de metadatos SEO retorna título y descripción por slug
   activo.
 - No elijas una librería de UI ni una estrategia CSS.
@@ -65,7 +65,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
    error explícito en edición manual.
 4. Contadores vivos y advertencias de 70/160 caracteres.
 5. Vista previa del snippet de búsqueda.
-6. Historial de slugs con redirecciones 301.
+6. Historial de slugs con resolución permanente de redirecciones (HTTP 301 en Marketplace).
 7. Simulación del endpoint público por slug activo.
 8. Estados de carga, vacío, error, permisos y conflicto.
 9. Navegación funcional entre los estados simulados.
@@ -88,26 +88,27 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 | Fuente | Identificador o sección | Aporte al flujo |
 |---|---|---|
-| Spec | SPEC-012-seo-metadatos.md, secciones 1–5 | Alcance, requisitos y criterio de completitud |
-| Historia de usuario | HU-012-seo-metadatos.md, CA-01 a CA-06 | Criterios y escenarios |
+| Spec | SPEC-012-seo-metadatos.md, secciones 1–5 | Reglas SEO, política de duplicados y resolución de slugs |
+| Historia de usuario | HU-012-seo-metadatos.md, CA-01 a CA-06 | Criterios de aceptación SEO |
 | Diseño | DESIGN.md | Lenguaje visual monocromático de baja fidelidad |
 | Backlog | No proporcionado | No se asignan IDs de backlog |
 
 ### Funcionalidades incluidas
 
-- Consultar el estado SEO de cada categoría.
-- Generar automáticamente un slug normalizado desde el nombre de la categoría.
+- Consultar el estado de configuración SEO por categoría.
+- Generar automáticamente el slug normalizado desde el nombre.
 - Editar manualmente el slug de una categoría.
 - Aplicar sufijo incremental silencioso en auto-generación con duplicado.
 - Rechazar duplicados en la edición manual con error explícito.
 - Editar meta-título y meta-descripción con límites 70/160 y advertencias.
-- Mantener historial de slugs y redirecciones 301.
+- Mantener historial de slugs y exponer resolución permanente `old_slug -> new_slug`.
 - Simular el endpoint público de metadatos por slug activo.
 
 ### Fuera de alcance
 
 - Gráfico del rendimiento SEO, sugerencias u otras herramientas de buscador.
 - Cambios en URLs canónicas del frontend.
+- Ejecución de la redirección HTTP 301 en la capa pública: corresponde a Marketplace.
 - Gestión del slug dentro de la creación de categorías de WF-008: aquí solo se
   administra el SEO una vez recibe la categoría.
 - Traducción de metadatos a varios idiomas.
@@ -127,21 +128,20 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 ## 4. Objetivo del flujo
 
 El gestor comercial debe poder configurar, por cada categoría, el slug y los
-metadatos SEO (meta-título y meta-descripción) con control de duplicados y
-redirecciones, de modo que el Marketplace pueda generar URLs legibles y
-optimizables, manteniendo el posicionamiento previo al renombrar slugs.
+metadatos SEO (meta-título y meta-descripción) con control de duplicados e
+historial de slugs, de modo que el Marketplace pueda generar URLs legibles y
+optimizar la navegación, resolviendo redirecciones para mantener el posicionamiento previo.
 
 ### Resultado exitoso
 
 La categoría queda con slug único y activo, metadatos dentro o sobre los
-límites recomendados con advertencia visible, historial de slugs con
-redirección 301 cuando cambia, y el endpoint público retorna el título y la
+límites recomendados con advertencia visible, historial de slugs con resolución permanente de redirección, y el endpoint público retorna el título y la
 descripción por el slug activo.
 
 ### Indicadores de finalización
 
 - Configuración inicial: mensaje Metadatos guardados y estado Configurado.
-- Cambio de slug: historial actualizado y redirección 301 registrada.
+- Cambio de slug: historial actualizado y resolución de redirección registrada.
 - Endpoint: respuesta simulada 200 con título y descripción.
 
 El patrón exacto de notificación debe alinearse con el sistema global.
@@ -171,9 +171,9 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 | Guardado exitoso | S-01 con estado Configurado actualizado |
 | Slug duplicado en edición manual | Error en S-02 sin guardar |
 | Slug duplicado en auto-generación | Sufijo silencioso y guardado permitido |
-| Cambio de slug | S-03 actualizado con 301 |
+| Cambio de slug | S-03 actualizado con resolución de redirección |
 | Cancelación | Regresa a S-01 o al origen |
-| Endpoint consultado | Simulación de respuesta 200/301/404 |
+| Endpoint consultado | Simulación de respuesta de metadatos o resolución permanente |
 | Sin permisos | Bloquea la acción y ofrece retorno seguro |
 
 ## 6. Secuencia principal
@@ -197,19 +197,19 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 1. El gestor edita el slug de una categoría configurada.
 2. Si el slug ya existe en otra categoría, el sistema muestra “El slug indicado
    ya está en uso” y bloquea el guardado.
-3. Si es válido y distinto del anterior, el sistema registra el historial y
-   redirección 301.
+3. Si es válido y distinto del anterior, el sistema registra el historial y la
+   resolución permanente `old_slug -> new_slug` (para ejecución 301 en Marketplace).
 
 ### Flujo D — Regenerar slug desde el nombre
 
 1. El gestor elige Regenerar desde el nombre.
 2. El sistema normaliza y, ante duplicado, aplica sufijo silencioso.
-3. El gestor guarda; se registran historial y 301 si aplica.
+3. El gestor guarda; se registran historial y resolución si aplica.
 
 ### Flujo E — Consultar historial y endpoint
 
 1. El gestor abre el historial de slugs de una categoría.
-2. Ve los slugs anteriores con redirección 301 y prueba el endpoint público.
+2. Ve los slugs anteriores con su resolución hacia el nuevo slug y prueba el endpoint público de metadatos.
 
 ### Flujos alternativos
 
@@ -233,7 +233,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 | S-01-E | Vacío o error del listado | Diferenciar ausencia de fallo de carga | Variante de S-01 | Sí |
 | S-02 | Configurar/Editar SEO | Slug, meta-título, meta-descripción y vista previa | Ruta propuesta /productos/seo/:id | Sí |
 | S-02-E | Error de guardado | Conservar datos y recuperar | Variante de S-02 | Sí |
-| S-03 | Historial y endpoint | Slugs anteriores, 301 y prueba del endpoint | Ruta propuesta /productos/seo/:id/historial | Sí |
+| S-03 | Historial y endpoint | Slugs anteriores, resolución de redirecciones y prueba del endpoint | Ruta propuesta /productos/seo/:id/historial | Sí |
 
 ## 8. Mapa de navegación
 
@@ -373,7 +373,7 @@ búsqueda.
 | A-07 | Auto-generación | Duplicado recibe sufijo silencioso |
 | A-08 | Edición manual | Duplicado rechazado; sin auto-sufijo |
 | A-09 | Contadores | Límite recomendado 70/160; guardado permitido |
-| A-10 | Cambio de slug | Genera historial y redirección 301 |
+| A-10 | Cambio de slug | Genera historial y resolución permanente (Marketplace ejecutará HTTP 301) |
 | A-11 | Vista previa | Simula el snippet de los buscadores |
 
 ### S-02-E — Error de guardado
@@ -386,28 +386,28 @@ búsqueda.
 
 #### Propósito
 
-Mostrar los slugs históricos con redirección 301 y probar el endpoint público.
+Mostrar los slugs históricos con su resolución permanente hacia el slug actual y probar el endpoint público de metadatos.
 
 #### Regiones y componentes
 
 | Región | Componente | Contenido | Comportamiento |
 |---|---|---|---|
 | Historial | Tabla | Slug actual; slugs anteriores; fecha | Tabla en escritorio/tarjetas en móvil |
-| Redirección | Etiqueta | 301 → slug actual | Indica la nueva ruta |
-| Endpoint | Panel de simulación | Slug de consulta; respuesta | Devuelve 200/301/404 ficticio |
+| Redirección | Etiqueta | Resolución permanente → slug actual | Indica la nueva ruta (ejecutada como 301 en Marketplace) |
+| Endpoint | Panel de simulación | Slug de consulta; respuesta | Devuelve 200 (metadatos vigentes), resolución de slug anterior, o 404 ficticio |
 
 #### Comportamiento de la simulación
 
 - Slug activo: 200 con `{slug, meta_title, meta_description}`.
-- Slug antiguo con historial: 301 con `Location` al slug nuevo.
-- Slug inexistente: 404.
+- Slug antiguo con historial: Resolución que indica reemplazo permanente hacia el nuevo slug (Marketplace responde 301 con `Location`).
+- Slug inexistente o categoría inactiva: 404.
 
 #### Anotaciones
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| A-12 | Historial | Cada slug anterior queda como 301 |
-| A-13 | Endpoint | Público, retorna metadatos por slug activo |
+| A-12 | Historial | Cada slug anterior expone resolución permanente `old_slug -> new_slug` |
+| A-13 | Endpoint | Público de solo lectura, retorna metadatos por slug activo |
 
 ## 10. Estados de interfaz
 
@@ -425,8 +425,8 @@ Mostrar los slugs históricos con redirección 301 y probar el endpoint público
 | Guardado exitoso | Sí | Confirmación + listado | Continuar | N/A |
 | Error de guardado | Sí | Mensaje sin perder datos | Reintentar | Repetir envío |
 | Slugs sin historial | Sí | Mensaje informativo | N/A | N/A |
-| Endpoint 200 | Sí | JSON ficticio | Probar otro slug | N/A |
-| Endpoint 301 | Sí | JSON ficticio con Location | Probar otro slug | N/A |
+| Endpoint 200 | Sí | JSON ficticio de metadatos vigentes | Probar otro slug | N/A |
+| Endpoint resolución | Sí | JSON ficticio de resolución `old_slug -> new_slug` | Probar otro slug | N/A |
 | Endpoint 404 | Sí | JSON ficticio | Probar otro slug | N/A |
 | Sin permisos | Sí | Explicación segura | Volver | Solicitar acceso |
 | Sesión expirada | Sí | Aviso/autenticación | Iniciar sesión | Recuperar contexto |
@@ -582,7 +582,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [x] Las pantallas y variantes están inventariadas.
 - [x] Los criterios CA-01 a CA-06 están cubiertos.
 - [x] La política dual de duplicados está documentada.
-- [x] Los límites 70/160 y la redirección 301 están documentados.
+- [x] Los límites 70/160 y la resolución de redirecciones (Marketplace 301) están documentados.
 - [x] Los supuestos y preguntas están registrados.
 - [x] El formato HTML está definido.
 - [ ] Confirmar el ID WF-012 contra INDEX.md.

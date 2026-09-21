@@ -108,33 +108,35 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 ### Funcionalidades incluidas
 
-- Consultar el detalle de precio de un SKU, indicando si es propio (override)\
-  o heredado del producto.
-- Actualizar el precio regular y/o el precio de oferta de un SKU, exigiendo\
-  motivo obligatorio.
-- Programar un precio (regular u oferta) con fecha/hora de vigencia futura.
+- Consultar el detalle de precio de un SKU, indicando si es propio (override)
+  o heredado del producto, así como su scope de canal (`channel_id`), moneda y `price_version`.
+- Actualizar el precio regular y/o el precio de oferta de un SKU, exigiendo
+  motivo obligatorio y validación de `price_version` para concurrencia optimista.
+- Programar precios con fecha/hora de vigencia (`valid_from` y `valid_until` opcional), canal (`channel_id`) y moneda, validando que no existan intervalos superpuestos.
+- Validar rangos comerciales y mostrar advertencias reforzadas ante variaciones porcentuales extraordinarias (guardrails).
 - Consultar el precio oficial vigente en una fecha/hora pasada (as-of).
-- Cargar un archivo CSV/XLSX con precios en lote, con cabeceras `sku`,\
-  `precio_regular`, `motivo_cambio` obligatorias y `precio_oferta` opcional.
+- Cargar un archivo CSV/XLSX con precios en lote, con columnas `sku`,
+  `precio_regular`, `motivo_cambio` obligatorias, y opcionales `precio_oferta`, `accion_precio_oferta`, `channel_id`, `valid_from`, `valid_until` y `price_version`.
 - Previsualizar la estructura del archivo antes de confirmar la carga.
-- Elegir entre el modo atómico por defecto (all-or-nothing) y el modo\
+- Elegir entre el modo atómico por defecto (all-or-nothing dentro de Pricing) y el modo
   tolerante a fallos (`allow_partial=true`).
 - Seguir el procesamiento asíncrono del lote sin bloquear la interfaz.
 - Mostrar el resultado cuantitativo del lote (total, exitosos, fallidos).
-- Descargar un reporte de errores fila por fila cuando existan fallos.
+- Descargar un reporte de errores fila por fila cuando existan fallos (incluyendo conflictos de versión o vigencias superpuestas).
 
 ### Fuera de alcance
 
-- Configuración de reglas de cupones, combos o promociones 2x1.
+- Configuración de reglas de cupones, combos o promociones 2x1 (corresponde a promociones/ofertas).
 - Procesamiento de cobros y checkout.
 - Determinación de costos logísticos o tarifas por zona.
-- Descarga de plantilla de carga masiva o exportación del catálogo de\
+- Costeo de productos, margen contable y prevención de márgenes negativos (no existe dominio de costos en el alcance; Pricing no administra costos).
+- Descarga de plantilla de carga masiva o exportación del catálogo de
   precios: no están documentadas en la especificación de este flujo.
 - Mapeo dinámico de columnas del archivo masivo.
-- Edición de la jerarquía producto/variante (creación de overrides fuera de\
+- Edición de la jerarquía producto/variante (creación de overrides fuera de
   la actualización de precio en sí).
-- Historial de lotes anteriores, cancelación de un lote en curso o\
-  cancelación de una programación ya creada, porque no están confirmados en\
+- Historial de lotes anteriores, cancelación de un lote en curso o
+  cancelación de una programación ya creada, porque no están confirmados en
   las fuentes.
 
 ## 3. Usuario objetivo
@@ -1029,8 +1031,8 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 - Densidad: media; hay reglas de negocio críticas (rangos de precio,\
   motivo obligatorio) que se presentan por etapas.
-- Sensación buscada: control, precisión y seguridad antes de una operación\
-  que afecta directamente el margen comercial.
+- Sensación buscada: control, precisión y seguridad ante una operación
+  que actualiza los precios oficiales del catálogo y canales (Pricing valida reglas comerciales y rangos, sin gestionar costos o márgenes contables).
 - Elemento dominante en S-01: el precio vigente y su origen.
 - Elemento dominante en S-02/S-03: la comparación entre el precio actual y\
   el nuevo precio.
@@ -1183,7 +1185,8 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 ### Alineación definitiva de Pricing y sus dos flujos masivos
 
-- Pricing es propietario de precio base del producto y overrides opcionales por SKU. El detalle debe mostrar **precio regular vigente, precio de oferta opcional y origen heredado/override** sin tratarlos como una sola cifra.
+- Pricing es propietario de precio base del producto y overrides opcionales por SKU. El detalle debe mostrar **precio regular vigente, precio de oferta opcional, scope de canal (`channel_id`), vigencia (`valid_from`/`valid_until`), versión (`price_version`) y origen heredado/override** sin tratarlos como una sola cifra. Se aplican guardrails con advertencias ante variaciones porcentuales extraordinarias sin inferir costos de producto.
+- No se permiten intervalos temporales superpuestos para un mismo SKU, tipo de precio, canal y moneda.
 - `pricing.price.changed` es emitido **por Pricing tras un cambio persistido**; no es un comando que Bulk le envía para cambiar precios. Para la importación general de WF-001 se usa `pricing.bulk.price.apply.requested` y su resultado correlacionado. La carga de precios propia de Pricing continúa como flujo diferenciado, con **All-or-Nothing por defecto** y `allow_partial=true` como alternativa aprobada.
 - La **oferta de Pricing es alternativa** a promociones automáticas/cupones, no su base acumulativa. Los descuentos de Promociones se calculan sobre el regular vigente por SKU; al comparar totales finales de una misma cesta, oferta Pricing gana en empate con promociones o cupones.
 - Auditoría registra primer precio como CREACION con `precio_anterior=null` y `variacion_porcentual=null`; mostrar «Sin precio anterior» en lugar de 0 o de una variación inventada.

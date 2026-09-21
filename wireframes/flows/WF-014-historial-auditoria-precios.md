@@ -33,12 +33,12 @@ Reglas de producción:
   registro de auditoría; el almacén es estrictamente de solo lectura y\
   adición (Append-Only). No representes botones de "Editar" ni "Eliminar"\
   en ninguna pantalla de este flujo.
-- No diseñes una pantalla de reversión ("rollback") de precios desde\
-  auditoría; cualquier corrección se hace desde el flujo formal de gestión\
+- No diseñes una pantalla de reversión ("rollback") de precios desde
+  auditoría; cualquier corrección se hace desde el flujo formal de gestión
   de precios (WF-013), fuera de este flujo.
-- No diseñes una pantalla para consultar registros archivados en frío\
-  (Parquet/S3) más allá de los 24 meses en caliente; no está documentada.
-- No agregues un filtro por `tipo_precio`; la especificación solo define\
+- No diseñes una pantalla para consultar registros archivados en frío
+  (Parquet/S3) más allá del período caliente configurable (`AUDIT_HOT_RETENTION_MONTHS`, inicial 24 meses); no está documentada.
+- No agregues un filtro por `tipo_precio`; la especificación solo define
   filtros por SKU, rango de fechas, usuario, canal de origen y lote.
 - No elijas una librería de UI o estrategia CSS.
 - No consumas APIs reales ni uses datos personales reales.
@@ -133,9 +133,9 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Edición, corrección o borrado de un registro de auditoría desde la\
   interfaz: el almacén es Append-Only.
 - Reversión ("rollback") de precios desde la interfaz de auditoría.
-- Consulta de registros archivados en almacenamiento en frío (Parquet/S3)\
-  más allá de los 24 meses en línea.
-- Captura o emisión del evento `pricing.price.changed`: ocurre en el flujo\
+- Consulta de registros archivados en almacenamiento en frío (Parquet/S3)
+  más allá del período caliente operativo (`AUDIT_HOT_RETENTION_MONTHS`, inicial 24 meses).
+- Captura o emisión del evento `pricing.price.changed`: ocurre en el flujo
   de gestión de precios (WF-013), no en este.
 
 ## 3. Usuario objetivo
@@ -143,44 +143,44 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 | Aspecto               | Definición                                                                                    |
 | ----------------------- | ------------------------------------------------------------------------------------------------- |
 | Persona               | Auditor interno o gestor comercial responsable del control de precios                          |
-| Rol en el sistema     | `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA`                      |
+| Rol en el sistema     | Usuario autenticado con permiso `PRICING_AUDIT_READ` (y `PRICING_AUDIT_EXPORT` para exportación)  |
 | Nivel técnico         | No especificado; diseñar para uso operativo básico/intermedio                                   |
 | Contexto de uso       | Investigación de reclamos, control interno, auditorías periódicas y cumplimiento normativo       |
 | Necesidad principal   | Reconstruir quién, cuándo y por qué cambió un precio, y exportar evidencia estructurada          |
-| Permisos relevantes   | Solo consulta y exportación; nunca edición ni borrado                                            |
+| Permisos relevantes   | `PRICING_AUDIT_READ`, `PRICING_AUDIT_EXPORT`; nunca edición ni borrado                          |
 | Dispositivo principal | Escritorio como hipótesis por el volumen de datos y la exportación; consulta puntual también en tablet |
 
 ## 4. Objetivo del flujo
 
-El auditor o gestor comercial debe poder consultar, filtrar y exportar el\
-historial inmutable de cambios de precio, con trazabilidad completa de cada\
-mutación, para resolver contingencias y sustentar controles internos o\
+El auditor o gestor comercial debe poder consultar, filtrar y exportar el
+historial inmutable de cambios de precio, con trazabilidad completa de cada
+mutación, para resolver contingencias y sustentar controles internos o
 legales.
 
 ### Resultado exitoso
 
-**Consulta:** el sistema entrega una lista paginada y ordenada\
-descendentemente de los registros que cumplen los filtros, en menos de\
+**Consulta:** el sistema entrega una lista paginada y ordenada
+descendentemente de los registros que cumplen los filtros, en menos de
 800 ms.
 
-**Detalle:** el sistema muestra el contrato completo del registro\
-seleccionado (usuario, IP, valores previo y nuevo, variación %, motivo,\
+**Detalle:** el sistema muestra el contrato completo del registro
+seleccionado (usuario, IP, valores previo y nuevo, variación %, motivo,
 canal, lote y timestamp).
 
-**Exportación CSV:** el sistema genera de forma asíncrona un archivo con\
+**Exportación CSV:** el sistema genera de forma asíncrona un archivo con
 todas las columnas del contrato y entrega un enlace de descarga.
 
-**Exportación PDF:** el sistema genera un documento formateado con membrete\
-de control interno cuando el conjunto filtrado no supera 500 registros; si\
+**Exportación PDF:** el sistema genera un documento formateado con membrete
+de control interno cuando el conjunto filtrado no supera 500 registros; si
 lo supera, bloquea la exportación con un mensaje explícito.
 
 ### Indicador de finalización
 
-- Consulta: la tabla se actualiza con los resultados o con el mensaje de\
+- Consulta: la tabla se actualiza con los resultados o con el mensaje de
   "sin resultados".
-- Exportación CSV: el estado cambia de "Generando" a un enlace de descarga\
+- Exportación CSV: el estado cambia de "Generando" a un enlace de descarga
   disponible.
-- Exportación PDF: el estado cambia de "Generando" a la descarga disponible,\
+- Exportación PDF: el estado cambia de "Generando" a la descarga disponible,
   o se muestra el bloqueo por exceso de registros.
 
 ## 5. Precondiciones y disparador
@@ -188,8 +188,8 @@ lo supera, bloquea la exportación con un mensaje explícito.
 ### Precondiciones
 
 - El usuario tiene una sesión válida.
-- El usuario posee el rol `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA`.
-- Existen registros de auditoría generados previamente por el flujo de\
+- El usuario posee el permiso `PRICING_AUDIT_READ` (y `PRICING_AUDIT_EXPORT` para exportaciones).
+- Existen registros de auditoría generados previamente por el flujo de
   gestión de precios (WF-013); este flujo no los crea.
 
 ### Punto de entrada
@@ -329,11 +329,11 @@ inmutable de cambios de precio.
 
 | Prioridad  | Acción            | Etiqueta visible   | Disponibilidad                                | Resultado             |
 | ---------- | -------------------- | ---------------------- | ---------------------------------------------------- | ------------------------ |
-| Primaria   | Aplicar filtros       | Buscar                  | Con rol `AUDITOR_COMERCIAL`/`ADMIN_SISTEMA`            | Actualiza la tabla        |
+| Primaria   | Aplicar filtros       | Buscar                  | Con permiso `PRICING_AUDIT_READ`                     | Actualiza la tabla        |
 | Secundaria | Limpiar filtros       | Limpiar filtros         | Cuando hay algún filtro activo                        | Restaura la vista inicial |
 | Secundaria | Ver detalle           | (clic en la fila)       | Siempre que existan resultados                        | Abre S-02                 |
-| Secundaria | Exportar a CSV        | Exportar a CSV          | Con rol requerido y al menos 1 registro filtrado       | Abre S-03                 |
-| Secundaria | Exportar a PDF        | Exportar a PDF          | Con rol requerido y al menos 1 registro filtrado       | Abre S-04                 |
+| Secundaria | Exportar a CSV        | Exportar a CSV          | Con permiso `PRICING_AUDIT_EXPORT` y al menos 1 registro filtrado | Abre S-03                 |
+| Secundaria | Exportar a PDF        | Exportar a PDF          | Con permiso `PRICING_AUDIT_EXPORT` y al menos 1 registro filtrado | Abre S-04                 |
 
 #### Formulario (filtros)
 
@@ -732,8 +732,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 - Datos sensibles visibles: dirección IP de origen y correo electrónico del\
   usuario que realizó el cambio; visibles solo para roles autorizados.
-- Los endpoints requieren token JWT con rol `AUDITOR_COMERCIAL` o\
-  `ADMIN_SISTEMA`; una petición sin autorización\
+- Los endpoints requieren token JWT con permiso `PRICING_AUDIT_READ` (o `PRICING_AUDIT_EXPORT` para exportar); una petición sin autorización
   se rechaza y la interfaz lo refleja como estado "Sin permisos".
 - El almacén de auditoría es estrictamente Append-Only: la interfaz nunca\
   ofrece edición, corrección o borrado de un registro, ni una acción que lo\
@@ -799,7 +798,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 | ID   | Pregunta o decisión                                                                                                   | Responsable          | Bloquea wireframe                        | Estado    |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------- | ---------- |
-| Q-01 | Resuelto: roles `AUDITOR_COMERCIAL` y `ADMIN_SISTEMA`; `ADMINISTRADOR` no es rol normativo aquí. | Specs/HU definitivos | No | Resuelta |
+| Q-01 | Resuelto: permisos `PRICING_AUDIT_READ` y `PRICING_AUDIT_EXPORT` asignados por Seguridad y Usuarios; no se acoplan roles globales. | Specs/HU definitivos | No | Resuelta |
 | Q-02 | ¿Cuál es la ruta exacta y la ubicación en navegación del historial de auditoría?                                                | Frontend               | No para estructura                            | Abierta    |
 | Q-03 | ¿El filtro por SKU admite búsqueda parcial (contiene) o solo coincidencia exacta?                                              | Backend/Producto      | No                                              | Abierta    |
 | Q-04 | ¿El filtro por usuario acepta simultáneamente ID y email, o son dos campos distintos?                                          | Backend/Producto      | No                                              | Abierta    |
@@ -811,10 +810,10 @@ Aplicar DESIGN.md como fuente de representación visual.
 
 ### Alineación definitiva de Auditoría de Precios
 
-- Los roles aprobados para consulta/exportación son `ADMIN_SISTEMA` y `AUDITOR_COMERCIAL`; la asignación concreta de claims de Seguridad se verificará con el equipo externo.
+- El acceso se rige por los permisos `PRICING_AUDIT_READ` (consulta) y `PRICING_AUDIT_EXPORT` (exportación); la asignación concreta de roles corresponde al módulo de Seguridad y Usuarios.
 - Si el registro es de **CREACION** del primer precio, mostrar `precio_anterior: «Sin precio anterior»` y `variacion_porcentual: «No aplicable»`; ambos campos son `null` en el contrato, no cero. En modificaciones normales se muestra la variación existente.
 - La captura de `pricing.price.changed` es **posterior al commit** de Pricing y asíncrona; la interfaz consulta registros efectivamente guardados, no promete visibilidad inmediata tras pulsar Guardar precio.
-- Retención interna: **al menos 24 meses** en caliente, archivado mensual verificable y cinco años adicionales en frío desde archivado. Esto no equivale a mostrar una fecha de eliminación exacta de 24 meses.
+- Retención interna configurable: controlada por `AUDIT_HOT_RETENTION_MONTHS` (inicial MVP: 24 meses) en base de datos operativa, archivado mensual verificable y `AUDIT_ARCHIVE_RETENTION_YEARS` (inicial MVP: 5 años) adicionales en frío.
 
 ### Registro de retiro de oferta (caso adicional)
 Cuando se elimina expresamente una oferta de Pricing, el historial conserva una fila `OFERTA / RETIRO_OFERTA` con importe anterior existente, «Sin oferta» como precio nuevo y variación «No aplica» (ambos `null` en contrato). No mostrar 0 ni un porcentaje de caída ficticio. Las altas iniciales de precio regular/oferta muestran `CREACION` y precio anterior/variación «No aplica». El registro histórico no se puede editar o borrar.
@@ -837,7 +836,7 @@ Cuando se elimina expresamente una oferta de Pricing, el historial conserva una 
 - [x] Los supuestos y preguntas están registrados.
 - [x] El formato HTML está definido.
 - [ ] Confirmar ID WF-014 contra INDEX.md (no se proporcionó en esta tarea).
-- [ ] Resolver Q-01 (contradicción de roles) antes de finalizar el texto de "Sin permisos".
+- [x] Q-01 resuelta: permisos `PRICING_AUDIT_READ` y `PRICING_AUDIT_EXPORT`.
 - [ ] Resolver Q-02 antes de confirmar la ruta definitiva.
 - [ ] Resolver Q-07 antes de decidir si S-04-P es necesaria.
 
