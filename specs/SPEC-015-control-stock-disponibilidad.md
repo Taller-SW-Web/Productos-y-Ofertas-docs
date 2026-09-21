@@ -1,4 +1,8 @@
-# SPEC-015 — Especificación: Gestión de inventario
+# SPEC-015 — Especificación: Control de stock y disponibilidad
+
+**Responsable:** Miguel Ángel Taco Zavala  
+**Rama:** taco  
+**Trazabilidad:** HU [HU-015](../hu/HU-015-control-stock-disponibilidad.md) | Wireframe [WF-015](../wireframes/flows/WF-015-control-stock-disponibilidad.md)
 
 ## Descripción
 
@@ -10,12 +14,12 @@ La gestión del inventario se realizará de manera integrada con los demás comp
 
 ## Unidad de inventario
 
-En este módulo la unidad de inventario es el **SKU vendible**. Todo elemento que pueda venderse tiene exactamente una identidad SKU para Inventario:
+En este módulo la unidad comercial sigue siendo el **SKU vendible**, pero el saldo operativo se identifica por **`(sku, location_id)`** para permitir tienda, almacén u otra ubicación sin rediseñar el dominio. Si el MVP despliega una sola ubicación, Inventario configura `location_id=DEFAULT` y las APIs pueden omitirla solo cuando no exista ambigüedad. Todo elemento vendible mantiene exactamente una identidad SKU:
 
 * producto simple (`tiene_variantes = false`) → usa su `sku_base` como SKU vendible;
-* producto con variantes (`tiene_variantes = true`) → cada variante posee su SKU autogenerado y el producto padre no tiene stock propio.
+* producto con variantes (`tiene_variantes = true`) → cada variante posee un SKU comercial único (suministrado o generado) y el producto padre no tiene stock propio.
 
-* **Inventario → SKU vendible:** el stock se controla de forma independiente por SKU.
+* **Inventario → SKU vendible + ubicación:** `on_hand`, `reserved` y `available` se controlan por `(sku, location_id)`; `available = max(on_hand - reserved, 0)`.
 * **Producto simple:** su `sku_base` funciona como SKU vendible y tiene un único registro de inventario.
 * **Producto con variantes:** el producto es agrupador comercial y no posee stock propio; el inventario reside en los SKUs de sus variantes.
 
@@ -27,15 +31,15 @@ Producto: Nike Air Max
 └── SKU-003 → Blanco / Talla 40 → stock 8
 ```
 
-Por lo tanto, toda consulta, registro o actualización de stock se realiza siempre referenciando un **SKU vendible**, sea el `sku_base` de un producto simple o el SKU de una variante.
+Por lo tanto, toda consulta, registro o actualización de stock referencia un **SKU vendible** y una ubicación. La respuesta puede agregar ubicaciones cuando el canal solicite disponibilidad global, pero nunca confunde un agregado comercial con el saldo autoritativo de cada `location_id`.
 
 ---
 
 ## 1. Consulta de disponibilidad de stock
 
-Esta funcionalidad permitirá consultar la cantidad de unidades disponibles de una variante y conocer su estado actual dentro del inventario.
+Esta funcionalidad permitirá consultar `on_hand`, `reserved` y especialmente `available` de un SKU por ubicación o de forma agregada según el contrato del canal, y conocer su estado actual dentro del inventario.
 
-Los diferentes canales podrán utilizar esta información para determinar si una variante se encuentra disponible antes de ofrecerla o realizar una operación relacionada con ella. Cuando se consulte el stock, la referencia obligatoria será la **Variante/SKU**.
+Los diferentes canales podrán utilizar esta información para determinar si una variante se encuentra disponible antes de ofrecerla o realizar una operación relacionada con ella. Cuando se consulte el stock, la referencia obligatoria será el **SKU vendible**; `location_id` será obligatorio cuando exista más de una ubicación o cuando el canal necesite disponibilidad de una ubicación concreta.
 
 Se contemplan principalmente los siguientes estados:
 
@@ -46,17 +50,17 @@ Se contemplan principalmente los siguientes estados:
 Las reglas de determinación del estado son las siguientes:
 
 ```text
-stock = 0
+available = 0
 → AGOTADO
 
-0 < stock <= umbral_stock_bajo
+0 < available <= umbral_stock_bajo_resuelto
 → STOCK_BAJO
 
-stock > umbral_stock_bajo
+available > umbral_stock_bajo_resuelto
 → DISPONIBLE
 ```
 
-El `umbral_stock_bajo` será **configurable por cada Variante/SKU desde Gestión de Inventario**, que es la capacidad propietaria de esta configuración. Cada SKU puede definir su propio límite a partir del cual se considera stock bajo; Gestión de Variantes puede consultarlo, pero no lo edita. Corresponde a una configuración del negocio y no se asume un valor por defecto.
+Inventario mantiene un `umbral_stock_bajo_default` global configurable y permite un `umbral_stock_bajo` específico por SKU como override. El `umbral_stock_bajo_resuelto` usa primero el override del SKU y, si no existe, el valor global. Esto evita tener que configurar manualmente miles de SKUs sin perder la capacidad de ajustar artículos sensibles. Gestión de Variantes puede consultar el valor resuelto, pero no lo edita.
 
 ### Ejemplo
 
@@ -90,7 +94,7 @@ La consulta estará disponible para los diferentes canales contemplados por el p
 
 Esta funcionalidad permitirá actualizar el inventario cuando se produzca el **consumo de unidades de una variante**.
 
-Cuando una operación implique el consumo de determinadas variantes, la cantidad correspondiente será descontada del inventario para mantener actualizada la disponibilidad.
+Cuando una operación implique consumo, Inventario descuenta `on_hand` y recalcula `available` en la ubicación correspondiente. Si existe una reserva homologada previa, el consumo libera simultáneamente la cantidad reservada; si no existe reserva, el débito se valida directamente contra `available`.
 
 ### Ejemplo
 
@@ -173,9 +177,9 @@ La **actualización por consumo** permitirá reflejar las unidades utilizadas en
 
 * La **confirmación definitiva del consumo** se solicita mediante el contrato **provisional `order.confirmed`**, cuya existencia, nombre y campos deberán homologarse con **Ventas y Postventa**, cuando la venta queda confirmada (pago aprobado o estado equivalente para un canal sin pago electrónico). Sin `order.confirmed` no se aplica consumo definitivo.
 * El módulo de **Despacho no genera consumo adicional ni modifica directamente el stock**: se limita a entregar las unidades correspondientes a ventas ya confirmadas, cuyos consumos ya fueron aplicados y validados bajo la misma regla de consumo.
-* En el alcance actual **no se contemplan reservas** en `order.created`: crear un pedido no descuenta ni reserva stock.
+* El dominio de Inventario **soporta `reserved` y contratos idempotentes de `reserve/release/consume`**, pero Ventas/Postventa decide en qué momento del ciclo del pedido solicitar una reserva. Mientras ese contrato no esté homologado, `order.created` por sí solo no reserva ni descuenta y `reserved` puede permanecer en cero en el MVP.
 * Si una venta confirmada es anulada **antes del despacho**, el evento provisional `order.cancelled` solicita compensar únicamente un consumo previo exitoso y no compensado.
-* Si la mercadería ya fue entregada, la reposición de stock solo ocurre ante una **devolución aceptada y físicamente reintegrable**, comunicada mediante el evento provisional `order.returned` con cantidades aceptadas; para combo inicial se exige devolución integral.
+* Si la mercadería ya fue entregada, la reposición solo ocurre ante una **devolución aceptada y físicamente reintegrable**, comunicada mediante el contrato provisional `order.returned` con SKU, `location_id` de reintegro y cantidades aceptadas. La política de devolución total o parcial —incluidos combos— pertenece a Ventas/Postventa.
 * Una anulación administrativa posterior al despacho que no implique devolución física no repone stock.
 
 Después de cada actualización de stock (por consumo o ajuste), la gestión de inventario **notificará el cambio de stock** de la variante mediante el contrato de evento `inventory.stock.changed`, que será consumido por el dashboard analítico y por otros componentes interesados para mantenerse actualizados.
@@ -187,10 +191,10 @@ La comunicación entre módulos se realizará mediante las interfaces de integra
 ### Contrato provisional de consumo, compensación y venta sin stock
 Ventas/Postventa aún no ha homologado eventos. Como hipótesis interna se acepta `order.confirmed` con `order_id`, `operation_id`, `occurred_at`, SKUs y cantidades por línea, referencia/snapshot de componentes de combo cuando aplique, y versión del contrato. Inventario verifica existencia, elegibilidad, stock y deduplicación por `order_id + tipo_operacion + sku`, aplica el débito ACID para **todas las líneas de la misma operación** y registra Kardex y Outbox en la misma transacción local. Publica `inventory.consumption.completed` o `inventory.consumption.rejected` con `order_id`, `operation_id`, SKUs y motivo; no decide ni altera estados del pedido o pagos. Si el stock es insuficiente tras un pedido/pago confirmado, Ventas/Postventa resuelve la anulación, sustitución o reembolso mediante su propio proceso pendiente de coordinación. La consulta anterior a la venta no constituye reserva ni garantía de stock.
 
-Las compensaciones `order.cancelled`/`order.returned` deben referenciar `order_id`, operación previa y líneas aceptadas. `order.cancelled` revierte solamente consumos efectivos y previos a despacho; `order.returned` registra solo unidades realmente aceptadas/reintegrables, y para combo inicial se exige devolución integral. El procesamiento es idempotente, tolera llegada desordenada con estado pendiente/reconciliación y evita acreditar dos veces el mismo consumo. Ningún evento de Despacho ocasiona débito adicional.
+Las compensaciones `order.cancelled`/`order.returned` deben referenciar `order_id`, operación previa, `location_id` y líneas/cantidades aceptadas. `order.cancelled` revierte solamente consumos efectivos y previos a despacho; `order.returned` registra solo unidades realmente aceptadas y físicamente reintegrables. El procesamiento es idempotente, tolera llegada desordenada con estado pendiente/reconciliación y evita acreditar dos veces el mismo consumo. Ningún evento de Despacho ocasiona débito adicional ni decide disponibilidad.
 
 ### Ajuste masivo y control de concurrencia
-Inventario inicializa cada nuevo SKU vendible con stock 0 y `stock_version=0`, de forma idempotente. Los conteos absolutos de `SPEC-001-carga-exportacion-masiva-productos.md` requieren `stock_version`. Inventario es el único dueño del ajuste, recibido mediante `inventory.bulk.stock.adjust.requested`; comprueba `stock_version` con actualización condicional y registra movimiento de Kardex anterior/nuevo/delta. Si hubo consumo concurrente que cambió la versión, publica rechazo `VERSION_CONFLICT` y no reaplica el conteo obsoleto. Solo después de persistir emite `inventory.stock.adjusted` y `inventory.stock.changed`. Se permiten bloqueos transaccionales breves por SKU, nunca un bloqueo global de todas las ventas. Una variación de inventario no es un evento de confirmación de pedido.
+Inventario inicializa cada nuevo SKU vendible con saldo 0 y `stock_version=0` en la ubicación predeterminada, de forma idempotente. Los conteos absolutos de `SPEC-001-carga-exportacion-masiva-productos.md` identifican `(sku, location_id)` y requieren `stock_version`. Inventario es el único dueño del ajuste; registra Kardex con valores anteriores/nuevos de `on_hand`, `reserved` y `available` cuando corresponda. Si hubo consumo, reserva o ajuste concurrente que cambió la versión, publica `VERSION_CONFLICT` y no reaplica un conteo obsoleto. Solo después del commit emite `inventory.stock.adjusted` y `inventory.stock.changed`. Se permiten bloqueos transaccionales breves por `(sku, location_id)`, nunca un bloqueo global del inventario.
 
 ### Límite de aprobación de contratos externos
 Los nombres y payloads de `order.confirmed`, `order.cancelled` y `order.returned`, y de los resultados de consumo, constituyen un **contrato de integración propuesto**, pendiente de homologación con Ventas y Postventa. Hasta ese acuerdo, ninguna implementación puede presumir que el equipo externo ya publica tales mensajes, ni que el pago queda automáticamente revertido ante un rechazo de Inventario. El consumo y las compensaciones aquí descritos son las reglas internas que implementará Productos al recibir una comunicación equivalente acordada.
@@ -203,7 +207,7 @@ En términos generales, permitirá:
 
 * Consultar la cantidad disponible de una variante.
 * Conocer el estado actual del stock de cada variante.
-* Identificar variantes disponibles, con stock bajo o agotadas, mediante el `umbral_stock_bajo` configurado por variante.
+* Identificar SKUs disponibles, con stock bajo o agotados mediante el umbral resuelto global/SKU y, cuando aplique, por ubicación.
 * Registrar el consumo de unidades sobre una variante.
 * Actualizar la cantidad disponible después de cada consumo.
 * Evitar consumos superiores al stock existente y consumos concurrentes sobre las mismas unidades.
@@ -212,5 +216,3 @@ En términos generales, permitirá:
 * Mantener las proyecciones de disponibilidad utilizadas por los canales mediante eventos; las vistas son eventualmente consistentes y el consumo definitivo vuelve a comprobar el stock en Inventario.
 
 Con estas funcionalidades, el inventario proporcionará información actualizada sobre la disponibilidad de las variantes y permitirá reflejar correctamente los cambios producidos por su consumo.
-
----

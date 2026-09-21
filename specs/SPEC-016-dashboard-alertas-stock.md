@@ -1,5 +1,9 @@
 # SPEC-016 — Especificación: Dashboard analítico y alertas de stock
 
+**Responsable:** Miguel Ángel Taco Zavala  
+**Rama:** taco  
+**Trazabilidad:** HU [HU-016](../hu/HU-016-dashboard-alertas-stock.md) | Wireframe [WF-016](../wireframes/flows/WF-016-dashboard-alertas-stock.md)
+
 ## Descripción
 
 El **Dashboard Analítico y Alertas de Stock** será una funcionalidad adicional orientada al **monitoreo del inventario**, permitiendo visualizar de manera resumida el estado de las variantes y detectar aquellas que requieren atención.
@@ -98,54 +102,33 @@ El objetivo será presentar la información de manera clara y facilitar su inter
 
 ---
 
-## 4. Top 5 de productos más vendidos
+## 4. Distribución operativa de stock por ubicación
 
-El dashboard podrá mostrar información sobre los productos con mayor cantidad de unidades vendidas durante el período analizado.
+Cuando Inventario tenga más de una `location_id`, el dashboard podrá resumir la disponibilidad por ubicación sin convertirse en un reporte de ventas. Esta vista permite responder preguntas operativas como dónde existe stock bajo o agotado y evita mezclar el dominio de Inventario con la analítica comercial propia de Ventas/Postventa.
 
-La métrica se define de la siguiente manera:
-
-> **Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado.**
-
-Para su cálculo se deberá:
-
-* Contar **unidades vendidas**.
-* Considerar únicamente las **ventas confirmadas**.
-* Agrupar las ventas de **todas las variantes/SKU pertenecientes al mismo Producto**.
-* Ordenar por la **cantidad total de unidades vendidas**, de mayor a menor.
-* **Excluir** las operaciones que no representen una venta confirmada, como ajustes de inventario, mermas o reservas.
+La métrica se define sobre datos autoritativos/proyectados de Inventario:
+- total de `on_hand`, `reserved` y `available` por ubicación;
+- cantidad de SKUs disponibles, con stock bajo y agotados por ubicación;
+- filtros por producto, categoría, marca, SKU y `location_id`;
+- posibilidad de agrupar por producto únicamente como presentación comercial, sin crear saldo a nivel producto.
 
 ### Ejemplo
 
-> **Top 5 productos más vendidos**
+> **Ubicación: Tienda San Isidro**
 >
-> 1. Nike Air Max — 45 unidades
-> 2. Adidas Predator — 38 unidades
-> 3. Puma Future — 30 unidades
-> 4. Nike Revolution — 25 unidades
-> 5. Adidas Run — 20 unidades
+> On hand: 420 unidades  
+> Reservadas: 18 unidades  
+> Disponibles: 402 unidades  
+> SKUs con stock bajo: 12  
+> SKUs agotados: 4
 
-Información de cálculo del ejemplo:
+Si el MVP opera con una única ubicación `DEFAULT`, la sección muestra un único resumen y no fuerza al usuario a seleccionar una ubicación inexistente.
 
-```text
-Nike Air Max
-SKU-001 → 20 unidades vendidas
-SKU-002 → 15 unidades vendidas
-SKU-003 → 10 unidades vendidas
-
-Total Producto = 45 unidades vendidas
-```
-
-De esta manera, el Top 5 es **de Productos**, aunque la venta se registre originalmente sobre una Variante/SKU.
-
-El período de análisis es **seleccionable por el usuario**. Por defecto se consideran los **últimos 30 días**, pudiendo solicitarse otro rango de fechas válido. El mismo rango se utiliza para obtener las ventas confirmadas y calcular el Top 5.
-
-La información necesaria para determinar los productos más vendidos deberá obtenerse mediante la integración correspondiente con los datos de las operaciones de venta.
-
----
+La funcionalidad **no calcula Top de productos vendidos, ventas por canal, vendedor ni otros indicadores de ventas**, porque esas métricas pertenecen al Dashboard y reportes de Ventas/Postventa. Si en el futuro se desea mostrarlas como contexto, deberán consumirse como un dato publicado por el módulo propietario y no reconstruirse desde movimientos de inventario.
 
 ## 5. Resultado esperado
 
-El Dashboard Analítico y Alertas de Stock permitirá disponer de una **vista general del estado del inventario**, facilitando la identificación de variantes con alta demanda, bajo stock o agotadas, así como de los productos con mayor movimiento comercial.
+El Dashboard Analítico y Alertas de Stock permitirá disponer de una **vista general del estado del inventario**, facilitando la identificación de SKUs con stock bajo o agotado y la distribución de disponibilidad por ubicación, sin asumir propiedad sobre métricas de ventas.
 
 La funcionalidad permitirá:
 
@@ -153,11 +136,9 @@ La funcionalidad permitirá:
 * Identificar variantes con stock bajo, según el umbral configurado por variante.
 * Identificar variantes agotadas.
 * Mostrar alertas relacionadas con la disponibilidad de las variantes.
-* Visualizar el Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado.
+* Visualizar la distribución de `on_hand`, `reserved` y `available` por ubicación cuando existan varias ubicaciones.
 * Agrupar la información por producto cuando se requiera una vista comercial.
 * Representar la información mediante gráficos e indicadores visuales.
 * Actualizarse de forma reactiva ante los cambios de stock notificados por la gestión de inventario mediante el contrato de evento `inventory.stock.changed`.
 
 De esta manera, el dashboard complementará la gestión del inventario proporcionando una visión rápida y comprensible de su estado actual y facilitando la identificación de situaciones que requieran atención.
-
----

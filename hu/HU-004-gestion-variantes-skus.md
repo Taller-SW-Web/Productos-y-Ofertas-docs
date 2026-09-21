@@ -1,13 +1,8 @@
 # HU-004 — Historia de Usuario: Gestión avanzada de variantes (SKUs)
-**Responsable:** Gabriel — Persona 2
-**Tipo:** Funcionalidad de valor agregado (sugerida)
-**Versión:** v2 — corregida para eliminar discrepancias con `SPEC-004-gestion-variantes-skus.md`
 
-> **Decisiones de corrección aplicadas** (ver resumen completo en el mensaje de respuesta):
-> 1. El SKU es **siempre autogenerado** por el sistema; no se acepta ingreso manual.
-> 2. Se introduce el atributo `tiene_variantes` en el producto: concilia el modelo "0..N variantes" del Spec con el "mínimo 1 variante activa" de la HU.
-> 3. Se aclara que **Inventario es el único dueño del stock** (por producto simple o por variante); Variantes solo notifica y consulta.
-> 4. El SKU es **inmutable**: los atributos que lo componen no se editan; se desactiva la variante y se crea una nueva.
+**Responsable:** Gabriel Poma Gutierrez  
+**Rama:** poma  
+**Trazabilidad:** Spec [SPEC-004](../specs/SPEC-004-gestion-variantes-skus.md) | Flow [WF-004](../wireframes/flows/WF-004-gestion-variantes-skus.md)
 
 ## Historia de usuario principal
 
@@ -22,28 +17,28 @@ Esta funcionalidad solo aplica a productos con el atributo `tiene_variantes = tr
 | ID | Criterio |
 |---|---|
 | CA-01 | Solo un gestor comercial con los permisos correspondientes puede crear, modificar o desactivar variantes de un producto. |
-| CA-02 | Una variante debe asociarse a un producto existente con `tiene_variantes = true`, y definir los valores de las características identificadoras que la distinguen (ej. talla, color), heredando el resto de los datos del producto padre. |
-| CA-03 | El sistema **genera automáticamente** el código SKU de cada variante a partir del `sku_base` del producto y sus características identificadoras; no se admite el ingreso manual de un SKU por parte del gestor comercial. |
+| CA-02 | Una variante debe asociarse a un producto existente con `tiene_variantes = true` y definir valores de las características identificadoras permitidas por el `tipo_producto_id` del padre (ej. talla, color), heredando los demás datos del producto cuando corresponda. |
+| CA-03 | El sistema genera siempre un `variant_id` interno, inmutable y no significativo. El **SKU comercial** de la variante puede ser proporcionado por el gestor/importación si cumple unicidad global y formato, o puede dejarse vacío para generación automática a partir de `sku_base` y atributos. El SKU no funciona como clave primaria interna. |
 | CA-04 | Cada variante debe tener al menos una imagen propia que la represente. |
 | CA-05 | El sistema debe impedir el registro de dos variantes de un mismo producto con exactamente la misma combinación de características identificadoras (ej. dos variantes "Talla 42 – Negro"). |
 | CA-06 | El gestor comercial puede consultar todas las variantes de un producto, filtrando por característica o por estado. |
 | CA-07 | Al crear una variante, el sistema debe **notificar** al componente de Inventario para que este inicialice su stock en 0; Variantes no almacena ni calcula esa cantidad, solo consulta disponibilidad cuando lo necesita. |
 | CA-08 | Un producto con `tiene_variantes = true` no puede pasar a estado "activo" ni mostrarse en los canales de venta si no tiene al menos una variante activa con SKU e imagen válidos. Un producto con `tiene_variantes = false` se activa directamente según las reglas de Gestión de Productos, sin pasar por esta funcionalidad. |
 | CA-09 | Al desactivar una variante, esta deja de mostrarse en canales y conserva su registro histórico; las demás variantes mantienen sus stocks. Si era la última variante ACTIVA, el producto padre pasa también a INACTIVO en la misma transacción de Catálogo. |
-| CA-10 | Las características identificadoras que componen el SKU de una variante (ej. talla, color) son **inmutables** una vez creada: no pueden editarse. Para "cambiar" una de ellas, el gestor comercial debe desactivar la variante actual y registrar una nueva con el valor correcto. Los atributos no identificadores y la imagen sí son editables libremente. |
+| CA-10 | Las características identificadoras que definen la identidad comercial de una variante (ej. talla, color) son **inmutables** una vez creada, aunque el SKU haya sido suministrado externamente. Para cambiarlas se desactiva la variante y se crea otra. Atributos no identificadores e imagen sí son editables. |
 | CA-11 | Toda operación de registro, actualización o desactivación de una variante debe quedar trazable con usuario, fecha/hora y resultado. |
 | CA-12 | Pricing puede definir un precio específico para un SKU de variante; si no existe override, se usa el precio base vigente del producto. |
 | CA-13 | Los combos referencian componentes por SKU vendible; para una variante utilizan su SKU y para un producto simple su `sku_base`. |
 | CA-14 | Los pedidos confirmados conservan un snapshot del SKU vendido aunque la variante se desactive posteriormente. |
 
-| CA-15 | Una variante nueva inicia en BORRADOR; solo un gestor autorizado puede activarla si posee SKU generado, atributos identificadores e imagen válidos, precio del padre confirmado y SKU inicializado en Inventario. |
+| CA-15 | Una variante nueva inicia en BORRADOR; solo puede activarse si posee `variant_id`, SKU comercial único (suministrado o generado), atributos identificadores e imagen válidos, precio aplicable confirmado y registro inicializado en Inventario. |
 | CA-16 | Una variante INACTIVA puede reactivarse tras las mismas validaciones y conserva su SKU; el producto padre no se reactiva automáticamente. |
-| CA-17 | Una fila de carga masiva que crea variante identifica padre existente o creado como BORRADOR por grupo `sku_base` del mismo lote y atributos; Catálogo devuelve el SKU autogenerado correlacionado por `batch_id`/`row_id`; un SKU escrito en una fila de creación no se acepta como asignación manual. |
+| CA-17 | Una fila de carga masiva que crea variante identifica padre existente o creado como BORRADOR por grupo `sku_base`, `tipo_producto_id` y atributos. Catálogo genera `variant_id` y devuelve el SKU comercial validado o generado correlacionado por `batch_id`/`row_id`; un SKU informado se acepta solo si cumple las reglas de unicidad y formato. |
 
 | CA-18 | Una variante ACTIVA no es vendible mientras su producto padre esté BORRADOR o INACTIVO. La activación de una variante preparada no activa automáticamente el producto padre. |
 
-| CA-19 | Antes de la primera variante, el gestor configura por producto con `tiene_variantes=true` uno o más `caracteristica_id` LISTA efectivos, activos y distintos de su categoría; tras crear la primera variante el conjunto queda inmutable incluso si se desactiva. |
-| CA-20 | Cada variante proporciona exactamente un `valor_id` activo de cada característica identificadora configurada; la unicidad se valida por IDs de la combinación incluso frente a variantes inactivas y SKU se genera sin depender de etiquetas renombrables. No se permite generar nuevas variantes con configuración invalidada por un cambio de categoría hasta resolverla. |
+| CA-19 | Antes de la primera variante, el gestor configura por producto con `tiene_variantes=true` uno o más `caracteristica_id` LISTA activos y definidos por su **tipo de producto**; tras crear la primera variante el conjunto queda inmutable para el CRUD ordinario incluso si luego se desactiva. |
+| CA-20 | Cada variante proporciona exactamente un `valor_id` activo por característica identificadora configurada; la unicidad se valida por IDs de la combinación incluso frente a variantes inactivas. Renombrar etiquetas no cambia identidad ni SKU. Cambiar categorías de navegación no invalida esta configuración; un cambio incompatible de tipo de producto requiere migración. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -156,5 +151,3 @@ Estas son coordinaciones internas con otras funcionalidades del mismo módulo.
 3. Combos trabaja con SKUs vendibles.
 4. Promociones pueden tener alcance a nivel producto o SKU según su configuración.
 5. Los pedidos confirmados conservan snapshot de la variante aunque después sea desactivada.
-
----

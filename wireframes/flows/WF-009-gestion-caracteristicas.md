@@ -93,7 +93,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 > CA-05/CA-06 (Marcas) y CA-07/CA-08/CA-09 (Asociación) no se cubren aquí:
 > las propias fuentes remiten a `HU-011-gestion-marcas.md` y
-> `HU-010-asociacion-categoria-caracteristica.md` (WF-011 y WF-010).
+> `HU-010-asociacion-tipo-producto-caracteristica.md` (WF-011 y WF-010).
 
 ### Funcionalidades incluidas
 

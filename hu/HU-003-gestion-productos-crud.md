@@ -1,15 +1,8 @@
 # HU-003 — Historia de Usuario: Gestión de productos (CRUD principal)
-**Responsable:** Gabriel — Persona 2
-**Referencia:** MDPYO-6
-**Versión:** v2 — corregida para eliminar discrepancias con `SPEC-003-gestion-productos-crud.md`
 
-> **Decisiones de corrección aplicadas** (ver resumen completo en el mensaje de respuesta):
-> 1. Se mantiene el modelo **borrador → validar → activo** (no "crear en activo").
-> 2. Los campos obligatorios se dividen en **mínimos para crear** vs. **requisitos para activar**.
-> 3. La duplicidad se define sobre `sku_base` y sobre `(nombre, marca_id)`, no sobre un "código" genérico.
-> 4. El **slug** es propiedad explícita de este componente (Catálogo Core), no de Taxonomía y SEO.
-> 5. Se agrega **reactivación** como criterio y escenario propios.
-> 6. Se resuelve la regla pendiente del **precio base**: se ingresa en el mismo formulario de creación y se notifica a Motor de Precios.
+**Responsable:** Gabriel Poma Gutierrez  
+**Rama:** poma  
+**Trazabilidad:** Spec [SPEC-003](../specs/SPEC-003-gestion-productos-crud.md) | Flow [WF-003](../wireframes/flows/WF-003-gestion-productos-crud.md)
 
 ## Historia de usuario principal
 
@@ -24,12 +17,12 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 | ID | Criterio |
 |---|---|
 | CA-01 | Solo un gestor comercial con los permisos correspondientes puede crear, modificar, activar, desactivar o reactivar productos. |
-| CA-02 | Para **crear** un producto (estado "borrador") basta con nombre, descripción, categoría, marca, precio base referencial, `sku_base` y `tiene_variantes`. No se exige característica ni imagen en este punto. |
-| CA-03 | El sistema debe validar que la categoría y la marca indicadas existan y estén activas antes de guardar o actualizar el producto, sin importar su estado. |
-| CA-04 | El sistema debe impedir el registro de un producto con el mismo `sku_base` que otro existente, o con la misma combinación `(nombre, marca_id)` que un producto ya registrado. |
-| CA-05 | Un producto solo puede pasar de "borrador" a "activo" cuando, además de los campos de CA-02, tenga completos **todos los valores de las características obligatorias efectivas de su categoría** y al menos una imagen. Si la categoría no tiene características obligatorias efectivas, no se exige informar una característica solo para activar. Si `tiene_variantes=true`, requiere también una variante ACTIVA válida. La publicación comercial espera confirmaciones de inicialización de precio y stock para los SKUs vendibles. |
+| CA-02 | Para **crear** un producto (estado "borrador") basta con nombre, descripción, al menos una categoría de navegación, `tipo_producto_id`, marca, precio base referencial, `sku_base` y `tiene_variantes`. No se exige imagen ni completar todavía todos los atributos del tipo. |
+| CA-03 | El sistema debe validar que las categorías de navegación, el tipo de producto y la marca indicados existan y estén activos antes de guardar o activar según corresponda. La categoría clasifica el producto; `tipo_producto_id` define su esquema de atributos. |
+| CA-04 | El sistema debe impedir el registro de un producto con el mismo `sku_base` que otro existente. Si detecta la misma combinación normalizada `(nombre, marca_id)`, debe mostrar una **advertencia de posible duplicado** y permitir continuar con confirmación explícita si el `sku_base` y la identidad del producto son distintos. |
+| CA-05 | Un producto solo puede pasar de "borrador" a "activo" cuando, además de los campos de CA-02, tenga completos **todos los valores obligatorios definidos por su tipo de producto** y al menos una imagen. Si el tipo no define atributos obligatorios, no se exige inventar uno para activar. Si `tiene_variantes=true`, requiere también una variante ACTIVA válida. La publicación comercial espera confirmaciones de preparación de Pricing e Inventario para los SKU vendibles. |
 | CA-06 | El gestor comercial puede consultar los productos registrados, filtrando por categoría, marca o estado, y ver el detalle completo de cada uno. |
-| CA-07 | Al actualizar un producto, el sistema valida las mismas reglas según su estado. Los cambios válidos de un producto activo se persisten inmediatamente en Catálogo y se propagan por eventos a los canales; no se garantiza visibilidad instantánea global; si dejan de cumplir una condición de activación, el guardado se rechaza. `tiene_variantes` no es editable. |
+| CA-07 | Al actualizar un producto, el sistema valida las mismas reglas según su estado. Los cambios válidos se propagan por eventos y no se garantiza visibilidad instantánea global. `tiene_variantes` y `tipo_producto_id` no se cambian como edición ordinaria cuando afecten identidad/variantes; una transformación estructural se trata como migración controlada fuera del CRUD normal. |
 | CA-08 | Al desactivar un producto, deja de mostrarse para nuevas ventas, conserva su registro/snapshot histórico y emite `catalog.product.deactivated` para que Promociones, Combos y otros consumidores reaccionen. |
 | CA-09 | Un producto inactivo puede reactivarse; al reactivarlo, el sistema debe volver a validar las condiciones de CA-05 antes de marcarlo como "activo" nuevamente. |
 | CA-10 | El sistema genera y mantiene el **slug** del producto (a partir del nombre) como parte de este componente; no depende del componente de Taxonomía y SEO. |
@@ -40,7 +33,7 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 | CA-14 | Una barrera de baja de categoría o marca impide crear, activar o reasignar productos a esa entidad durante la verificación asíncrona; Catálogo confirma el resultado por `operation_id`. |
 | CA-15 | El producto no se ofrece comercialmente hasta que Pricing confirme la preparación de su precio y, para el SKU vendible ofrecido, Inventario confirme la inicialización. |
 | CA-16 | Al crear un producto, el precio base se solicita a Pricing con operación idempotente; el evento `pricing.price.changed` lo emite Pricing tras persistirlo, no Catálogo. |
-| CA-17 | Durante la baja asíncrona de un valor LISTA identificador o requerido, Catálogo bloquea nuevos vínculos bajo barrera, confirma el uso activo con el `operation_id` y no altera SKUs/pedidos. Un producto `tiene_variantes=true` permite configurar sus características identificadoras LISTA antes de crear la primera variante; después no permite cambiarlas. Al editar su categoría se valida que la configuración continúe siendo aplicable, sin mutar SKUs previamente generados. |
+| CA-17 | Durante la baja asíncrona de un valor LISTA identificador o requerido, Catálogo bloquea nuevos vínculos bajo barrera, confirma el uso activo con `operation_id` y no altera SKU/pedidos. Un producto `tiene_variantes=true` selecciona sus características identificadoras entre las LISTA activas definidas por su `tipo_producto_id` antes de crear la primera variante; después no las cambia por edición ordinaria. Cambiar categorías de navegación no modifica esta configuración. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -64,7 +57,7 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 ● CUANDO selecciona una categoría o marca que no existe o está desactivada,
 ● ENTONCES el sistema impide guardar el producto e indica cuál relación no es válida.
 
-**Escenario 5: Rechazar sku_base o combinación nombre+marca duplicados**
+**Escenario 5: Rechazar `sku_base` duplicado y advertir posible duplicado nombre+marca**
 ● DADO que existe un producto con `sku_base` "ZAP-PSX", o un producto activo llamado "Zapatillas Running ProSpeed X" de la marca "ProSpeed",
 ● CUANDO el gestor comercial intenta registrar otro producto con el mismo `sku_base`, o con el mismo nombre y la misma marca,
 ● ENTONCES el sistema rechaza el registro e indica cuál de las dos reglas de unicidad se violó.
@@ -133,5 +126,3 @@ Estas son coordinaciones internas con otras funcionalidades del mismo módulo.
 1. Los cambios válidos sobre productos activos se publican inmediatamente; no existe un estado adicional de revisión.
 2. `tiene_variantes` es inmutable después de la creación.
 3. Al desactivar un producto se emite `catalog.product.deactivated`; promociones y combos dejan de considerarlo para nuevas operaciones, mientras pedidos confirmados conservan su snapshot.
-
----

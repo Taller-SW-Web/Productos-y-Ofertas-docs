@@ -1,5 +1,9 @@
 # SPEC-011 — Especificación: Gestión de marcas
 
+**Responsable:** Leonardo Lopez  
+**Rama:** lopez  
+**Trazabilidad:** HU [HU-011](../hu/HU-011-gestion-marcas.md) | Wireframe [WF-011](../wireframes/flows/WF-011-gestion-marcas.md)
+
 ## 1. Contexto
 Los productos del Marketplace deportivo pertenecen a distintas marcas (ej. Nike, Adidas, Wilson). Los clientes necesitan poder filtrar y navegar el catálogo por marca, y el módulo de Catálogo Core necesita asociar cada producto a una marca válida al momento de registrarlo. Esta gestión debe centralizarse en el sub-módulo de Taxonomía, igual que categorías y características.
 
@@ -96,5 +100,3 @@ La capacidad se considera correctamente implementada cuando:
 - Todos los escenarios definidos se cumplen.
 - Los requisitos no funcionales aplicables se cumplen.
 - No se han incorporado funcionalidades fuera del alcance.
-
----

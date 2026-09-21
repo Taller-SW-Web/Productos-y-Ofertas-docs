@@ -1,7 +1,12 @@
 # SPEC-004 — Especificación: Gestión avanzada de variantes (SKUs)
-**Versión:** v2 — corregida para eliminar discrepancias con `HU-004-gestion-variantes-skus.md`
 
-> **Cambios respecto a la v1:** el SKU es siempre autogenerado (se elimina la opción de recibirlo manualmente); se formaliza la aplicabilidad exclusiva a productos con `tiene_variantes = true`; se aclara que Inventario es el único dueño del stock; los atributos que forman el SKU pasan a ser inmutables.
+**Responsable:** Gabriel Poma Gutierrez  
+**Rama:** poma  
+**Trazabilidad:** HU [HU-004](../hu/HU-004-gestion-variantes-skus.md) | Wireframe [WF-004](../wireframes/flows/WF-004-gestion-variantes-skus.md)
+
+**Versión:** v2 — corregida para eliminar discrepancias con `hu_gestion_variantes_skus.md`
+
+> **Cambios consolidados:** se separa el identificador interno inmutable `variant_id` del SKU comercial; el SKU puede suministrarse desde un sistema externo o generarse automáticamente cuando se omite, siempre con unicidad global; la capacidad aplica exclusivamente a productos con `tiene_variantes = true`; Inventario continúa siendo el único dueño del stock; los atributos identificadores de la variante permanecen inmutables mediante edición ordinaria.
 
 ## 1. Contexto
 
@@ -9,16 +14,16 @@ Dentro del catálogo de productos deportivos (camisetas, zapatillas, accesorios,
 
 ## 2. Propósito
 
-Permitir que un producto con `tiene_variantes = true` tenga una o más variantes (SKUs) diferenciadas por características identificadoras como talla y color, cada una con su propio código único autogenerado e imagen, de modo que los canales de venta puedan mostrar y comercializar exactamente la combinación que el cliente desea.
+Permitir que un producto con `tiene_variantes = true` tenga una o más variantes diferenciadas por características identificadoras como talla y color, cada una con `variant_id` interno inmutable, SKU comercial único —aportado o generado— e imagen, de modo que los canales de venta y futuras integraciones con ERP/proveedores puedan identificar exactamente la combinación comercial.
 
 ## 3. Alcance
 
 Aplica exclusivamente a productos con `tiene_variantes = true`. Los productos simples (`tiene_variantes = false`) no utilizan esta funcionalidad; se activan mediante Gestión de Productos y su `sku_base` funciona como SKU vendible para Pricing e Inventario.
 
 Incluye:
-- Configuración previa por producto de características identificadoras LISTA de su categoría, inmutable desde la primera variante; sus valores referencian IDs estables.
+- Configuración previa por producto de características identificadoras LISTA permitidas por su `tipo_producto_id`, inmutable desde la primera variante; sus valores referencian IDs estables.
 - Creación de una o más variantes (SKUs) asociadas a un producto base, cada una con su combinación única de atributos identificadores (ej. talla + color).
-- Generación automática de un código único (SKU) por variante, distinto del `sku_base` del producto y de cualquier otro SKU del catálogo. El sistema es el único que asigna este código; no se acepta ingreso manual.
+- Asignación de un `variant_id` interno generado por Catálogo e inmutable, separado del SKU comercial. El SKU comercial puede ser informado por el gestor/importación —por ejemplo, si proviene de ERP o proveedor— o generado por el sistema si se omite; en ambos casos debe ser único globalmente y no puede cambiarse después de publicar la variante mediante edición ordinaria.
 - Asociación de una imagen propia a cada variante (por ejemplo, para reflejar el color específico).
 - Posibilidad de definir un precio propio para una variante en Pricing; si no existe, hereda el precio base vigente del producto. La persistencia y vigencia del precio pertenece a Pricing.
 - Actualización de los atributos no identificadores, la imagen o el estado de una variante existente. Los atributos identificadores (los que componen el SKU) son inmutables una vez creada la variante.
@@ -29,7 +34,7 @@ Incluye:
 ## 4. Requisitos
 
 ### Requisito 0: Configuración de características identificadoras por producto
-El gestor configura **en Catálogo, para cada producto `tiene_variantes=true` y antes de crear su primera variante**, un conjunto no vacío de `caracteristica_id` distintos seleccionados entre las características LISTA efectivas y activas de la categoría; las características NUMERO/TEXTO no identifican variantes en este alcance. El conjunto de IDs se ordena de forma canónica y queda **inmutable desde la primera variante registrada**, incluso cuando quede inactiva, para impedir cambios retroactivos de identidad/SKU. Para cada variante se exige exactamente un `valor_id` activo y perteneciente a cada LISTA identificadora configurada; no pueden faltar atributos ni aparecer atributos identificadores extra. Los valores y características se referencian por ID estable; el código SKU se genera usando `sku_base` y representaciones técnicas inmutables de esos IDs, no etiquetas editables. Una combinación de IDs no puede reutilizarse aunque una variante anterior esté inactiva. La selección de características se valida contra la Taxonomía vigente en el momento de configurar y crear; si una categoría cambia y deja sin validez una configuración, se bloquea la creación/activación de nuevas variantes hasta resolución explícita sin reescribir SKUs ya emitidos. La primera variante puede crearse en el mismo lote que su padre solo si las filas coherentes declaran el mismo conjunto de `caracteristica_id` identificadoras.
+El gestor configura **en Catálogo, para cada producto `tiene_variantes=true` y antes de crear su primera variante**, un conjunto no vacío de `caracteristica_id` distintos seleccionados entre las características LISTA activas y aplicables a su `tipo_producto_id`; las características NUMERO/TEXTO no identifican variantes en este alcance. El conjunto queda **inmutable desde la primera variante registrada**, incluso si después queda inactiva, para impedir cambios retroactivos de identidad. Para cada variante se exige exactamente un `valor_id` activo y perteneciente a cada LISTA identificadora configurada; no pueden faltar atributos ni aparecer atributos identificadores extra. Los valores y características se referencian por ID estable. Una combinación de IDs no puede reutilizarse aunque una variante anterior esté inactiva. Un cambio de categoría de navegación no altera esta identidad; un cambio de tipo de producto que la invalide requiere una migración explícita fuera del CRUD ordinario.
 
 ### Requisito 1: Creación de variantes de un producto
 
@@ -38,26 +43,30 @@ El sistema DEBE permitir registrar una o más variantes para un producto existen
 #### Escenario: Registro exitoso de una nueva variante
 - DADO un producto base activo o en borrador, con `tiene_variantes = true`, registrado en el catálogo
 - CUANDO el gestor comercial registra una nueva variante indicando sus atributos identificadores (ej. talla "M", color "azul") y una imagen
-- ENTONCES el sistema crea la variante asociada al producto en estado BORRADOR, le asigna automáticamente un código SKU único y la deja disponible únicamente para consulta administrativa mientras no se active
+- ENTONCES el sistema crea la variante asociada al producto en estado BORRADOR, genera un `variant_id` interno, valida el SKU comercial informado o genera uno si se dejó vacío, y la deja disponible únicamente para consulta administrativa mientras no se active
 
 #### Escenario: Intento de registro de una variante con combinación de atributos duplicada
 - DADO un producto que ya tiene registrada una variante con una combinación específica de atributos identificadores (ej. talla "M", color "azul")
 - CUANDO el gestor comercial intenta registrar otra variante con exactamente la misma combinación de atributos para el mismo producto
 - ENTONCES el sistema rechaza la operación e informa que ya existe una variante con esa combinación
 
-### Requisito 2: Código único por variante (SKU autogenerado)
+### Requisito 2: Identidad interna y SKU comercial único
+Cada variante DEBE recibir un `variant_id` interno generado por Catálogo, estable e inmutable. Separadamente, debe disponer de un `sku` comercial único a nivel de catálogo. Al crear la variante, el gestor o una importación puede informar un SKU comercial válido; si lo omite, el sistema genera uno a partir del `sku_base` y la combinación identificadora. El SKU comercial aceptado no se modifica mediante la edición ordinaria de una variante ya publicada; una recodificación exige un proceso explícito de migración para no romper referencias de Pricing, Inventario, pedidos e integraciones externas.
 
-El sistema DEBE generar automáticamente el código SKU de cada variante a partir del `sku_base` del producto y de sus atributos identificadores, garantizando que sea único a nivel de todo el catálogo. El sistema NO debe aceptar un código SKU ingresado manualmente por el gestor comercial.
+#### Escenario: SKU comercial proporcionado
+- DADO el registro de una variante válida y un SKU comercial externo `NKE-PEG-42-BLK`
+- CUANDO Catálogo valida formato y comprueba que no existe otro producto o variante con el mismo código
+- ENTONCES conserva ese SKU como código comercial de la variante y genera independientemente su `variant_id` interno.
 
-#### Escenario: Asignación correcta de código SKU
-- DADO el registro de una nueva variante válida
-- CUANDO el sistema genera el código SKU de la variante a partir del `sku_base` y los atributos identificadores
-- ENTONCES el sistema valida que dicho código no exista previamente en ninguna otra variante o producto del catálogo antes de confirmar el registro
+#### Escenario: Generación automática cuando no se informa SKU
+- DADO el registro de una nueva variante válida sin SKU comercial
+- CUANDO Catálogo procesa el alta
+- ENTONCES genera un SKU determinista/único según la convención vigente, valida la ausencia de colisión y lo devuelve junto con el `variant_id`.
 
-#### Escenario: Colisión interna de SKU autogenerado
-- DADO que, por un caso excepcional, el código SKU autogenerado coincide con uno ya existente en el catálogo
-- CUANDO el sistema intenta confirmar el registro de la variante
-- ENTONCES el sistema rechaza la operación, registra la colisión para revisión técnica y no expone la variante mientras no se resuelva
+#### Escenario: Colisión de SKU
+- DADO que el SKU informado o generado coincide con uno ya existente
+- CUANDO el sistema intenta confirmar el registro
+- ENTONCES rechaza la operación sin exponer la variante y permite corregir el SKU solicitado o reintentar la generación según corresponda.
 
 ### Requisito 3: Imagen propia por variante
 
@@ -105,8 +114,8 @@ La variante se crea BORRADOR y puede pasar a ACTIVA mediante una acción autoriz
 - CUANDO se solicita activarla
 - ENTONCES se rechaza sin convertirla en ACTIVA.
 
-### Requisito 4.2: Creación masiva sin SKU manual
-Cuando Carga Masiva crea una variante, identifica el producto padre (existente o creado como BORRADOR una sola vez por grupo `sku_base` en el mismo lote) y la combinación de características por sus IDs/valores; Catálogo genera el SKU único y devuelve `product_id`, `sku` y la correlación `batch_id`/`row_id` en el resultado. Un SKU suministrado en el archivo para una variante inexistente NO se adopta como identificador manual. Si la fila señala un SKU existente, se trata como actualización y se rechaza todo intento de cambiar los atributos identificadores.
+### Requisito 4.2: Creación masiva con SKU opcional
+Cuando Carga Masiva crea una variante, identifica el producto padre (existente o creado como BORRADOR una sola vez por grupo `sku_base` en el mismo lote) y la combinación de características por sus IDs/valores. Catálogo siempre genera `variant_id`; si la fila aporta `sku`, lo valida como código comercial solicitado, y si la celda está vacía genera el SKU según la convención vigente. Devuelve `product_id`, `variant_id`, `sku` y la correlación `batch_id`/`row_id`. Si la fila señala un SKU existente, se trata como actualización y se rechaza todo intento de cambiar los atributos identificadores o recodificar el SKU desde este flujo.
 
 ### Requisito 5: Consulta de variantes por producto
 
@@ -145,9 +154,7 @@ Una variante con estado ACTIVA no es vendible si su producto padre está BORRADO
 ## Criterio de completitud
 
 La capacidad se considera correctamente implementada cuando:
-- Todos los requisitos (Creación de variantes, SKU autogenerado, Imagen propia por variante, Actualización/Desactivación con inmutabilidad del SKU, y Consulta) están implementados.
+- Todos los requisitos (Creación de variantes, `variant_id` interno, SKU comercial aportado o generado con unicidad, imagen propia, actualización/desactivación con identidad estable y consulta) están implementados.
 - Todos los escenarios definidos se cumplen, incluyendo los casos borde y de error.
 - Los requisitos no funcionales aplicables (rendimiento, seguridad, disponibilidad, auditoría, escalabilidad) se cumplen.
 - No se han incorporado funcionalidades fuera del alcance, como gestión de precios, cálculo de stock u ofertas asociadas a variantes.
-
----

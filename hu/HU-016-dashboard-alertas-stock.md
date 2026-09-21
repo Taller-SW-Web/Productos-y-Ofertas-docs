@@ -1,12 +1,14 @@
 # HU-016 — Historia de Usuario: Dashboard analítico y alertas de stock
 
-## Historia de usuario principal
+**Responsable:** Miguel Ángel Taco Zavala  
+**Rama:** taco  
+**Trazabilidad:** Spec [SPEC-016](../specs/SPEC-016-dashboard-alertas-stock.md) | Flow [WF-016](../wireframes/flows/WF-016-dashboard-alertas-stock.md)
 
 **Como** responsable de inventario,
 
 **quiero** visualizar indicadores, niveles de stock y alertas sobre el estado del inventario,
 
-**para** identificar oportunamente las variantes con bajo nivel de disponibilidad, conocer las variantes agotadas y analizar el Top 5 de productos con mayor cantidad de unidades vendidas.
+**para** identificar oportunamente unidades con baja disponibilidad o agotadas y analizar cómo se distribuye operativamente el stock entre ubicaciones, sin duplicar los reportes de ventas cuyo dueño es Ventas/Postventa.
 
 El dashboard permitirá visualizar información consolidada del inventario mediante indicadores y gráficos, facilitando el seguimiento del estado del stock y la identificación de situaciones que requieran atención.
 
@@ -18,13 +20,13 @@ La unidad primaria de inventario del dashboard es el **SKU vendible**. El Produc
 | --- | --- |
 | **CA-01** | El sistema debe mostrar la cantidad de variantes que se encuentran en estado **Disponible, Stock bajo y Agotado**. |
 | **CA-02** | El sistema debe mostrar indicadores que permitan conocer el estado general del inventario. |
-| **CA-03** | El sistema debe identificar las variantes cuyo stock se encuentre en o por debajo del `umbral_stock_bajo` configurado por variante/SKU para el estado **Stock bajo** (`0 < stock <= umbral_stock_bajo`). |
+| **CA-03** | El sistema identifica Stock bajo usando `available` y el umbral efectivo: override por SKU cuando exista o umbral global configurable como fallback. El estado puede mostrarse por ubicación y, cuando proceda, agregado por SKU. |
 | **CA-04** | El sistema debe mostrar alertas para las variantes que se encuentren en estado **Stock bajo** o **Agotado**, según el estado calculado de cada SKU. |
-| **CA-05** | El sistema debe mostrar el **Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado**, considerando exclusivamente unidades vendidas de ventas confirmadas (excluyendo operaciones que no representen una venta confirmada, como ajustes de inventario, mermas o reservas), agrupando las ventas de todas las variantes de un mismo producto, sumando las unidades vendidas de sus SKUs y mostrando los 5 productos con mayor cantidad total de unidades vendidas. |
+| **CA-05** | El sistema debe mostrar la **distribución operativa del inventario por ubicación**, indicando al menos unidades `on_hand`, `reserved` y `available` y cantidad de SKU en Stock bajo/Agotado por `location_id`. El dashboard no calcula rankings de ventas por producto. |
 | **CA-06** | Los indicadores deben representar el estado actual del inventario y las alertas deben generarse según el estado calculado de cada SKU en ese momento. |
 | **CA-07** | Los indicadores y alertas deben actualizarse cuando la gestión de inventario notifique un cambio de stock de una variante mediante el contrato de evento `inventory.stock.changed`; la actualización debe reflejar el saldo y el estado vigentes. |
 | **CA-08** | Después de un consumo correctamente registrado, el estado del SKU debe reflejarse correctamente en el dashboard: si pasa de **Disponible → Stock bajo**, debe verse como **Stock bajo**; si pasa de **Stock bajo → Agotado**, debe verse como **Agotado**. |
-| **CA-09** | El período del Top 5 debe ser seleccionable; si el usuario no especifica uno, se utilizan los últimos 30 días. |
+| **CA-09** | El dashboard permite filtrar por `location_id` y comparar ubicaciones habilitadas. Si solo existe `DEFAULT`, mantiene una vista única sin inventar tiendas o almacenes no configurados. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -46,11 +48,11 @@ La unidad primaria de inventario del dashboard es el **SKU vendible**. El Produc
 * **CUANDO** el responsable de inventario consulta el dashboard,
 * **ENTONCES** el sistema muestra la variante como **Agotada** y genera la alerta correspondiente.
 
-### Escenario 4: Visualizar el Top 5 de productos más vendidos
+### Escenario 4: Visualizar distribución de stock por ubicación
 
-* **DADO** que existen ventas confirmadas registradas de diferentes variantes durante el período analizado, por ejemplo `Nike Air Max` con `SKU-001 → 20 unidades vendidas`, `SKU-002 → 15 unidades vendidas` y `SKU-003 → 10 unidades vendidas`,
-* **CUANDO** el responsable de inventario consulta la sección de productos más vendidos,
-* **ENTONCES** el sistema muestra el **Top 5 de productos con mayor cantidad de unidades vendidas durante el período analizado**, agrupando las ventas de las variantes de un mismo producto (por ejemplo, `Nike Air Max` con un total de **45** unidades vendidas) y ordenándolos de mayor a menor.
+* **DADO** que el mismo SKU posee existencias en `ALMACEN_CENTRAL` y `TIENDA_01`,
+* **CUANDO** el responsable consulta la distribución operativa,
+* **ENTONCES** el sistema muestra por ubicación sus unidades `on_hand`, `reserved` y `available`, sin interpretar esos datos como ventas ni duplicar reportes de Ventas/Postventa.
 
 ### Escenario 5: Actualización de una alerta después de un consumo (Disponible → Stock bajo)
 
@@ -74,7 +76,7 @@ La unidad primaria de inventario del dashboard es el **SKU vendible**. El Produc
 
 | **Módulo** | **Necesidad de interacción** | **Información que esta funcionalidad recibe** | **Información que esta funcionalidad entrega** |
 | --- | --- | --- | --- |
-| **Ventas y Postventa** | Proporcionar las unidades vendidas por variante/SKU correspondientes a ventas confirmadas del período analizado para calcular el Top 5 de productos más vendidos. | Unidades vendidas por variante/SKU y período analizado. | Información analítica del Top 5 para el responsable de inventario. |
+| **Ventas y Postventa** | No es fuente obligatoria de este dashboard. Los reportes de ventas por producto/canal pertenecen a Ventas/Postventa; Inventario únicamente puede recibir sus solicitudes de reserva/consumo mediante los contratos de WF/HU-015. | Contratos de movimientos de inventario cuando correspondan. | Disponibilidad/resultado de inventario, no analítica de ventas. |
 
 ## Dependencias dentro de Productos y Ofertas
 
@@ -88,8 +90,6 @@ La unidad primaria de inventario del dashboard es el **SKU vendible**. El Produc
 ## Reglas de negocio consolidadas
 
 * **Indicadores mínimos:** total de SKUs vendibles, total de unidades disponibles y cantidad de SKUs por estado (Disponible, Stock bajo y Agotado).
-* **Umbral:** `umbral_stock_bajo` se configura individualmente por SKU; no existe un valor global obligatorio.
+* **Umbral:** se usa un umbral global configurable como fallback y override por SKU cuando exista.
 * **Filtros:** el dashboard permite filtrar por producto, categoría, marca, SKU y estado de inventario.
-* **Top 5:** período seleccionable; por defecto, últimos 30 días.
-
----
+* **Distribución:** la vista por ubicación muestra `on_hand`, `reserved`, `available` y estados de stock; los rankings de ventas quedan fuera del alcance y pertenecen a Ventas/Postventa.

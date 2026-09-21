@@ -1,6 +1,8 @@
 # HU-002 — Historia de Usuario: Gestión de combos de productos
 
-## Historia de usuario principal
+**Responsable:** Marco Renato Castilla Huanca  
+**Rama:** castilla  
+**Trazabilidad:** Spec [SPEC-002](../specs/SPEC-002-gestion-combos-productos.md) | Flow [WF-002](../wireframes/flows/WF-002-gestion-combos-productos.md)
 
 **Como** gestor comercial,
 **quiero** crear y gestionar paquetes (combos) agrupando múltiples SKUs y productos
@@ -16,18 +18,18 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 | **ID** | **Criterio** |
 | **CA-01** | Solo un gestor comercial con los permisos correspondientes (Módulo Seguridad y Usuarios) puede crear, modificar, consultar y desactivar combos. |
 | **CA-02** | El registro de un combo debe incluir obligatoriamente: nombre, descripción, selección de 2 o más SKUs vendibles **distintos** (SKU de variante o `sku_base` de producto simple) con sus respectivas cantidades, y un precio único de paquete. |
-| **CA-03** | El sistema debe validar de manera estricta y obligatoria que el precio del paquete sea mayor a cero y estrictamente menor que la suma de `precio_regular_vigente_sku × cantidad` para todos sus componentes, resuelto por Pricing con override/herencia. No se usa precio de oferta ni descuentos adicionales para esta comparación. |
+| **CA-03** | El sistema debe validar que el precio del paquete sea mayor a cero, menor que la suma de `precio_regular_vigente_sku × cantidad` y también menor que la suma de los **precios públicos efectivos vigentes** de los componentes (oferta propia de Pricing cuando exista, de lo contrario regular). No se incorporan promociones de carrito ni cupones contextuales a esta validación administrativa. |
 | **CA-04** | Queda estrictamente prohibido el anidamiento: los combos únicamente pueden estar conformados por productos y SKUs individuales puros, rechazando la inclusión de otros combos. |
 | **CA-05** | El sistema debe calcular la disponibilidad informativa (stock) del combo basándose en el SKU individual con menor disponibilidad proporcional ($stock\_disponible = \min \lfloor stock\_sku_i / cantidad\_requerida_i \rfloor$). |
 | **CA-06** | Si alguno de los SKUs componentes del combo se queda sin stock (0 unidades), la disponibilidad del combo automáticamente pasa a ser 0 y se marca como no disponible para compra. |
 | **CA-07** | Al emitirse el contrato provisional `order.confirmed` desde Ventas/Postventa con `order_id`, composición/SKUs y cantidades aceptadas, **Inventario** ejecuta el descuento ACID de todos los componentes o ninguno y publica resultado correlacionado; Combos no escribe stock. |
 | **CA-08** | Si una venta ya confirmada se cancela antes del despacho (`order.cancelled`), el sistema compensa íntegramente el stock consumido. Un `order.created` que nunca llega a confirmarse no requiere compensación porque no afectó stock. |
-| **CA-09** | En caso de cancelación o devolución postventa (`order.returned`), la reposición de stock se gestiona de forma atómica e integral para todos los artículos que integraban el paquete. |
+| **CA-09** | La política de si una devolución de combo puede ser total o parcial pertenece a Ventas/Postventa. Al recibir el contrato homologado de devolución aceptada, Inventario repone **exactamente los SKU y cantidades físicamente reintegrables informados**, de forma idempotente, sin que Combos decida la elegibilidad de la devolución. |
 | **CA-10** | Si un gestor comercial desactiva o da de baja un SKU o producto componente en el Catálogo, el combo debe inhabilitarse y ocultarse automáticamente en todos los canales de venta, emitiendo una notificación al gestor para su revisión. |
 
-| **CA-11** | No se repite un mismo SKU como dos componentes; cada uno requiere cantidad entera positiva. El precio de referencia es la suma de precios regulares vigentes por SKU × cantidad, incluidos overrides de variante. |
+| **CA-11** | No se repite un mismo SKU como dos componentes; cada uno requiere cantidad entera positiva. La validación comercial muestra tanto la suma regular como la suma efectiva vigente de los componentes para evitar publicar un combo más caro que comprarlos individualmente en ese momento. |
 | **CA-12** | Si un cambio de precios deja de cumplir el descuento real, el combo se vuelve no elegible para nuevas ventas y se notifica, sin alterar pedidos históricos. |
-| **CA-13** | Un combo no acumula descuentos adicionales de promociones o cupones en el alcance inicial; su precio y composición se conservan en el snapshot confirmado del pedido. |
+| **CA-13** | El precio de combo es un beneficio comercial propio. Su combinabilidad con promociones/cupones se resuelve por la política configurada del motor de Promociones; por defecto el MVP puede marcar el combo como exclusivo. El pedido confirmado conserva snapshot de precio y composición. |
 | **CA-14** | Un rechazo de consumo desde Inventario se comunica a Ventas mediante resultado idempotente; la resolución de pedido/pago depende de Ventas/Postventa y no se presume exitosa. |
 | **CA-15** | La disponibilidad mostrada del combo es una estimación calculada con la proyección de stock de sus SKUs; la consulta expone `calculated_at` y estado de actualización. Si es desconocida/obsoleta se informa «No verificable», nunca se garantiza una compra. Inventario revalida y descuenta atómicamente en `order.confirmed`, sin reservas. |
 
@@ -86,7 +88,7 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 * **CUANDO** se intenta crearlo,
 * **ENTONCES** el sistema rechaza el guardado porque necesita dos SKUs distintos.
 
-**Escenario 10: Cambio de precio regular invalida combo**
+**Escenario 10: Cambio de precio vigente invalida la conveniencia del combo**
 * **DADO** un combo cuyo precio deja de ser inferior al total regular de componentes,
 * **CUANDO** Pricing confirma el cambio,
 * **ENTONCES** el combo se oculta para nuevas ventas y se notifica al gestor, sin alterar pedidos previos.
@@ -118,8 +120,6 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 ## Reglas acordadas de negocio y arquitectura
 
 * **Baja de productos individuales:** Si un SKU componente es desactivado en el catálogo, **el combo se deshabilita y oculta automáticamente en los canales de venta** y se genera una notificación al gestor comercial para su revisión.
-* **Devoluciones:** Ante cancelaciones o devoluciones de combos desde Ventas y Postventa (`order.returned`), la reposición de existencias se procesa de forma **atómica e integral para todos sus artículos individuales** (el combo se anula y devuelve completo).
+* **Devoluciones:** Ventas/Postventa define si una devolución de combo es total o parcial. Inventario repone únicamente las líneas y cantidades aceptadas físicamente que reciba en el contrato homologado; esta funcionalidad no impone una política de devolución al módulo propietario del pedido.
 * **Anidamiento:** **Prohibido el anidamiento**. Un paquete solo puede conformarse por artículos y variantes directas, descartando complejidades recursivas.
-* **Límites de precios:** Es una **validación obligatoria y bloqueante**: el precio configurado para el combo DEBE ser menor que la suma de los precios regulares vigentes por SKU, multiplicados por sus cantidades ($0 < precio\_combo < \sum_i precio\_regular\_sku_i \times cantidad_i$).
-
----
+* **Límites de precios:** Es una **validación obligatoria y bloqueante**: el precio configurado para el combo debe ser menor tanto que la suma regular como que la suma de precios públicos efectivos vigentes de los componentes. Los descuentos contextuales de carrito/cupón no forman parte de esta comparación administrativa.

@@ -176,6 +176,9 @@ Confirmación no bloqueante y listado o detalle actualizado después de crear, e
 | Estado | Selector | Sí | Activa o inactiva | N/A |
 | Inicio | Fecha/hora | Sí | Valor válido | `Indica el inicio` |
 | Fin | Fecha/hora | Sí | Posterior al inicio | `El fin debe ser posterior al inicio` |
+| Prioridad | Número | Sí | Entero >= 1 para orden determinista | `Ingresa una prioridad válida` |
+| Canales | Selección múltiple | No | `MARKETPLACE`, `CHATBOT`, `RETAIL` (vacío = todos) | N/A |
+| Política de combinabilidad | Selector | Sí | `EXCLUSIVE` o `COMBINABLE` | `Selecciona la política de combinabilidad` |
 | Alcance | Selección múltiple | Sí | Al menos un producto y/o SKU vendible activo; deduplicar SKU incluido por producto | `Selecciona al menos un producto o SKU` |
 
 - Cambiar el tipo actualiza la ayuda del valor.

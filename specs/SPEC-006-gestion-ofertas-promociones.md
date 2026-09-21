@@ -1,5 +1,9 @@
 # SPEC-006 — Especificación: Gestión de ofertas y promociones
 
+**Responsable:** Axel Andree Cueva Alcalá  
+**Rama:** cueva  
+**Trazabilidad:** HU [HU-006](../hu/HU-006-gestion-ofertas-promociones.md) | Wireframe [WF-006](../wireframes/flows/WF-006-gestion-ofertas-promociones.md)
+
 ## 1. Contexto
 
 El proyecto consiste en un Marketplace Multicanal para productos deportivos, organizado en módulos integrados mediante APIs. Dentro del Módulo de Productos y Ofertas, una funcionalidad obligatoria es la gestión de ofertas y promociones.
@@ -19,16 +23,17 @@ Incluye:
 - Validar vigencia, estado y productos participantes.
 - Evaluar promociones aplicables.
 - Resolver múltiples promociones automáticas válidas.
-- Resolver la coincidencia entre una promoción automática y un cupón válido sin acumular descuentos.
+- Resolver la coincidencia entre beneficios mediante una política de combinación configurable por promoción, manteniendo por defecto el comportamiento exclusivo del MVP cuando no se habilite una combinación.
+- Configurar canales habilitados (`MARKETPLACE`, `CHATBOT`, `RETAIL` o todos) y prioridad comercial.
 - Preservar el beneficio registrado en pedidos ya confirmados.
 
 ## 4. Requisitos
 
 ### Requisito 1: Registrar promociones
 
-El sistema DEBE permitir registrar una promoción indicando como mínimo nombre, tipo de descuento, valor, fecha/hora de inicio y fin, modalidad obligatoria `AUTOMATICA` o `CUPON`, estado inicial —ACTIVA o INACTIVA— y alcance asociado (uno o más productos y/o SKUs vendibles).
+El sistema DEBE permitir registrar una promoción indicando como mínimo nombre, tipo de descuento, valor, fecha/hora de inicio y fin, modalidad obligatoria `AUTOMATICA` o `CUPON`, estado inicial —ACTIVA o INACTIVA—, alcance asociado (uno o más productos y/o SKUs vendibles), `prioridad`, `canales_habilitados` y política de combinación. La política declara expresamente si puede coexistir con `OFERTA_PRICING`, `PROMOCION_AUTOMATICA` y/o `CUPON`; por defecto todas las combinaciones son `false` para conservar un comportamiento seguro y explícito.
 
-La fecha de inicio DEBE ser anterior a la fecha de fin.
+La fecha de inicio DEBE ser anterior a la fecha de fin. La lista de canales vacía se interpreta como todos los canales soportados.
 
 ### Requisito 2: Validar valores de descuento
 
@@ -57,21 +62,16 @@ Desactivar una promoción no altera descuentos ya registrados en pedidos confirm
 El sistema DEBE considerar únicamente promociones que:
 - correspondan al producto o SKU evaluado según el alcance configurado;
 - estén activas;
-- se encuentren dentro de su periodo de vigencia.
+- se encuentren dentro de su periodo de vigencia;
+- estén habilitadas para el canal que solicita la evaluación.
 
-El cálculo utiliza el precio regular vigente por SKU suministrado por Pricing como base para las alternativas; el precio de oferta de Pricing se compara como alternativa independiente, según la política comercial compartida, sin apilar descuentos.
+El cálculo utiliza el precio regular vigente por SKU suministrado por Pricing como base. La oferta de Pricing y otros beneficios solo se combinan cuando las políticas de todas las piezas involucradas lo permiten; una ausencia de autorización expresa se interpreta como incompatibilidad.
 
 ### Requisito 6: Resolver múltiples promociones automáticas
+Cuando varias promociones `AUTOMATICA` sean válidas, el motor no asume que todas son excluyentes. Construye únicamente las combinaciones autorizadas por sus políticas, respeta la prioridad comercial y evita aplicar dos veces una misma promoción o una combinación no declarada. Para las promociones compatibles que actúan sobre las mismas líneas, se usa un orden determinista por `prioridad` ascendente y luego `promotion_id`; cada paso opera con decimal exacto y la presentación redondea al final de la línea. Entre todas las combinaciones válidas, el motor selecciona la que produzca el menor importe final para la misma cesta. Si ninguna combinación múltiple es válida, se mantiene la mejor alternativa individual.
 
-Cuando más de una promoción con modalidad `AUTOMATICA` sea válida para la misma evaluación, el sistema DEBE seleccionar únicamente la que genere el mayor beneficio económico para el cliente, entendido como el menor importe resultante.
-
-### Requisito 7: Resolver promoción automática y cupón
-
-Una promoción de modalidad `AUTOMATICA`, una oferta vigente de Pricing y un cupón válido NO se acumulan en el alcance inicial.
-
-El sistema DEBE comparar importes finales calculados sobre el total de la misma cesta, manteniendo intactas las líneas no elegibles, y aplicar una única alternativa de mayor beneficio. En empate cupón vs promoción automática se prioriza cupón; en empate con oferta de Pricing se prioriza la oferta vigente y no se consume cupón.
-
-El cupón solo podrá consumirse posteriormente si fue el beneficio efectivamente seleccionado para el pedido.
+### Requisito 7: Resolver promoción automática, cupón y oferta de Pricing
+Una oferta de Pricing, una promoción automática y un cupón pueden coexistir **solo cuando las políticas de combinación de las promociones involucradas lo permiten**. El sistema evalúa alternativas individuales y combinaciones permitidas sobre el total de la misma cesta, manteniendo intactas las líneas no elegibles, y selecciona el menor importe final. En empate exacto se elige primero la alternativa que no consuma cupón; luego la de menor valor de `prioridad`; finalmente se usa el identificador estable como desempate técnico. El cupón solo podrá consumirse si forma parte del beneficio finalmente seleccionado.
 
 ### Requisito 7.1: Alcance por producto o SKU
 Una promoción puede configurarse:
@@ -82,7 +82,7 @@ Si una misma promoción incluye producto y SKU, la evaluación deduplica el alca
 
 ### Requisito 8: Consultar promociones
 
-El sistema DEBE permitir consultar promociones con su tipo de descuento, valor, productos participantes, estado y periodo de vigencia.
+El sistema DEBE permitir consultar promociones con su tipo de descuento, valor, productos participantes, estado, periodo de vigencia, prioridad, canales habilitados y política de combinación.
 
 ### Requisito 9: Exponer evaluación mediante API
 
@@ -94,34 +94,29 @@ La evaluación debe devolver como mínimo:
 - motivo cuando no existe un beneficio aplicable.
 
 ### Política comercial compartida de precios y descuentos (decisión interna)
-Pricing es propietario del `precio_regular` vigente, del `precio_oferta` opcional y de los overrides de variante. Para cada SKU vendible entrega **ambos valores separados**, la moneda y la vigencia, resolviendo primero la herencia del producto o el override de la variante. La base para calcular porcentajes/montos de Promociones/Cupones es el **precio regular vigente por SKU**, multiplicado por la cantidad elegible; `precio_oferta` es un **beneficio alternativo de Pricing**, no una base para volver a aplicar promociones. La evaluación comercial compara el subtotal regular, la oferta propia de Pricing (cuando aplique), la mejor promoción automática y el cupón válido; aplica exclusivamente la alternativa que deja menor importe en el mismo conjunto elegible, sin acumularlas. En empate entre cupón y promoción automática se prioriza cupón; frente a empate con oferta Pricing se prioriza la oferta ya vigente para no consumir un cupón innecesariamente. El cupón solo consume uso si queda seleccionado. El resultado incluye precio regular, alternativa seleccionada, descuento, importe final y desglose por SKU. Los importes se calculan con decimal exacto y redondeo monetario al final de cada línea (2 decimales para PEN); se comparan importes finales no porcentajes nominales. Cada alternativa se compara contra el **total de la misma cesta**, incluyendo las líneas no elegibles sin modificación; no se comparan subtotales de conjuntos distintos.
+Pricing es propietario del `precio_regular`, `precio_oferta`, moneda, vigencia y scope por canal. Entrega esos valores separados a Promociones/Cupones. El precio de oferta de Pricing no obliga a excluir cualquier otro beneficio: la combinación depende de la `politica_combinacion` de las promociones involucradas. Pricing no evalúa cupones ni promociones; únicamente resuelve el precio propio del SKU para el canal y momento solicitados.
 
-Esta política es una **decisión interna provisional de comercialización**, no un contrato ya acordado con Ventas/Postventa. En pedidos confirmados Ventas conserva snapshot de precio y beneficio elegido.
+Esta política es una **decisión interna provisional de comercialización**, pendiente de homologación en los contratos con Ventas/Postventa. En pedidos confirmados Ventas conserva el snapshot del precio y de los beneficios aplicados.
 
-### Requisito 10: Modalidad de promoción y transiciones
-Toda promoción se crea con `modalidad = AUTOMATICA | CUPON`. Las automáticas pueden aplicarse sin código; las CUPON solo son candidatas cuando el comprador presenta y valida un cupón que las referencia. La modalidad es inmutable después de la primera activación o cuando existan cupones asociados o usos históricos: para cambiarla el gestor registra otra promoción. Si aún está en borrador funcional, inactiva y sin cupones ni usos, puede editarse antes de activarla. La API administrativa muestra modalidad y la evaluación excluye CUPON sin código. Cambiar la vigencia o desactivar una promoción no altera snapshots de pedidos confirmados.
+### Requisito 5: Inicialización de precio y contrato de auditoría
+La creación del precio base se solicita a Pricing mediante comando idempotente con `product_id`, `sku_base`, `precio_regular`, `motivo_cambio=ALTA_PRODUCTO`, identidad del actor y correlación. Pricing registra el primer precio con `tipo_operacion=CREACION`, `precio_anterior=null` y `variacion_porcentual=null`, emite `pricing.price.changed` con ese contrato **solo después del commit** y confirma la preparación a Catálogo. Las modificaciones posteriores usan `tipo_operacion=MODIFICACION`, precio anterior y variación calculada. El evento es un hecho ocurrido; nunca sirve como orden para realizar el cambio.
 
-### Requisito 11: Resultados provisionales de confirmación
-La evaluación de beneficios NO consume usos. Ante el contrato provisional `order.confirmed` con `order_id`, identificador de beneficio seleccionado y resumen de SKU/cantidades/precios, Cupones revalida atómicamente el límite de usos, registra idempotentemente el consumo o devuelve `promotions.coupon.consumption.rejected` con correlación. Ventas/Postventa es dueño de resolver el pedido/pago si el consumo falla; Productos no confirma ni revierte pagos por su cuenta. Los mensajes de Ventas requieren homologación formal.
+### Requisito 6: Distinguir importaciones
+La carga exclusiva de precios de esta funcionalidad garantiza All-or-Nothing **solo dentro de Pricing** cuando `allow_partial=false`; el modo parcial permite persistir filas válidas en transacción local. La importación general de `SPEC-001-carga-exportacion-masiva-productos.md` coordina Catálogo, Pricing e Inventario y **no promete atomicidad entre dominios**. El Worker recibe comandos idempotentes por dominio y retorna resultados correlacionados; no consume `pricing.price.changed` como instrucción. La respuesta inicial de una importación asíncrona es HTTP 202 con `batch_id`, y su éxito/fallo se consulta por estado.
 
 ## 5. Requisitos no funcionales
-
-- Rendimiento: las evaluaciones no deben afectar perceptiblemente la experiencia de compra.
-- Seguridad: solo usuarios autenticados y autorizados como Gestor Comercial pueden administrar promociones.
-- Auditoría: registrar creación y última modificación.
-- Consistencia: usar una referencia temporal consistente en backend.
-- Integración: exponer la lógica mediante API, sin acceso directo de otros módulos a la base de datos.
+- Rendimiento objetivo: actualización individual < 300 ms; consulta histórica/vigente < 100 ms bajo carga de referencia. Para 5,000 registros, procesamiento asíncrono medible y no bloqueante; 10 segundos es una meta a validar con benchmark del entorno, no un plazo garantizado ante caídas, reintentos o cuotas Free Tier.
+- Seguridad: Endpoints protegidos mediante token emitido por Seguridad y Usuarios y permisos como `PRICING_READ`, `PRICING_WRITE` y `PRICING_BULK_WRITE`; Productos y Ofertas no define qué roles globales reciben esos permisos. Validación rigurosa del MIME type y tamaño máximo de archivo (máx. 10 MB).
+- Integración y Persistencia: Desacoplamiento del precio vigente (tabla operativa para lectura ultrarrápida) e histórico de vigencias (SCD Tipo 2). Emisión obligatoria del evento `pricing.price.changed` al broker asíncrono acordado tras cada mutación persistida, mediante Outbox; la selección RabbitMQ/Kafka queda fuera del contrato funcional.
 
 ## 6. Fuera de alcance
-
-- Gestión del código y control de usos de cupones, que corresponde a Gestión de Cupones.
-- Gestión de venta cruzada y upselling.
-- Gestión de productos, precios base y stock.
-- Checkout, pedidos y pagos.
-- Pantalla administrativa de simulación «Evaluar compra»; la evaluación de beneficios se expone por API y se ejecuta en los flujos reales de los canales/venta.
+- Configuración de reglas complejas de cupones de descuento, combos y promociones 2x1 — corresponde al módulo de ofertas y promociones.
+- Procesamiento de cobros y checkout — responsabilidad del canal de ventas transaccional.
+- Determinación de costos logísticos y tarifas por zona — responsabilidad del módulo de despacho y entrega.
 
 ## Criterio de completitud
-
-La capacidad se considera correctamente implementada cuando todos los requisitos y escenarios de esta especificación se cumplen y no se incorporan funcionalidades fuera del alcance.
-
----
+La capacidad se considera correctamente implementada cuando:
+- Todos los requisitos funcionales (incluyendo programación y consultas históricas) están implementados.
+- Todos los escenarios definidos se cumplen satisfactoriamente.
+- Los requisitos no funcionales de tiempo de respuesta y seguridad se cumplen.
+- No se incorporan funcionalidades fuera de alcance.

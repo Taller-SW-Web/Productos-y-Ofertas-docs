@@ -1,5 +1,9 @@
 # SPEC-014 — Especificación: Historial de auditoría de precios
 
+**Responsable:** Leonardo Vera Rodríguez  
+**Rama:** vera  
+**Trazabilidad:** HU [HU-014](../hu/HU-014-historial-auditoria-precios.md) | Wireframe [WF-014](../wireframes/flows/WF-014-historial-auditoria-precios.md)
+
 ## 1. Contexto
 En una plataforma de comercio multicanal donde interactúan diversos administradores comerciales, los errores en la asignación de precios o modificaciones no coordinadas conllevan pérdidas de margen considerables o contingencias legales por publicidad engañosa. Para asegurar el control interno, la rendición de cuentas y la detección inmediata de incidencias, se requiere un mecanismo de registro inmutable que documente en tiempo real quién realizó el cambio, cuándo se ejecutó, el valor previo y nuevo, la variación porcentual, el motivo comercial, el canal de origen, el identificador de lote y la dirección IP de procedencia de la petición.
 
@@ -12,7 +16,7 @@ Incluye:
 - Captura de contrato de auditoría completo: `id_auditoria`, `sku`, `product_id`, `tipo_precio`, `precio_anterior` (nullable si `tipo_operacion=CREACION`), `precio_nuevo` (nullable si `tipo_operacion=RETIRO_OFERTA`), `variacion_porcentual` (nullable si `tipo_operacion=CREACION|RETIRO_OFERTA`), `tipo_operacion`, `canal_origen`, `motivo_cambio`, `batch_id`, `usuario_id`, `usuario_email`, `ip_origen` y `timestamp` en UTC.
 - Consulta paginada y filtrado del log por SKU, rango de fechas, usuario responsable, canal y lote.
 - Exportación de registros de auditoría en formato CSV (hasta 100,000 filas para análisis masivo) y PDF (hasta 500 filas para reportes ejecutivos de control).
-- Política de ciclo de vida: al menos 24 meses completos en base operativa; archivado mensual verificado de datos que ya cumplieron ese plazo, seguido de cinco años en frío contados desde el archivado.
+- Política de ciclo de vida configurable. Para el MVP se conserva como valor inicial 24 meses completos en base operativa y cinco años adicionales en archivo frío, sujeto a validación legal/empresarial antes de producción.
 - Inmutabilidad estricta (patrón Append-Only; prohibición de `PUT`, `PATCH`, `DELETE`).
 
 ## 4. Requisitos
@@ -72,7 +76,7 @@ El sistema DEBE asegurar que los registros de auditoría sean estrictamente de s
 El primer precio regular o primera oferta es `CREACION` con `precio_anterior=null` y variación `null`. Una modificación entre importes existentes es `MODIFICACION` y calcula la variación. El retiro explícito de una oferta usa `RETIRO_OFERTA` con `precio_nuevo=null` y variación `null`, según Requisito 6. `event_id` es único por registro de evento procesado; si llega un duplicado, no se crea otro asiento. Auditoría nunca ejecuta comandos para modificar precios.
 
 ### Requisito 5: Archivo verificable
-Cada ejecución mensual selecciona solo registros con antigüedad mayor o igual a 24 meses completos. Exporta Parquet, verifica conteo/checksum y recuperabilidad antes de retirar registros del almacenamiento caliente mediante credenciales de mantenimiento aisladas. La conexión habitual de Auditoría conserva permisos INSERT/SELECT y nunca borra ni actualiza asientos; una exportación fallida conserva los registros originales. En frío se retienen cinco años desde el archivado. El plazo operativo puede exceder 24 meses hasta la siguiente ejecución mensual, nunca ser inferior.
+La retención usa parámetros `AUDIT_HOT_RETENTION_MONTHS` y `AUDIT_ARCHIVE_RETENTION_YEARS`; para el MVP sus valores iniciales son 24 meses y 5 años. Cada ejecución mensual selecciona únicamente registros que ya cumplieron el período caliente configurado, exporta Parquet, verifica conteo/checksum y recuperabilidad antes de retirar la copia caliente mediante credenciales de mantenimiento aisladas. La conexión habitual de Auditoría conserva permisos INSERT/SELECT y nunca borra ni actualiza asientos; una exportación fallida conserva los registros originales. Cambiar los parámetros requiere decisión administrativa y validación legal cuando corresponda; la especificación no presenta esos valores como obligación normativa universal.
 
 ### Requisito 6: Auditar alta y retiro de oferta sin inventar importes
 El alta del **primer** precio regular o de una **nueva** oferta de Pricing registra `tipo_operacion=CREACION`, `precio_anterior=null` y `variacion_porcentual=null`, con `precio_nuevo` positivo. Cuando Pricing retira expresamente una oferta con `accion_precio_oferta=ELIMINAR`, emite `pricing.price.changed` tras el commit con `tipo_precio=OFERTA`, `tipo_operacion=RETIRO_OFERTA`, `precio_anterior` igual a la oferta retirada, `precio_nuevo=null` y `variacion_porcentual=null`: un precio inexistente no equivale a cero y no admite variación porcentual comercial. Toda modificación entre importes existentes utiliza `tipo_operacion=MODIFICACION`, `precio_anterior`/`precio_nuevo` no nulos y variación calculada. La consulta y exportación representan importes nulos como «Sin oferta» o vacío tipado, nunca `0`. Los eventos se deduplican por `event_id` y su auditoría sigue siendo append-only.
@@ -84,9 +88,9 @@ El alta del **primer** precio regular o de una **nueva** oferta de Pricing regis
 
 ## 5. Requisitos no funcionales
 - Rendimiento: La captura y persistencia del log de auditoría no debe añadir más de 50 ms a la operación de precios (arquitectura orientada a eventos mediante el broker acordado y Outbox). La consulta paginada debe responder en menos de 800 ms.
-- Seguridad: Extracción certera de la IP cliente considerando capas de reverse proxy, CDN o API Gateway (revisión obligatoria de `X-Forwarded-For` y `X-Real-IP`). Acceso restringido exclusivamente a roles `ADMIN_SISTEMA` o `AUDITOR_COMERCIAL`.
+- Seguridad: Extracción certera de la IP cliente considerando capas de reverse proxy, CDN o API Gateway. La consulta requiere `PRICING_AUDIT_READ` y la exportación `PRICING_AUDIT_EXPORT`, permisos homologados con Seguridad y Usuarios; esta funcionalidad no define por sí misma roles globales como `ADMIN_SISTEMA` o `AUDITOR_COMERCIAL`.
 - Integridad: Conexión de base de datos del servicio de auditoría configurada con permisos exclusivos de `INSERT` y `SELECT` sobre la tabla de auditoría.
-- Política de Retención: cada registro permanece al menos 24 meses completos en caliente. Un proceso mensual archiva únicamente registros ya elegibles, verifica integridad y recuperabilidad del Parquet antes de retirar su copia caliente, y conserva el archivo cinco años adicionales desde el archivado. No se afirma cumplimiento de una ley específica sin validación legal.
+- Política de Retención: se aplican los parámetros configurados de retención; para el MVP, 24 meses calientes y cinco años de archivo son valores iniciales. No se afirma cumplimiento de una ley específica sin validación legal y de privacidad.
 
 ## 6. Fuera de alcance
 - Auditoría de inicios de sesión o autenticación de usuarios — responsabilidad del módulo de identidad y seguridad.
@@ -97,7 +101,5 @@ El alta del **primer** precio regular o de una **nueva** oferta de Pricing regis
 La capacidad se considera correctamente implementada cuando:
 - Todos los requisitos funcionales y de exportación están implementados.
 - El contrato completo de eventos se encuentra homologado y persistido.
-- La política de retención de 24 meses y archivado posterior está configurada.
+- La política configurable de retención y archivado está definida y los valores del MVP están documentados.
 - No se han incorporado funcionalidades fuera de alcance.
-
----

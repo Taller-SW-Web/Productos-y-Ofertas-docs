@@ -1,12 +1,16 @@
 # HU-014 — Historia de Usuario: Historial de auditoría de precios
 
+**Responsable:** Leonardo Vera Rodríguez  
+**Rama:** vera  
+**Trazabilidad:** Spec [SPEC-014](../specs/SPEC-014-historial-auditoria-precios.md) | Flow [WF-014](../wireframes/flows/WF-014-historial-auditoria-precios.md)
+
 ---
 
 ## 1. Historia de Usuario Principal
 
 | Parámetro | Detalle |
 | :--- | :--- |
-| **Rol (Como)** | `AUDITOR_COMERCIAL` / `ADMIN_SISTEMA` |
+| **Rol (Como)** | Usuario autorizado para auditoría de precios (permisos asignados por Seguridad y Usuarios) |
 | **Acción (Quiero)** | Registrar de forma automática e inmutable cada cambio de precio con su contrato completo y consultar o exportar el historial cronológico (en CSV o PDF) con filtros por SKU, usuario, fechas, canal y lote |
 | **Beneficio (Para)** | Contar con trazabilidad absoluta (quién, cuándo, valor anterior, valor nuevo, variación %, motivo, canal, IP), resolviendo contingencias operativas, comerciales o legales y garantizando el cumplimiento normativo |
 
@@ -23,14 +27,14 @@
 | **CA-05** | **Consulta y Filtrado Multicriterio:** Provee endpoints para consultar cronológicamente el log en orden descendente, permitiendo filtrar por: `sku`, rango de fechas/horas (`fecha_desde` / `fecha_hasta`), identificador o email de usuario, `canal_origen` y `batch_id`. |
 | **CA-06** | **Paginación y Tiempos de Respuesta:** La consulta debe ser paginada y responder en menos de 800 ms. Si no existen registros para los filtros seleccionados, retorna HTTP `200 OK` con un arreglo vacío (`[]`) y total de elementos 0, mostrando en interfaz: "No se registraron cambios de precio bajo los criterios seleccionados". |
 | **CA-07** | **Exportación de Registros (CSV y PDF):** Permite exportar los registros consultados. La exportación en formato **CSV** soporta hasta 100,000 filas para análisis masivo; la exportación en **PDF** está restringida a un máximo de 500 registros para reportes ejecutivos de control con membrete oficial. |
-| **CA-08** | **Seguridad y Accesos:** La consulta y exportación del historial está restringida a usuarios autenticados con rol `AUDITOR_COMERCIAL` o `ADMIN_SISTEMA`. |
-| **CA-09** | **Política de Retención y Archivado:** Los registros se mantienen indexados en la base de datos operativa durante **al menos 24 meses completos**. Al cumplirse este tiempo, un proceso mensual por lotes traslada las particiones a almacenamiento en frío en formato Parquet (S3/Cloud Storage) donde se conservan por cinco años desde el archivado, después de verificar integridad/recuperabilidad antes de retirar los registros de la base operativa. |
+| **CA-08** | **Seguridad y Accesos:** La consulta/exportación requiere permisos `PRICING_AUDIT_READ` y `PRICING_AUDIT_EXPORT` según operación. Seguridad y Usuarios decide qué roles reciben esos permisos; Auditoría no crea ni administra roles propios. |
+| **CA-09** | **Política de Retención y Archivado:** La retención es configurable por política (`RETENTION_HOT_MONTHS`, `RETENTION_ARCHIVE_YEARS`). Para el MVP se proponen 24 meses completos en caliente y cinco años adicionales en frío, sin afirmar que esos plazos respondan por sí solos a una obligación legal. El archivado verifica integridad/recuperabilidad antes de retirar la copia caliente. |
 
 ---
 
 | CA-10 | La creación inicial de precio regular o de una nueva oferta registra `tipo_operacion=CREACION`, precio anterior y variación nulos; los cambios entre importes existentes son `MODIFICACION`. Retirar una oferta registra `RETIRO_OFERTA`, precio nuevo y variación nulos, sin confundir «sin oferta» con precio cero. |
 | CA-11 | Duplicados del mismo `event_id` no producen auditorías repetidas; la bitácora nunca modifica precios. |
-| CA-12 | El archivado mensual nunca retira registros antes de cumplir 24 meses completos y verifica integridad y recuperabilidad antes del retiro; su conservación fría dura cinco años desde el archivado. |
+| CA-12 | El archivado mensual respeta los parámetros de retención configurados, verifica integridad y recuperabilidad antes del retiro y conserva evidencia de la política aplicada. Los valores MVP iniciales son 24 meses en caliente y cinco años adicionales en frío. |
 
 ## 3. Escenarios (Dado - Cuando - Entonces / Gherkin)
 
@@ -86,7 +90,7 @@
 | Módulo | Necesidad de Interacción | Información que Recibe | Información que Entrega |
 | :--- | :--- | :--- | :--- |
 | **Gestión de Precios** | Disparar el registro de auditoría ante cada cambio efectivo. | Evento `pricing.price.changed` con el contrato completo de auditoría. | Confirmación de recepción / ACK en el bus de eventos. |
-| **Seguridad y Usuarios** | Validar identidad, correo y permisos de auditoría (`AUDITOR_COMERCIAL`). | Token JWT con claims y roles. | Denegación o autorización de visualización/exportación. |
+| **Seguridad y Usuarios** | Validar identidad y permisos `PRICING_AUDIT_READ` / `PRICING_AUDIT_EXPORT`; la asignación a roles pertenece a Seguridad. | Token JWT con claims/permisos. | Denegación o autorización de visualización/exportación. |
 | **Ventas y Postventa** | Esclarecer discrepancias de precios reportadas en reclamos o auditorías de ventas. | SKU y rango de fechas de consulta. | Trazabilidad del precio vigente, motivo del cambio y actor responsable. |
 
 ---
@@ -106,5 +110,3 @@
 - [x] **Contrato interno completo:** Resuelto. Se capturan `canal_origen`, `motivo_cambio`, `batch_id` y `variacion_porcentual` (nula en CREACION o RETIRO_OFERTA, cuando no existe importe de referencia o final); no se afirma homologación con módulos externos.
 - [x] **Formatos de exportación:** Resuelto. CSV habilitado hasta 100,000 registros y PDF limitado a 500 filas para reportes ejecutivos.
 - [x] **Retención y archivado:** Resuelto. Al menos 24 meses completos en base operativa; archivado mensual verificado en Parquet y cinco años adicionales desde archivado.
-
----

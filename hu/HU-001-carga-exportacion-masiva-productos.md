@@ -1,5 +1,9 @@
 # HU-001 — Historia de Usuario: Carga y exportación masiva de productos
 
+**Responsable:** Marco Renato Castilla Huanca  
+**Rama:** castilla  
+**Trazabilidad:** Spec [SPEC-001](../specs/SPEC-001-carga-exportacion-masiva-productos.md) | Flow [WF-001](../wireframes/flows/WF-001-carga-exportacion-masiva-productos.md)
+
 **Como** **gestor comercial**,
 
 **quiero** descargar el catálogo completo y cargar archivos
@@ -16,24 +20,24 @@ rápida y asíncrona, coordinando los dominios de Catálogo, Pricing e Inventari
 | **ID** | **Criterio** |
 | **CA-01** | El sistema debe permitir al gestor descargar el catálogo actual completo a nivel de SKU vendible o una plantilla vacía en formato Excel/CSV con las cabeceras predefinidas, aplicando hasta 5,000 filas o 10 MB únicamente al archivo de **importación**; la exportación completa no se trunca por ese límite. |
 | **CA-02** | La importación no debe requerir mapeo dinámico; el archivo subido debe respetar la estructura y formato exacto de la plantilla, de lo contrario será rechazado en su totalidad durante la pre-validación de estructura. |
-| **CA-03** | Cada fila representa un SKU vendible vinculado a su código de producto base. Si `operacion=CREAR_PRODUCTO_SIMPLE`, se utiliza `sku_base` nuevo; si `CREAR_VARIANTE`, se suministran padre y atributos con SKU de variante vacío y Catálogo lo genera y devuelve. Un padre nuevo puede declararse en el mismo archivo repitiendo idénticos metadatos obligatorios y `sku_base` en sus filas; se crea una sola vez en BORRADOR; si `ACTUALIZAR`, se exige SKU existente y no se cambian los atributos identificadores. |
+| **CA-03** | Cada fila representa una unidad vendible vinculada a su producto base. `CREAR_PRODUCTO_SIMPLE` usa un `sku_base` nuevo. `CREAR_VARIANTE` suministra padre, `tipo_producto_id` y atributos identificadores; el `sku` comercial puede venir informado si cumple unicidad o quedar vacío para que Catálogo lo genere. Catálogo siempre crea un `variant_id` interno independiente. Un padre nuevo puede declararse en el mismo lote con metadatos coherentes. `ACTUALIZAR` referencia una unidad existente y no modifica identidad ni atributos identificadores por esta vía. |
 | **CA-04** | En filas de actualización (SKU existente), las celdas vacías o en blanco deben ser ignoradas por el sistema, conservando intactos los valores actuales persistidos en la base de datos (evitando sobreescrituras o borrados accidentales). |
 | **CA-05** | Solo se admitirán URLs válidas para registrar las imágenes de los productos en la carga masiva; el sistema no procesará archivos físicos adjuntos o imágenes incrustadas en el documento. |
 | **CA-06** | En caso de existir errores parciales de validación de negocio en filas individuales, el sistema debe procesar y persistir las filas válidas, rechazar las inválidas, mostrar un resumen cuantitativo en pantalla y proveer la descarga de un archivo CSV con el detalle de las filas fallidas y el motivo exacto del error. |
 | **CA-07** | El procesamiento debe ser asíncrono mediante Worker/EDA, sin transacción distribuida global. Cada fila se correlaciona con `batch_id` y `row_id`, y los mensajes hacia Catálogo, Pricing e Inventario deben ser idempotentes y reintentables. |
 | **CA-07A** | Una fila solo se marca como exitosa cuando todos los dominios que debía modificar confirman la aplicación. Si un dominio falla definitivamente, la fila queda `FAILED` y el reporte indica dominio y motivo **junto con qué dominios ya aplicaron cambios y si requiere conciliación**. |
-| **CA-08** | La actualización de inventario debe solicitarse mediante comando idempotente de ajuste condicional con `stock_version`; Inventario registra el cambio en Kardex y luego emite `inventory.stock.adjusted`. Si el stock cambió durante una venta, rechaza el conteo absoluto obsoleto con `VERSION_CONFLICT`; no utiliza bloqueo global de base de datos. |
+| **CA-08** | Las actualizaciones usan control optimista por dominio: `catalog_version` para Catálogo, `price_version` para Pricing y `stock_version` para Inventario cuando la fila modifica esos datos. Una versión obsoleta debe rechazarse como conflicto en el dominio afectado, evitando que una exportación antigua sobrescriba cambios posteriores. Inventario registra el ajuste por `location_id` en Kardex y solo después emite `inventory.stock.adjusted`. |
 | **CA-09** | El sistema debe validar extensión (XLSX, CSV), tipo MIME y contenido activo. Si el archivo contiene fórmulas, macros o contenido ejecutable, debe rechazarse íntegramente en prevalidación; las exportaciones deben escapar/proteger cadenas que pudieran interpretarse como fórmulas. |
 | **CA-10** | Debe registrarse en los logs de auditoría el usuario, timestamp, batch ID y archivo procesado para garantizar la trazabilidad completa. |
 
-| **CA-11** | La plantilla versionada distingue `CREAR_PRODUCTO_SIMPLE`, `CREAR_VARIANTE` y `ACTUALIZAR`; en creación de variante, SKU está vacío y lo genera Catálogo, que devuelve el identificador correlacionado. |
+| **CA-11** | La plantilla versionada distingue `CREAR_PRODUCTO_SIMPLE`, `CREAR_VARIANTE` y `ACTUALIZAR`. En creación de variante, `variant_id` siempre lo genera Catálogo; el `sku` comercial puede ser proporcionado o quedar vacío para generación automática, sujeto a unicidad. |
 | **CA-12** | Los comandos de Catálogo, Pricing e Inventario son distintos de `pricing.price.changed` e `inventory.stock.adjusted`, eventos que solo publican los dominios tras persistir; cada dominio devuelve resultado funcional correlacionado. |
 | **CA-13** | Ante fallo definitivo de una fila, el CSV informa dominios aplicados, dominio fallido y necesidad de conciliación; no se declara rollback global ni se oculta un cambio parcial. |
-| **CA-14** | Un conteo absoluto sobre SKU existente requiere `stock_version`; para SKU recién creado se espera la inicialización confirmada a cero y se usa versión inicial 0. Ante venta o ajuste posterior se rechaza `VERSION_CONFLICT` sin reaplicar el conteo viejo. |
+| **CA-14** | Un conteo absoluto de inventario sobre una unidad existente requiere `location_id` y `stock_version`; para una unidad recién creada se espera la inicialización confirmada a cero en la ubicación indicada y se usa versión inicial 0. Ante consumo o ajuste posterior se rechaza `VERSION_CONFLICT` sin reaplicar el conteo viejo. |
 | **CA-15** | El archivo con fórmulas/macros se rechaza en prevalidación; exportaciones protegen contra Formula Injection; el alta del lote responde HTTP 202 y permite consultar resultado final. |
 | **CA-16** | Al exportar catálogo se incluye `exported_at` y las versiones necesarias; se informa que no existe un snapshot ACID único entre los tres dominios. |
-| **CA-17** | Un producto padre con variantes inexistente puede crearse a partir de varias filas `CREAR_VARIANTE` del mismo archivo; todas deben repetir coherentemente el `sku_base` y datos del padre, que se crea una sola vez en BORRADOR. Las variantes reciben SKU autogenerado. |
-| **CA-18** | La plantilla general v1 contiene exactamente, y en orden: `operacion`, `product_id`, `sku_base`, `sku`, `nombre`, `descripcion`, `categoria_id`, `marca_id`, `tiene_variantes`, `caracteristicas_identificadoras`, `atributos_identificadores`, `atributos_no_identificadores`, `imagen_url`, `precio_regular`, `precio_oferta`, `accion_precio_oferta`, `stock`, `stock_version`, `estado`, `motivo_cambio`; campos condicionales y tipos siguen el Requisito 9 del Spec. Los ejemplos son eliminables y una nueva estructura requiere versión nueva. |
+| **CA-17** | Un producto padre con variantes inexistente puede crearse a partir de varias filas `CREAR_VARIANTE` del mismo archivo; todas deben repetir coherentemente `sku_base`, `tipo_producto_id` y datos del padre, que se crea una sola vez en BORRADOR. Cada variante recibe `variant_id` interno; su SKU comercial se valida si fue informado o se genera si quedó vacío. |
+| **CA-18** | La plantilla general v2 contiene, conservando contrato versionado, los campos: `operacion`, `product_id`, `variant_id`, `sku_base`, `sku`, `nombre`, `descripcion`, `categoria_id`, `tipo_producto_id`, `marca_id`, `tiene_variantes`, características/atributos, `imagen_url`, precios, `location_id`, `stock`, `catalog_version`, `price_version`, `stock_version`, `estado` y `motivo_cambio`. En XLSX, hojas auxiliares y listas de referencia permiten seleccionar tipos, características y valores sin exigir al gestor escribir JSON manualmente; CSV conserva una representación técnica documentada cuando corresponde. |
 | **CA-19** | Descargar plantilla es inmediato. Exportar todo el catálogo crea un trabajo asíncrono con `export_id`, consulta de estado y descarga protegida al concluir; no se trunca al alcanzar el límite de importación. |
 | **CA-20** | El fallo general del worker se informa como `FAILED_GENERAL` tras hasta tres reintentos transitorios; se conserva estado por fila, y la recuperación reanuda comandos pendientes idempotentemente usando el mismo `batch_id`, sin volver a aplicar confirmados. |
 | **CA-21** | La oferta vacía no se borra: `accion_precio_oferta` vacía/`CONSERVAR` conserva; `ESTABLECER` exige importe; `ELIMINAR` con importe vacío la retira. Se rechaza regular incompatible con una oferta conservada. |
@@ -89,10 +93,10 @@ rápida y asíncrona, coordinando los dominios de Catálogo, Pricing e Inventari
 * **CUANDO** en ese mismo instante un canal de venta descuenta unidades del mismo SKU por una venta confirmada,
 * **ENTONCES** el consumo de venta y el ajuste compiten mediante actualizaciones transaccionales cortas y versión; si la venta cambió la versión, Inventario rechaza el ajuste absoluto desactualizado con `VERSION_CONFLICT` sin sobrescribir el consumo.
 
-**Escenario 7: Nueva variante recibe SKU autogenerado**
-* **DADO** una fila `CREAR_VARIANTE` con producto padre y atributos identificadores, pero sin SKU de variante,
+**Escenario 7: Nueva variante con identidad interna y SKU comercial**
+* **DADO** una fila `CREAR_VARIANTE` con producto padre, tipo y atributos identificadores, pudiendo traer un SKU comercial válido o dejarlo vacío,
 * **CUANDO** Catálogo confirma el alta,
-* **ENTONCES** devuelve SKU, `batch_id` y `row_id` y Bulk lo utiliza en comandos posteriores.
+* **ENTONCES** genera siempre `variant_id`, valida o genera el SKU comercial y devuelve ambos junto con `batch_id` y `row_id` para los comandos posteriores.
 
 **Escenario 8: Precio no aplicado tras creación en Catálogo**
 * **DADO** una fila cuyo cambio de Catálogo se confirmó y cuyo cambio de Pricing falló definitivamente,
@@ -112,7 +116,7 @@ rápida y asíncrona, coordinando los dominios de Catálogo, Pricing e Inventari
 **Escenario 11: Varias variantes de producto nuevo en el mismo lote**
 * **DADO** dos filas `CREAR_VARIANTE` con el mismo `sku_base` de padre aún inexistente, metadatos coherentes y atributos diferentes,
 * **CUANDO** se procesa el lote,
-* **ENTONCES** Catálogo crea un único producto padre en BORRADOR y dos variantes BORRADOR, genera cada SKU y devuelve el resultado de cada fila. Si los metadatos compartidos se contradicen, rechaza el grupo sin crear múltiples padres.
+* **ENTONCES** Catálogo crea un único producto padre en BORRADOR y dos variantes BORRADOR, genera sus `variant_id`, valida o genera los SKU comerciales y devuelve el resultado de cada fila. Si los metadatos compartidos se contradicen, rechaza el grupo sin crear múltiples padres.
 
 **Escenario 12: Exportación completa asíncrona**
 * **DADO** un catálogo de más de 5.000 SKUs,
@@ -139,17 +143,15 @@ Estas son las coordinaciones que el orquestador de importación ejecuta mediante
 |  |  |
 | --- | --- |
 | **Submódulo / Dominio** | **Mecanismo de coordinación y eventos emitidos** |
-| **Catálogo de Productos** | Valida categorías y marcas; recibe `catalog.bulk.upsert.requested` y devuelve `catalog.bulk.upsert.completed|rejected`, incluido el SKU generado cuando corresponda; solo después publica sus hechos de producto. |
-| **Gestión de Precios (Pricing)** | Recibe `pricing.bulk.price.apply.requested`, emite resultado correlacionado y publica `pricing.price.changed` exclusivamente tras persistir el precio. |
-| **Gestión de Inventario** | Recibe `inventory.bulk.stock.adjust.requested` con `stock_version`; confirma o rechaza, registra Kardex y publica `inventory.stock.adjusted` y `inventory.stock.changed` después de persistir. |
+| **Catálogo de Productos** | Valida categorías, tipo de producto, características y marcas; recibe `catalog.bulk.upsert.requested` con `catalog_version` cuando aplica y devuelve `catalog.bulk.upsert.completed|rejected`, incluido `variant_id` y SKU validado/generado cuando corresponda; solo después publica sus hechos de producto. |
+| **Gestión de Precios (Pricing)** | Recibe `pricing.bulk.price.apply.requested` con `price_version` cuando aplica, emite resultado correlacionado y publica `pricing.price.changed` exclusivamente tras persistir el precio. |
+| **Gestión de Inventario** | Recibe `inventory.bulk.stock.adjust.requested` con `location_id` y `stock_version`; confirma o rechaza, registra Kardex de la ubicación y publica `inventory.stock.adjusted` e `inventory.stock.changed` después de persistir. |
 
 ## Reglas acordadas de negocio y arquitectura
 
 * **Límites del archivo:** Máximo **5,000 filas** o un peso límite de **10 MB** por archivo. Archivos que excedan estos límites son rechazados en la validación inicial de cabeceras.
 * **Tratamiento de campos vacíos:** Al actualizar un SKU existente, cualquier celda en blanco se interpreta como **"ignorar y conservar valor actual"**, previniendo borrados accidentales de atributos preexistentes.
 * **Reporte de errores:** Se presenta un resumen consolidado en la interfaz web (total procesados, exitosos, fallidos) y se provee un botón para **descargar un archivo CSV con el reporte detallado** de cada fila rechazada y su causa.
-* **Concurrencia de stock:** Las modificaciones de stock masivas se solicitan mediante comando y control por versión; `inventory.stock.adjusted` es el evento de ajuste ya confirmado en Kardex.
+* **Concurrencia por dominio:** Las modificaciones se condicionan por `catalog_version`, `price_version` o `stock_version` según los datos de la fila; un conflicto se reporta al dominio correspondiente y no se sobrescribe silenciosamente información más reciente.
 * **Consistencia multi-dominio:** No se usa una transacción distribuida entre Catálogo, Pricing e Inventario. Se aplica consistencia eventual con mensajes idempotentes, reintentos y confirmaciones correlacionadas por `batch_id`/`row_id`.
 * **Definición de éxito:** una fila es exitosa solo cuando todos los dominios requeridos han confirmado el cambio.
-
----

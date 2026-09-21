@@ -1,7 +1,12 @@
 # SPEC-003 — Especificación: Gestión de productos (CRUD principal)
-**Versión:** v2 — corregida para eliminar discrepancias con `HU-003-gestion-productos-crud.md`
 
-> **Cambios respecto a la v1:** estado inicial en "borrador" (no "activo"); nuevo requisito de activación; duplicidad redefinida sobre `sku_base` y `(nombre, marca_id)`; slug como propiedad de este componente; reactivación con re-validación; precio base con responsabilidad resuelta.
+**Responsable:** Gabriel Poma Gutierrez  
+**Rama:** poma  
+**Trazabilidad:** HU [HU-003](../hu/HU-003-gestion-productos-crud.md) | Wireframe [WF-003](../wireframes/flows/WF-003-gestion-productos-crud.md)
+
+**Versión:** v2 — corregida para eliminar discrepancias con `hu_gestion_productos_crud.md`
+
+> **Cambios consolidados:** estado inicial en "borrador"; activación explícita; `sku_base` como identificador único bloqueante; `(nombre, marca_id)` como advertencia de posible duplicado y no como clave empresarial; separación entre categoría de navegación y `tipo_producto_id` que define el esquema de características; slug como propiedad de Catálogo; reactivación con re-validación; precio base con responsabilidad resuelta.
 
 ## 1. Contexto
 
@@ -14,7 +19,7 @@ Permitir al gestor comercial administrar el ciclo de vida completo de los produc
 ## 3. Alcance
 
 Incluye:
-- Registro (creación) de nuevos productos, en estado **borrador**, con sus atributos mínimos (nombre, descripción, categoría, marca, precio base referencial, `sku_base` y bandera `tiene_variantes`).
+- Registro (creación) de nuevos productos, en estado **borrador**, con sus atributos mínimos (nombre, descripción, categoría de navegación, `tipo_producto_id`, marca, precio base referencial, `sku_base` y bandera `tiene_variantes`).
 - Activación de un producto en borrador a estado **activo**, sujeta a validaciones adicionales (características, imágenes).
 - Actualización de los datos de un producto existente, en cualquiera de sus estados.
 - Consulta de productos, tanto individual (por identificador/slug) como en listado, con filtros básicos (categoría, marca, estado).
@@ -22,15 +27,15 @@ Incluye:
 - Reactivación de un producto previamente desactivado, con re-validación de las condiciones de activación.
 - Generación y mantenimiento del slug del producto (identificador amigable de URL).
 - Exposición de estas operaciones mediante API para su consumo por parte de otros módulos (Marketplace Cliente, Chatbot Cliente, Retail Vendedor, Ventas y Postventa, Despacho y Entrega, Seguridad y Usuarios).
-- Validaciones de integridad de datos y de reglas de negocio propias del producto (unicidad de `sku_base`, unicidad de `(nombre, marca_id)`, campos obligatorios según el estado).
+- Validaciones de integridad de datos y de reglas de negocio propias del producto: unicidad bloqueante de `sku_base`, campos obligatorios según estado y detección no bloqueante de posibles duplicados por `(nombre, marca_id)`.
 
 ## 4. Requisitos
 
 ### Requisito 1: Creación de productos (estado borrador)
 
-El sistema DEBE permitir registrar un nuevo producto con sus atributos mínimos (nombre, categoría, marca, precio base, descripción, `sku_base` y `tiene_variantes`), asignarle un identificador interno único y un slug, y guardarlo en estado **"borrador"**. No se exige característica ni imagen en este punto.
+El sistema DEBE permitir registrar un nuevo producto con sus atributos mínimos (nombre, categoría de navegación, `tipo_producto_id`, marca, precio base, descripción, `sku_base` y `tiene_variantes`), asignarle un identificador interno único y un slug, y guardarlo en estado **"borrador"**. No se exige imagen ni valores concretos de características en este punto. El `tipo_producto_id` referencia el esquema de atributos administrado por la funcionalidad de asociación de tipos de producto y características; la categoría se utiliza para navegación/clasificación y no define por sí sola el esquema de datos del producto.
 
-La bandera `tiene_variantes` se define al crear el producto y es **inmutable** en el alcance actual. Si es `false`, `sku_base` identifica también el SKU vendible que Inventario inicializa en 0. Si es `true`, `sku_base` solo sirve de raíz para generar los SKUs de variantes y no posee stock.
+La bandera `tiene_variantes` se define al crear el producto y no es editable mediante el CRUD ordinario una vez que existe identidad comercial publicada o variantes registradas. Una conversión posterior entre producto simple y producto con variantes se considera una **migración de modelo** fuera de este flujo, porque afecta SKU, Pricing, Inventario y referencias externas. Si es `false`, `sku_base` identifica también el SKU vendible; si es `true`, el producto padre no posee stock propio y sus variantes son las unidades vendibles.
 
 #### Escenario: Registro exitoso de un producto nuevo (borrador)
 - DADO que el gestor comercial ha ingresado todos los campos mínimos con datos válidos
@@ -42,16 +47,16 @@ La bandera `tiene_variantes` se define al crear el producto y es **inmutable** e
 - CUANDO el gestor comercial intenta registrar un nuevo producto con ese `sku_base`
 - ENTONCES el sistema rechaza la operación y muestra un mensaje indicando que el `sku_base` ya está en uso
 
-#### Escenario: Intento de registro con nombre y marca duplicados
-- DADO que ya existe un producto con el mismo nombre y la misma marca (`nombre` + `marca_id`)
-- CUANDO el gestor comercial intenta registrar un nuevo producto con esa misma combinación
-- ENTONCES el sistema rechaza la operación y muestra un mensaje indicando que ya existe un producto con esos datos
+#### Escenario: Advertencia por posible duplicado de nombre y marca
+- DADO que ya existe un producto con el mismo nombre normalizado y la misma marca (`nombre` + `marca_id`)
+- CUANDO el gestor comercial intenta registrar un nuevo producto con esa misma combinación pero con `sku_base` distinto
+- ENTONCES el sistema muestra una advertencia de posible duplicado y los productos coincidentes, pero permite continuar si el gestor confirma que se trata de una referencia comercial distinta; `sku_base` continúa siendo la restricción de unicidad bloqueante
 
-**Configuración de variantes:** si `tiene_variantes=true`, el formulario de producto configura antes de la primera variante las características identificadoras LISTA aplicables según `SPEC-004-gestion-variantes-skus.md`; el conjunto queda fijo desde la primera variante, incluso inactiva. Un cambio de categoría no modifica silenciosamente sus identidades ni los SKU existentes y debe revalidar la configuración.
+**Configuración de variantes:** si `tiene_variantes=true`, el formulario de producto configura antes de la primera variante las características identificadoras LISTA permitidas por su `tipo_producto_id`, según `SPEC-004-gestion-variantes-skus.md`. El conjunto queda fijo desde la primera variante, incluso inactiva. Cambiar la categoría de navegación no altera el esquema de atributos ni las identidades existentes; cambiar el tipo de producto después de existir identidad publicada requiere un flujo de migración explícito y no se realiza silenciosamente desde este CRUD.
 
 ### Requisito 1.1: Activación de productos
 
-El sistema DEBE permitir cambiar un producto de "borrador" a "activo" únicamente cuando, además de los campos mínimos de creación, cuente con categoría y marca activas, tenga informados **todos los valores de las características obligatorias efectivas** de su categoría y al menos una imagen. Si la categoría no tiene características obligatorias efectivas, no se exige informar una característica únicamente para activar. Si `tiene_variantes = true`, también requiere una variante ACTIVA con SKU e imagen válidos; si es simple, su `sku_base` es el SKU vendible. No se publica como vendible hasta que Pricing confirme precio inicial y, para cada SKU publicable, Inventario confirme inicialización; la consulta comercial verifica su disponibilidad vigente.
+El sistema DEBE permitir cambiar un producto de "borrador" a "activo" únicamente cuando, además de los campos mínimos de creación, cuente con categoría y marca activas, `tipo_producto_id` activo, tenga informados **todos los valores de las características obligatorias efectivas de su tipo de producto** y al menos una imagen. Si el tipo no posee características obligatorias, no se exige inventar una. Si `tiene_variantes = true`, también requiere una variante ACTIVA con SKU e imagen válidos; si es simple, su `sku_base` es el SKU vendible. No se publica como vendible hasta que Pricing confirme precio inicial y, para cada SKU publicable, Inventario confirme inicialización; la consulta comercial verifica su disponibilidad vigente.
 
 #### Escenario: Activación exitosa
 - DADO un producto en borrador que cuenta con categoría y marca activas, todos los valores de sus características obligatorias efectivas completos y al menos una imagen
@@ -152,5 +157,3 @@ La capacidad se considera correctamente implementada cuando:
 - Todos los escenarios definidos se cumplen, incluyendo los casos borde y de error.
 - Los requisitos no funcionales aplicables (rendimiento, seguridad, disponibilidad, auditoría, escalabilidad) se cumplen.
 - No se han incorporado funcionalidades fuera del alcance, como gestión de variantes, precios, metadatos SEO u ofertas.
-
----

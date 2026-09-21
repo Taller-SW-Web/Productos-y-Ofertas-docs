@@ -1,8 +1,12 @@
 # SPEC-007 — Especificación: Reglas de venta cruzada y upselling
 
+**Responsable:** Axel Andree Cueva Alcalá  
+**Rama:** cueva  
+**Trazabilidad:** HU [HU-007](../hu/HU-007-reglas-venta-cruzada-upselling.md) | Wireframe [WF-007](../wireframes/flows/WF-007-reglas-venta-cruzada-upselling.md)
+
 ## 1. Contexto
 
-La capacidad permite configurar manualmente reglas de Cross-sell y Upsell para exponer recomendaciones a Marketplace, Chatbot y Retail.
+La capacidad permite configurar manualmente reglas de merchandising Cross-sell y Upsell para exponer **candidatos comerciales** a Marketplace, Chatbot y Retail. No sustituye la recomendación conversacional ni la personalización por intención del cliente que pueda implementar el canal Chatbot.
 
 ## 2. Propósito
 
@@ -12,7 +16,7 @@ Permitir al Gestor Comercial definir recomendaciones basadas en producto o categ
 
 Incluye:
 - Registrar reglas Cross-sell y Upsell.
-- Registrar una justificación comercial por cada producto recomendado como Upsell.
+- Clasificar cada Upsell con un `criterio_superioridad` controlado y permitir una `justificacion_comercial` opcional para revisión administrativa.
 - Definir origen por producto o por categoría.
 - Asociar uno o más productos recomendados.
 - Definir prioridad de la regla.
@@ -45,14 +49,11 @@ El «precio vigente» expuesto por una recomendación es el precio público info
 El sistema DEBE permitir relacionar un origen —producto o categoría— con uno o más productos complementarios.
 
 ### Requisito 2: Registrar reglas de Upsell
+El sistema DEBE permitir relacionar un origen (producto o categoría) con uno o más productos clasificados por el Gestor Comercial como alternativas superiores.
 
-El sistema DEBE permitir relacionar un origen (producto o categoría) con uno o más productos clasificados expresamente por el Gestor Comercial como alternativas superiores.
+La superioridad es una **clasificación comercial manual**, no una inferencia del sistema. Cada recomendado UPSELL debe seleccionar un `criterio_superioridad` de un catálogo controlado —por ejemplo `MAYOR_RENDIMIENTO`, `MEJOR_MATERIAL`, `MAYOR_CAPACIDAD` o `FUNCIONALIDAD_ADICIONAL`— y puede añadir una `justificacion_comercial` breve para uso interno. El sistema no intenta demostrar automáticamente la afirmación, no calcula una puntuación y no considera el precio más alto como criterio suficiente por sí solo.
 
-**Criterio de negocio acordado para esta funcionalidad:** la superioridad es una **clasificación comercial manual y justificada**, no el resultado de una comparación automática. Por cada producto recomendado en una regla UPSELL, el gestor DEBE registrar una `justificacion_comercial` que identifique una mejora concreta frente al producto origen o, si el origen es una categoría, frente al tipo de productos comprendidos por ella (por ejemplo, mayor amortiguación, material de mayor resistencia o una funcionalidad adicional). La justificación DEBE referirse a una característica o prestación identificable en la ficha del producto recomendado, de modo que pueda revisarse administrativamente.
-
-El sistema DEBE exigir que la justificación no esté vacía al crear o modificar la regla; el gestor es responsable de la pertinencia y veracidad de la clasificación. El sistema NO verifica automáticamente si la mejora declarada es verdadera, NO calcula una puntuación de superioridad y NO considera el precio más alto, por sí solo, como justificación suficiente. No se exige una diferencia de precio, ni que origen y recomendado pertenezcan a la misma categoría.
-
-Si una regla UPSELL utiliza origen por categoría, el gestor DEBE justificar la mejora respecto del tipo de productos de esa categoría; la plataforma no comprueba individualmente la superioridad respecto de cada producto que coincida con ella. La `justificacion_comercial` se conserva asociada a cada producto recomendado para consulta y revisión administrativa; no es obligatorio exponerla en la API consumida por los canales.
+La API de candidatos para canales no necesita exponer la justificación interna. Marketplace, Retail o Chatbot deciden cómo presentar los candidatos según su propia experiencia de usuario; en particular, Chatbot conserva la responsabilidad de interpretar lenguaje natural, necesidades y contexto conversacional.
 
 ### Requisito 3: Validar productos
 
@@ -111,7 +112,7 @@ La consulta administrativa DEBE mostrar como mínimo:
 - estado;
 - fecha/hora de inicio y fin;
 - productos recomendados y su orden;
-- justificación comercial de cada producto recomendado cuando la regla sea UPSELL.
+- criterio de superioridad y justificación comercial opcional de cada producto recomendado cuando la regla sea UPSELL.
 
 ## 6. Requisitos no funcionales
 
@@ -124,6 +125,7 @@ La consulta administrativa DEBE mostrar como mínimo:
 ## 7. Fuera de alcance
 
 - Inteligencia artificial o machine learning.
+- Interpretación de lenguaje natural, intención conversacional o personalización específica del Chatbot; esta capacidad solo entrega candidatos de merchandising.
 - Historial de navegación o compras.
 - Determinar o verificar automáticamente si una alternativa es “superior”.
 - Agregar o reemplazar automáticamente productos en una compra.
@@ -132,5 +134,3 @@ La consulta administrativa DEBE mostrar como mínimo:
 ## Criterio de completitud
 
 La capacidad se considera correctamente implementada cuando todos los requisitos anteriores se cumplen.
-
----

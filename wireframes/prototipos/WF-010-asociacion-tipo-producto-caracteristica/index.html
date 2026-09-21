@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WF-010 — Asociación entre tipos de producto y características</title>
+  <style>
+    :root{
+      --surface:#fff;
+      --neutral-10:#f3f4f6;
+      --neutral-20:#e5e7eb;
+      --neutral-30:#d1d5db;
+      --neutral-50:#6b7280;
+      --neutral-70:#374151;
+      --neutral-90:#111827;
+      --radius:4px;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--neutral-90);
+      background:var(--surface);
+    }
+    *{box-sizing:border-box}
+    html{min-width:320px}
+    body{margin:0;background:var(--surface);font-size:16px;line-height:1.5}
+    button,input,select{font:inherit;color:inherit}
+    button{min-height:44px;cursor:pointer}
+    button:disabled{cursor:not-allowed;color:var(--neutral-50);border-color:var(--neutral-30);background:var(--neutral-10)}
+    a,button,input,select{outline-offset:3px}
+    a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--neutral-90);outline-offset:2px}
+    input[type="checkbox"],input[type="radio"]{accent-color:var(--neutral-90)}
+    .app-shell{min-height:100vh}
+    .topbar{border-bottom:1px solid var(--neutral-30);background:var(--surface)}
+    .topbar-inner{max-width:1200px;margin:auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700}
+    .brand-mark{width:32px;height:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-family:"Roboto Mono",monospace;font-size:11px}
+    .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .crumb{color:var(--neutral-50);font-size:14px}
+    .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
+    .page-header h1{font-size:32px;line-height:1.15;margin:0 0 8px;font-weight:700}
+    .page-header p{margin:0;color:var(--neutral-50);max-width:760px}
+    h2{font-size:24px;line-height:1.2;margin:0 0 16px}
+    h3{font-size:18px;line-height:1.3;margin:0 0 12px}
+    .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
+    .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+    .btn-primary{background:var(--neutral-90);color:var(--surface)}
+    .btn-danger{background:var(--surface);border-style:double;border-width:3px}
+    .btn-quiet{border-color:var(--neutral-30);font-weight:500}
+    .button-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .button-row.end{justify-content:flex-end}
+    .card{border:1px solid var(--neutral-30);background:var(--surface);padding:24px}
+    .muted{color:var(--neutral-50)}
+    .small{font-size:14px}
+    .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--neutral-30);padding:4px 8px;border-radius:999px;background:var(--surface)}
+    .status::before{content:"";width:8px;height:8px;border:1px solid var(--neutral-90);border-radius:50%;background:var(--surface)}
+    .status.active::before{background:var(--neutral-90)}
+    .notice{border:1px solid var(--neutral-90);padding:16px;display:flex;gap:12px;align-items:flex-start;background:var(--surface);margin-bottom:16px}
+    .notice-icon{width:24px;height:24px;min-width:24px;border:1px solid var(--neutral-90);border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px}
+    .notice h3{font-size:16px;margin:0 0 4px}
+    .notice p{margin:0;color:var(--neutral-70)}
+    .notice.error{border-width:2px;background:var(--neutral-10)}
+    .toast{position:fixed;right:24px;bottom:24px;border:1px solid var(--neutral-90);background:var(--surface);padding:14px 16px;max-width:360px;z-index:80;display:none}
+    .toast.show{display:block}
+
+    .layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start}
+    .type-nav{border:1px solid var(--neutral-30)}
+    .type-nav h2{padding:16px;margin:0;border-bottom:1px solid var(--neutral-30);font-size:16px}
+    .type-item{padding:14px 16px;border-bottom:1px solid var(--neutral-30);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+    .type-item:last-child{border-bottom:0}
+    .type-item.selected{background:var(--neutral-90);color:var(--surface)}
+    .type-item.selected .muted{color:var(--neutral-30)}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--neutral-30);vertical-align:middle}
+    th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"Roboto Mono",ui-monospace,monospace;font-weight:600;color:var(--neutral-70);background:var(--neutral-10)}
+    tbody tr:last-child td{border-bottom:0}
+    .table-wrap{border:1px solid var(--neutral-30);overflow:hidden}
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .row-actions .btn{min-height:36px;padding:6px 12px;font-size:13px}
+    .tag{border:1px solid var(--neutral-30);padding:2px 8px;font-size:12px;font-family:"Roboto Mono",monospace;font-weight:600;display:inline-block}
+    .tag.mandatory{border-color:var(--neutral-90);background:var(--neutral-90);color:var(--surface)}
+    .tag.optional{border-color:var(--neutral-50);color:var(--neutral-70)}
+
+    .overlay{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:90;display:none;align-items:center;justify-content:center;padding:24px}
+    .overlay.open{display:flex}
+    .dialog{width:min(680px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--surface);border:1px solid var(--neutral-90);padding:24px}
+    .dialog-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}
+    .dialog-header h2{margin:0}
+    .results{border:1px solid var(--neutral-30);margin-top:16px;max-height:280px;overflow-y:auto}
+    .result-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--neutral-30);cursor:pointer}
+    .result-item:last-child{border-bottom:0}
+    .result-item:hover{background:var(--neutral-10)}
+    .field{margin-bottom:16px}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    select,input[type="text"]{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:10px 12px;border-radius:var(--radius);min-height:44px}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div>
+        <span class="crumb">Catálogo / Esquemas de Producto</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="page-header">
+        <div>
+          <h1>Asociación entre Tipos de Producto y Características</h1>
+          <p>Define las características aplicables y su obligatoriedad por cada Tipo de Producto. Las categorías de navegación no alteran este esquema estructural.</p>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-primary" id="btn-open-associate">+ Asociar característica</button>
+        </div>
+      </div>
+
+      <div class="notice">
+        <div class="notice-icon" aria-hidden="true">i</div>
+        <div>
+          <h3>Desacoplamiento de Navegación y Esquema</h3>
+          <p>El esquema de atributos pertenece al <strong>Tipo de Producto</strong> (máx. 20 características activas). Un producto puede cambiar de categoría sin alterar sus características técnicas.</p>
+        </div>
+      </div>
+
+      <div class="layout">
+        <aside class="type-nav">
+          <h2>Tipos de Producto</h2>
+          <div id="type-list">
+            <!-- Rendered by JS -->
+          </div>
+        </aside>
+
+        <section class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div>
+              <h2 id="selected-type-title" style="margin:0 0 4px 0;">Calzado Deportivo</h2>
+              <span class="small muted" id="selected-type-desc">Esquema para zapatillas, botas y calzado técnico.</span>
+            </div>
+            <div class="status active" id="type-status">Activo</div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span class="small" id="attr-count-label"><strong>3 / 20</strong> características activas asignadas</span>
+            <span class="small muted mono">MAX_PRODUCT_TYPE_ATTRIBUTES = 20</span>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Característica</th>
+                  <th>Tipo de Dato</th>
+                  <th>Condición</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="attr-table-body">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Asociar Característica -->
+  <div class="overlay" id="modal-associate">
+    <div class="dialog">
+      <div class="dialog-header">
+        <div>
+          <h2>Asociar Característica a Tipo de Producto</h2>
+          <p class="small muted" id="modal-type-subtitle">Tipo de producto seleccionado: Calzado Deportivo</p>
+        </div>
+        <button class="btn btn-quiet" id="btn-close-modal">✕</button>
+      </div>
+
+      <div class="field">
+        <label for="select-char">Selecciona una característica activa del catálogo:</label>
+        <select id="select-char">
+          <option value="Talla">Talla (LISTA: 38, 39, 40, 41, 42, 43, 44)</option>
+          <option value="Color">Color (LISTA: Negro, Blanco, Azul, Rojo)</option>
+          <option value="Material de Capellada">Material de Capellada (TEXTO)</option>
+          <option value="Tipo de Suela">Tipo de Suela (LISTA: Sintética, Goma, TPU)</option>
+          <option value="Peso">Peso (NUMERO: gramos)</option>
+          <option value="Tecnología de Amortiguación">Tecnología de Amortiguación (TEXTO)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Condición en formularios de producto:</label>
+        <div style="display:flex;gap:16px;margin-top:8px;">
+          <label style="font-weight:normal;"><input type="radio" name="req-cond" value="mandatory" checked /> <strong>Obligatoria</strong> (Exigida para publicar/guardar)</label>
+          <label style="font-weight:normal;"><input type="radio" name="req-cond" value="optional" /> <strong>Opcional</strong> (Informativa)</label>
+        </div>
+      </div>
+
+      <div class="notice error" id="limit-error" style="display:none;margin-top:16px;">
+        <div class="notice-icon">!</div>
+        <div>
+          <h3>Límite Operativo Alcanzado (S-02-E)</h3>
+          <p>Este tipo de producto ya alcanzó el límite máximo de 20 características activas asignadas.</p>
+        </div>
+      </div>
+
+      <div class="button-row end" style="margin-top:24px;">
+        <button class="btn btn-quiet" id="btn-cancel-modal">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-assoc">Guardar asociación</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const state = {
+      types: [
+        {
+          id: 'TP-01',
+          name: 'Calzado Deportivo',
+          desc: 'Esquema para zapatillas, tacos y calzado técnico.',
+          attrs: [
+            { id: 'C-01', name: 'Talla', type: 'LISTA', mandatory: true },
+            { id: 'C-02', name: 'Color', type: 'LISTA', mandatory: true },
+            { id: 'C-03', name: 'Material de Capellada', type: 'TEXTO', mandatory: false }
+          ]
+        },
+        {
+          id: 'TP-02',
+          name: 'Ropa de Entrenamiento',
+          desc: 'Esquema para camisetas, shorts, mallas y buzos.',
+          attrs: [
+            { id: 'C-01', name: 'Talla', type: 'LISTA', mandatory: true },
+            { id: 'C-02', name: 'Color', type: 'LISTA', mandatory: true },
+            { id: 'C-04', name: 'Género', type: 'LISTA', mandatory: true },
+            { id: 'C-05', name: 'Composición Textil', type: 'TEXTO', mandatory: false }
+          ]
+        },
+        {
+          id: 'TP-03',
+          name: 'Balones y Accesorios',
+          desc: 'Esquema para balones, guantes, canilleras y bolsos.',
+          attrs: [
+            { id: 'C-06', name: 'Tamaño / Número', type: 'LISTA', mandatory: true },
+            { id: 'C-07', name: 'Material de Cubierta', type: 'TEXTO', mandatory: false }
+          ]
+        }
+      ],
+      selectedTypeId: 'TP-01'
+    };
+
+    function showToast(msg){
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function renderTypes(){
+      const list = document.getElementById('type-list');
+      list.innerHTML = '';
+      state.types.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'type-item' + (t.id === state.selectedTypeId ? ' selected' : '');
+        item.innerHTML = `<div><strong>${t.name}</strong><br><span class="small muted mono">${t.attrs.length} características</span></div>`;
+        item.onclick = () => {
+          state.selectedTypeId = t.id;
+          renderTypes();
+          renderDetail();
+        };
+        list.appendChild(item);
+      });
+    }
+
+    function renderDetail(){
+      const cur = state.types.find(t => t.id === state.selectedTypeId);
+      if(!cur) return;
+      document.getElementById('selected-type-title').textContent = cur.name;
+      document.getElementById('selected-type-desc').textContent = cur.desc;
+      document.getElementById('attr-count-label').innerHTML = `<strong>${cur.attrs.length} / 20</strong> características activas asignadas`;
+
+      const tbody = document.getElementById('attr-table-body');
+      tbody.innerHTML = '';
+      if(cur.attrs.length === 0){
+        tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center;padding:24px;">No hay características asociadas a este tipo de producto.</td></tr>';
+        return;
+      }
+      cur.attrs.forEach((a, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${a.name}</strong></td>
+          <td><span class="mono">${a.type}</span></td>
+          <td>
+            <span class="tag ${a.mandatory ? 'mandatory' : 'optional'}">
+              ${a.mandatory ? 'Obligatoria' : 'Opcional'}
+            </span>
+          </td>
+          <td>
+            <div class="row-actions">
+              <button class="btn btn-quiet" onclick="toggleMandatory(${idx})">
+                ${a.mandatory ? 'Hacer opcional' : 'Hacer obligatoria'}
+              </button>
+              <button class="btn btn-danger" onclick="removeAttribute(${idx})">Desasociar</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.toggleMandatory = function(idx){
+      const cur = state.types.find(t => t.id === state.selectedTypeId);
+      cur.attrs[idx].mandatory = !cur.attrs[idx].mandatory;
+      renderDetail();
+      showToast('Obligatoriedad actualizada. Se exigirá en el próximo guardado de productos.');
+    };
+
+    window.removeAttribute = function(idx){
+      const cur = state.types.find(t => t.id === state.selectedTypeId);
+      const name = cur.attrs[idx].name;
+      if(confirm(`¿Deseas desasociar la característica "${name}" de ${cur.name}?`)){
+        cur.attrs.splice(idx, 1);
+        renderTypes();
+        renderDetail();
+        showToast(`Característica "${name}" desasociada exitosamente.`);
+      }
+    };
+
+    document.getElementById('btn-open-associate').onclick = () => {
+      const cur = state.types.find(t => t.id === state.selectedTypeId);
+      document.getElementById('modal-type-subtitle').textContent = `Tipo de producto: ${cur.name}`;
+      document.getElementById('limit-error').style.display = 'none';
+      document.getElementById('modal-associate').classList.add('open');
+    };
+
+    function closeModal(){
+      document.getElementById('modal-associate').classList.remove('open');
+    }
+    document.getElementById('btn-close-modal').onclick = closeModal;
+    document.getElementById('btn-cancel-modal').onclick = closeModal;
+
+    document.getElementById('btn-save-assoc').onclick = () => {
+      const cur = state.types.find(t => t.id === state.selectedTypeId);
+      if(cur.attrs.length >= 20){
+        document.getElementById('limit-error').style.display = 'flex';
+        return;
+      }
+      const select = document.getElementById('select-char');
+      const name = select.value;
+      const isMandatory = document.querySelector('input[name="req-cond"]:checked').value === 'mandatory';
+
+      if(cur.attrs.some(a => a.name === name)){
+        alert('Esta característica ya se encuentra asociada a este tipo de producto.');
+        return;
+      }
+
+      cur.attrs.push({
+        id: 'C-' + Math.floor(Math.random()*1000),
+        name: name,
+        type: name.includes('Talla') || name.includes('Color') || name.includes('Suela') || name.includes('Género') || name.includes('Número') ? 'LISTA' : (name.includes('Peso') ? 'NUMERO' : 'TEXTO'),
+        mandatory: isMandatory
+      });
+
+      closeModal();
+      renderTypes();
+      renderDetail();
+      showToast(`Característica "${name}" asociada exitosamente.`);
+    };
+
+    renderTypes();
+    renderDetail();
+  </script>
+</body>
+</html>

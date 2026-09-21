@@ -25,7 +25,7 @@
   </style>
 </head>
 <body>
-  <header class="topbar"><div class="topbar-in"><div class="brand"><span class="mark" aria-hidden="true">PO</span><span>Productos y ofertas</span></div><nav class="nav" aria-label="Navegación principal"><span>Productos</span><span aria-current="page">Promociones</span><span>Cupones</span><span>Reglas</span></nav></div></header>
+  <header class="topbar"><div class="topbar-in"><div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div><nav class="nav" aria-label="Navegación principal"><span>Productos</span><span aria-current="page">Promociones</span><span>Cupones</span><span>Reglas</span></nav></div></header>
   <main id="app" tabindex="-1"></main><div id="overlay"></div><div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <script>
   (()=>{
@@ -44,7 +44,36 @@
     function rows(){const q=document.getElementById('q').value.toLowerCase(),s=document.getElementById('state').value,t=document.getElementById('type').value;const data=promotions.filter(p=>(p.name+' '+p.products.join(' ')).toLowerCase().includes(q)&&(s==='Todos'||(s==='Activas'&&p.state==='ACTIVA')||(s==='Inactivas'&&p.state==='INACTIVA'))&&(t==='Todos'||t===p.type));document.getElementById('count').textContent=`${data.length} resultado${data.length===1?'':'s'}`;document.getElementById('rows').innerHTML=data.length?`<div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Descuento</th><th>Productos</th><th>Vigencia</th><th>Estado</th><th><span class="sr">Acciones</span></th></tr></thead><tbody>${data.map(p=>{const i=promotions.indexOf(p);return `<tr><td><strong>${p.name}</strong></td><td>${p.type==='Porcentaje'?p.value+' %':'S/ '+p.value.toFixed(2)}</td><td>${p.products.length} producto${p.products.length===1?'':'s'}</td><td>${date(p.start)} — ${date(p.end)}</td><td><span class="status ${p.state==='ACTIVA'?'on':''}"><span class="dot"></span>${p.state}</span></td><td class="actions"><button class="btn link" data-action="detail" data-index="${i}">Ver detalle</button></td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty"><h3>No hay coincidencias</h3><p class="muted">Ajusta los filtros de búsqueda.</p></div>'}
     function date(v){return new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(v))}
     function form(i=null){const p=i===null?{name:'',type:'Porcentaje',value:'',state:'ACTIVA',start:'',end:'',products:[]}:promotions[i];location.hash=i===null?'#nueva':'#editar';app.innerHTML=head(i===null?'Crear promoción':'Editar promoción','Define el descuento, los productos participantes y el periodo de aplicación.')+`
-      <form class="panel" id="form" novalidate><div class="panel-head"><div><h2>Configuración</h2><p class="small muted">Los campos marcados con * son obligatorios.</p></div></div><div class="form-grid">
+      <form class="panel" id="form" novalidate>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div>
+              <label for="p-modalidad"><strong>Modalidad:</strong></label>
+              <select id="p-modalidad" style="width:100%;min-height:44px;border:1px solid var(--neutral-30);padding:8px 12px;background:var(--surface);">
+                <option value="AUTOMATICA">AUTOMÁTICA (Al carrito)</option>
+                <option value="CUPON">CUPÓN (Requiere código)</option>
+              </select>
+            </div>
+            <div>
+              <label for="p-prioridad"><strong>Prioridad de evaluación:</strong></label>
+              <input type="number" id="p-prioridad" value="1" min="1" style="width:100%;min-height:44px;border:1px solid var(--neutral-30);padding:8px 12px;background:var(--surface);" />
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label><strong>Canales habilitados:</strong></label>
+            <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
+              <label><input type="checkbox" id="ch-mkt" checked /> Marketplace</label>
+              <label><input type="checkbox" id="ch-chat" checked /> Chatbot</label>
+              <label><input type="checkbox" id="ch-ret" checked /> Retail</label>
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label for="p-combinabilidad"><strong>Política de combinabilidad:</strong></label>
+            <select id="p-combinabilidad" style="width:100%;min-height:44px;border:1px solid var(--neutral-30);padding:8px 12px;background:var(--surface);">
+              <option value="EXCLUSIVE">Exclusiva (No combinable con otras promociones)</option>
+              <option value="COMBINABLE">Combinable (Aplica en orden determinista de menor importe)</option>
+            </select>
+          </div>
+        <div class="panel-head"><div><h2>Configuración</h2><p class="small muted">Los campos marcados con * son obligatorios.</p></div></div><div class="form-grid">
         <div class="field span2"><label for="name">Nombre *</label><input id="name" class="input" value="${esc(p.name)}" placeholder="Ej. Semana Running"><span class="error" id="e-name" hidden></span></div>
         <fieldset class="field span2" style="border:0;padding:0;margin:0"><legend class="label">Tipo de descuento *</legend><div class="choices"><label class="choice ${p.type==='Porcentaje'?'selected':''}"><input type="radio" name="discount" value="Porcentaje" ${p.type==='Porcentaje'?'checked':''}> Porcentaje</label><label class="choice ${p.type==='Monto fijo'?'selected':''}"><input type="radio" name="discount" value="Monto fijo" ${p.type==='Monto fijo'?'checked':''}> Monto fijo</label></div></fieldset>
         <div class="field"><label for="value">Valor del descuento *</label><input id="value" class="input" type="number" min="0.01" step="0.01" value="${p.value}" placeholder="0.00"><span class="hint" id="value-hint">Mayor que 0 y hasta 100 %.</span><span class="error" id="e-value" hidden></span></div>

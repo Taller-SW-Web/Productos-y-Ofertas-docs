@@ -1,6 +1,9 @@
 # HU-007 — Historia de Usuario: Reglas de venta cruzada y upselling
 
-Proyecto: Módulo de Productos y Ofertas.
+**Responsable:** Axel Andree Cueva Alcalá  
+**Rama:** cueva  
+**Trazabilidad:** Spec [SPEC-007](../specs/SPEC-007-reglas-venta-cruzada-upselling.md) | Flow [WF-007](../wireframes/flows/WF-007-reglas-venta-cruzada-upselling.md)
+
 Responsabilidad: Persona 4 — Axel Cueva.
 Versión corregida: 2026-09-16.
 
@@ -39,14 +42,14 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 | CA-02 | Cada regla debe incluir nombre, tipo —Cross-sell o Upsell—, origen que la activa, prioridad, fecha/hora de inicio y fin, estado y al menos un producto recomendado. |
 | CA-03 | El origen puede ser un producto específico o una categoría. |
 | CA-04 | Los productos configurados deben existir y estar activos. No se permite recomendar el mismo producto de origen ni repetir un producto dentro de la misma regla. |
-| CA-05 | En una regla UPSELL, el gestor comercial debe clasificar explícitamente cada producto recomendado como alternativa superior y registrar para cada uno una `justificacion_comercial` no vacía que describa una mejora concreta respecto del producto origen o, si el origen es una categoría, respecto del tipo de productos de esa categoría. La mejora debe referirse a una característica o prestación identificable en la ficha del recomendado. El precio mayor por sí solo no es justificación suficiente; el sistema no determina ni verifica automáticamente la superioridad. |
+| CA-05 | En una regla UPSELL, el gestor clasifica el candidato mediante un `criterio_superioridad` controlado (por ejemplo, material, capacidad, desempeño o prestación) y puede añadir una `criterio_superioridad` descriptiva opcional. El precio mayor por sí solo no convierte al producto en superior. Esta funcionalidad administra **candidatos de merchandising**, no infiere intención ni personaliza recomendaciones por lenguaje natural. |
 | CA-06 | El gestor puede establecer el orden de los productos recomendados dentro de cada regla. |
 | CA-07 | Una regla solo participa si está activa, vigente y su condición de producto o categoría coincide con la consulta. |
 | CA-08 | La respuesta excluye productos inactivos o sin stock y elimina duplicados entre reglas. |
 | CA-09 | La respuesta identifica producto recomendado, tipo de recomendación, prioridad de regla, orden de presentación, precio vigente y disponibilidad. |
 | CA-10 | Las recomendaciones se ordenan por prioridad de regla y luego por orden de producto. |
 | CA-11 | Si no existen recomendaciones válidas, se devuelve una lista vacía. Las recomendaciones no agregan ni reemplazan productos automáticamente. |
-| CA-12 | Si falta la justificación comercial de cualquiera de los productos recomendados por una regla UPSELL, el sistema rechaza su creación o modificación e identifica cuál debe completarse. La consulta administrativa muestra la justificación por producto; su exposición en la API para canales no es obligatoria. |
+| CA-12 | En UPSELL, cada candidato requiere `criterio_superioridad`; la `criterio_superioridad` es opcional. La API entrega candidatos comerciales y metadatos de regla, mientras que la interpretación conversacional, personalización o recomendación por necesidades expresadas corresponde al módulo Chatbot. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -65,10 +68,10 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 ### Escenario 2A: Rechazar un Upsell sin justificación concreta
 
 * **DADO** que el gestor configura una regla UPSELL con un producto recomendado,
-* **CUANDO** intenta guardarla sin `justificacion_comercial`,
+* **CUANDO** intenta guardarla sin `criterio_superioridad`,
 * **ENTONCES** el sistema rechaza la operación, indica qué producto carece de justificación y conserva los datos para corregirlos.
 
-### Escenario 2B: Justificar un Upsell cuyo origen es una categoría
+### Escenario 2B: Clasificar un Upsell cuyo origen es una categoría
 
 * **DADO** que el gestor configura una regla UPSELL con origen «Zapatillas de running»,
 * **CUANDO** registra un producto recomendado y justifica una mejora concreta respecto del tipo de productos de esa categoría,
@@ -112,6 +115,8 @@ Cada producto recomendado dentro de la regla tiene un **orden de presentación**
 
 ## Interacción con otros módulos
 
+> **Frontera funcional:** este componente publica relaciones curadas de Cross-sell/Upsell. El módulo Chatbot es responsable de interpretar lenguaje natural y recomendar según necesidades del cliente; puede usar estas relaciones como una señal, pero Productos y Ofertas no sustituye su motor conversacional.
+
 | Módulo | Necesidad de interacción | Información que recibe esta funcionalidad | Información que entrega esta funcionalidad |
 | --- | --- | --- | --- |
 | Marketplace | Mostrar complementos y alternativas. | Identificador del producto consultado. | Recomendaciones ordenadas con tipo, precio y disponibilidad. |
@@ -137,5 +142,3 @@ Las integraciones se realizan mediante APIs, de forma asíncrona y sin acceso di
 
 ## Aclaración normativa: precio informativo
 El precio de una recomendación es informativo y corresponde al regular u oferta pública vigente de Pricing para el SKU elegible; una promoción de carrito o cupón no se aplica por anticipado. Un producto con variantes puede mostrar rango/«desde» para SKUs activos con stock, y la cotización final se recalcula para el SKU seleccionado. La recomendación no reserva stock ni congela precio.
-
----

@@ -1,6 +1,9 @@
 # HU-006 — Historia de Usuario: Gestión de ofertas y promociones
 
-Proyecto: Módulo de Productos y Ofertas.
+**Responsable:** Axel Andree Cueva Alcalá  
+**Rama:** cueva  
+**Trazabilidad:** Spec [SPEC-006](../specs/SPEC-006-gestion-ofertas-promociones.md) | Flow [WF-006](../wireframes/flows/WF-006-gestion-ofertas-promociones.md)
+
 Responsabilidad: Persona 4 — Axel Cueva.
 Versión corregida: 2026-09-15.
 
@@ -21,8 +24,8 @@ Gestión de ofertas y promociones — Obligatoria.
 - El monto fijo debe ser mayor que 0 y se descuenta **una sola vez sobre el subtotal elegible de la evaluación**, nunca por unidad.
 - El descuento nunca puede producir un importe resultante negativo.
 - Una promoción solo participa en una evaluación si está activa, vigente y aplica a los productos evaluados.
-- Si coinciden varias promociones automáticas válidas, se selecciona la que produzca el **mayor beneficio económico para el cliente**.
-- Si coincide una promoción automática con un cupón válido, **no se acumulan**. Se comparan ambos beneficios y se aplica únicamente el que deje el menor importe resultante. En empate exclusivo cupón/promoción automática se prioriza el cupón; si también empata una oferta vigente de Pricing, se conserva la oferta para no consumir cupón.
+- Cada promoción define `prioridad`, alcance de `canales` y una **política de combinabilidad**. El evaluador construye únicamente combinaciones compatibles y, entre ellas, selecciona la de menor importe final; la prioridad resuelve empates o precedencias comerciales configuradas.
+- Si coinciden promoción automática, cupón u oferta de Pricing, se evalúan únicamente las **combinaciones permitidas** por sus políticas. Si son exclusivas, se compara el importe final y se selecciona la alternativa válida correspondiente; si son combinables, pueden coexistir sin aplicar dos veces el mismo beneficio.
 - Un cupón solo consume un uso si finalmente fue el beneficio seleccionado y el pedido fue confirmado.
 - Modificar o desactivar una promoción no altera descuentos ya registrados en pedidos confirmados.
 - Al crear una promoción, el gestor debe indicar su estado inicial: **ACTIVA** o **INACTIVA**.
@@ -34,21 +37,21 @@ Gestión de ofertas y promociones — Obligatoria.
 | ID | Criterio |
 | --- | --- |
 | CA-01 | Solo un gestor comercial con permisos puede crear, modificar, activar o desactivar promociones. |
-| CA-02 | Para registrar una promoción se debe indicar nombre, al menos un producto o SKU participante, tipo de descuento —porcentaje o monto fijo—, valor del descuento, fecha y hora de inicio y fin, modalidad `AUTOMATICA` o `CUPON`, y estado inicial ACTIVA o INACTIVA. |
+| CA-02 | Para registrar una promoción se debe indicar nombre, al menos un producto o SKU participante, tipo/valor de descuento, fecha y hora de inicio y fin, modalidad `AUTOMATICA` o `CUPON`, estado inicial, `prioridad`, canales aplicables y política de combinabilidad. |
 | CA-03 | Los productos o SKUs seleccionados deben existir y estar activos. El inicio debe ser anterior al fin; el porcentaje debe ser mayor que 0 y hasta 100 %, y el monto fijo debe ser mayor que 0. |
 | CA-04 | El gestor puede consultar el listado y el detalle de las promociones, modificar sus condiciones y activarlas o desactivarlas. |
 | CA-05 | Una promoción solo se aplica si está activa, dentro de su vigencia y corresponde a los productos evaluados. |
-| CA-06 | El descuento se calcula sobre el precio regular vigente de cada SKU elegible; la oferta propia de Pricing es una alternativa excluyente. El monto fijo se aplica una sola vez al subtotal elegible y ningún descuento puede producir un importe negativo. |
-| CA-07 | Si existen varias promociones automáticas válidas para la misma evaluación, el sistema aplica la que genere el mayor beneficio económico para el cliente. |
+| CA-06 | El descuento se calcula sobre la base monetaria definida para cada SKU elegible. La oferta propia de Pricing participa según la política de combinabilidad. El monto fijo se aplica una sola vez al subtotal elegible y ningún descuento puede producir un importe negativo. |
+| CA-07 | Si existen varias promociones automáticas válidas, el sistema evalúa solo las combinaciones permitidas por sus políticas. Entre las combinaciones válidas selecciona la de menor importe final; la `prioridad` configurada se utiliza para desempates o precedencias definidas. |
 | CA-08 | La evaluación devuelve la promoción aplicada, el importe original, el descuento y el importe resultante; si no corresponde aplicarla, informa el motivo. |
 | CA-09 | Modificar o desactivar una promoción no altera los descuentos ya registrados en pedidos confirmados. |
-| CA-10 | Una promoción automática, la oferta vigente de Pricing y un cupón válido no se acumulan: se selecciona el menor importe final; en empate cupón/automática se prioriza cupón, pero si la oferta de Pricing empata se conserva la oferta y no se consume el cupón. |
+| CA-10 | Promociones, cupones y la oferta propia de Pricing se combinan únicamente cuando sus políticas lo permiten. Una promoción puede declararse `EXCLUSIVE` o compatible con clases de beneficio específicas; el motor no aplica una regla global de no-stacking. |
 | CA-11 | Una promoción puede configurarse a nivel producto (aplica a sus SKUs vendibles activos) o a nivel SKU específico. |
 
 | CA-12 | La modalidad `AUTOMATICA` o `CUPON` es obligatoria y visible en consulta. Una promoción CUPON nunca se aplica sin código asociado validado. |
 | CA-13 | La modalidad solo puede editarse en promoción inactiva nunca activada y sin cupones asociados ni usos históricos; en otros casos se crea otra promoción. |
-| CA-14 | Pricing devuelve regular/oferta por SKU separadamente; promoción y cupón se calculan sobre regular y la oferta de Pricing compite como alternativa sin apilamiento. |
-| CA-15 | La validación no consume cupón; confirmaciones provisionales de Ventas generan consumo aceptado o rechazo idempotente, cuya resolución del pedido pertenece a Ventas/Postventa. |
+| CA-14 | Pricing devuelve regular/oferta por SKU separadamente. La evaluación usa bases monetarias explícitas y la oferta de Pricing participa como beneficio según la política de combinabilidad, evitando descuentos duplicados o bases ambiguas. |
+| CA-15 | La evaluación considera el canal solicitante (`MARKETPLACE`, `CHATBOT`, `RETAIL` u otro homologado) y excluye promociones no habilitadas para él. La validación no consume cupón; confirmaciones provisionales de Ventas generan consumo aceptado o rechazo idempotente y Ventas/Postventa resuelve el pedido. |
 
 ## Escenarios dado-cuando-entonces
 
@@ -78,15 +81,15 @@ Gestión de ofertas y promociones — Obligatoria.
 
 ### Escenario 5: Elegir la mejor promoción
 
-* **DADO** que para una compra son válidas una promoción de S/ 20 de descuento y otra que produce S/ 30 de descuento,
-* **CUANDO** el sistema evalúa las promociones automáticas aplicables,
-* **ENTONCES** aplica únicamente la promoción que produce S/ 30 de descuento.
+* **DADO** que para una compra existen promociones válidas con políticas de combinación conocidas,
+* **CUANDO** el sistema evalúa las combinaciones permitidas,
+* **ENTONCES** aplica la combinación válida de menor importe final; si son mutuamente exclusivas, conserva únicamente la alternativa ganadora.
 
 ### Escenario 6: Resolver promoción automática y cupón
 
-* **DADO** que una promoción automática deja el importe en S/ 170 y un cupón válido lo deja en S/ 160,
+* **DADO** que una promoción automática y un cupón válido participan en la misma compra,
 * **CUANDO** el canal solicita evaluar ambos beneficios,
-* **ENTONCES** el sistema aplica únicamente el cupón y devuelve S/ 160 como importe resultante.
+* **ENTONCES** el sistema respeta su política de combinabilidad: los acumula solo si está permitido; de lo contrario selecciona la alternativa válida de menor importe final.
 
 ### Escenario 7: Excluir una promoción fuera de vigencia
 
@@ -131,5 +134,3 @@ Gestión de ofertas y promociones — Obligatoria.
 ## Condiciones de integración
 
 Las integraciones se realizan mediante APIs, de forma asíncrona y sin acceso directo a las bases de datos de otros módulos. Los contratos y mecanismos concretos se coordinan con los equipos involucrados.
-
----

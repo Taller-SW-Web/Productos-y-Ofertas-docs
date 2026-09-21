@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WF-015 — Gestión de inventario</title>
+  <title>WF-015 — Control de stock y disponibilidad</title>
   <style>
     :root{
       --surface:#fff;
@@ -144,8 +144,7 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span><span class="brand-text">PO Productos y ofertas</span></div>
-      <div class="crumb">Productos / Inventario</div>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div><div class="crumb">Productos / Inventario</div>
     </div>
   </header>
   <main id="app" class="page" tabindex="-1"></main>
@@ -248,11 +247,11 @@
 
   function renderGlobalState(){
     if(state.queryState==='no-permission'){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta la disponibilidad de los SKUs vendibles y el resultado de los consumos confirmados.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para administrar el inventario.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
+      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta la disponibilidad de los SKUs vendibles y el resultado de los consumos confirmados.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para administrar el inventario.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
       return true;
     }
     if(state.queryState==='session-expired'){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta la disponibilidad de los SKUs vendibles y el resultado de los consumos confirmados.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
+      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta la disponibilidad de los SKUs vendibles y el resultado de los consumos confirmados.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
       return true;
     }
     return false;
@@ -269,31 +268,31 @@
 
   function renderList(){
     if(state.loading){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible. Un producto simple usa su sku_base; un producto con variantes usa el SKU de cada variante.</p></div></div><div class="skeleton"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div>`;
+      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible. Un producto simple usa su sku_base; un producto con variantes usa el SKU de cada variante.</p></div></div><div class="skeleton"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div>`;
       setTimeout(()=>{state.loading=false;render();},450);
       return;
     }
     if(state.queryState==='list-error'){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar el inventario.</h3><p>Vuelve a intentarlo en unos momentos.</p></div></div><button class="btn btn-primary" data-action="retry">Reintentar</button>`;
+      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar el inventario.</h3><p>Vuelve a intentarlo en unos momentos.</p></div></div><button class="btn btn-primary" data-action="retry">Reintentar</button>`;
       bindPage();
       return;
     }
     if(skus.length===0 || state.queryState==='empty'){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="empty-state"><h2>Aún no hay variantes con inventario.</h2><p>Las variantes deben existir en Gestión de variantes para que su SKU vendible aparezca aquí.</p></div>`;
+      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="empty-state"><h2>Aún no hay variantes con inventario.</h2><p>Las variantes deben existir en Gestión de variantes para que su SKU vendible aparezca aquí.</p></div>`;
       bindPage();
       return;
     }
     const rows=visibleSkus();
     const hasData=rows.length>0;
     if(!hasData && state.filter!=='all'){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="toolbar">${toolbar()}</div>
+      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="toolbar">${toolbar()}</div>
       <div class="empty-state"><h2>Sin resultados con el filtro actual.</h2><p>No hay SKUs en el estado seleccionado con el término buscado.</p><button class="btn" data-action="clear-filters">Limpiar filtros</button></div>${eventFeed()}`;
       bindControls();
       bindPage();
       return;
     }
     if(rows.length===0){
-      app.innerHTML=`<div class="page-header"><div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="toolbar">${toolbar()}</div>
+      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="toolbar">${toolbar()}</div>
       <div class="empty-state"><h2>Sin resultados.</h2><p>Ninguna variante coincide con la búsqueda.</p><button class="btn" data-action="clear-filters">Limpiar filtros</button></div>${eventFeed()}`;
       bindControls();
       bindPage();
@@ -335,7 +334,7 @@
       </article>`;
     }).join('');
     app.innerHTML=`<div class="page-header">
-        <div><h1>Gestión de inventario</h1><p>Consulta del stock por SKU vendible. Un producto simple usa su sku_base; un producto con variantes usa el SKU de cada variante.</p></div>
+        <div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible. Un producto simple usa su sku_base; un producto con variantes usa el SKU de cada variante.</p></div>
       </div>
       <div class="toolbar">${toolbar()}</div>
       <div class="desktop-table table-wrap"><table>

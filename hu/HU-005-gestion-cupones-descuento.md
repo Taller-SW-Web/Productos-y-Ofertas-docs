@@ -1,6 +1,9 @@
 # HU-005 — Historia de Usuario: Gestión de cupones de descuento
 
-Proyecto: Módulo de Productos y Ofertas.
+**Responsable:** Axel Andree Cueva Alcalá  
+**Rama:** cueva  
+**Trazabilidad:** Spec [SPEC-005](../specs/SPEC-005-gestion-cupones-descuento.md) | Flow [WF-005](../wireframes/flows/WF-005-gestion-cupones-descuento.md)
+
 Responsabilidad: Persona 4 — Axel Cueva.
 Versión corregida: 2026-09-15.
 
@@ -34,8 +37,9 @@ El cupón posee como datos propios:
 - El uso se consume cuando Ventas y Postventa emite la confirmación definitiva del pedido después de que el pago haya sido aceptado o, para flujos sin pago electrónico, cuando el pedido pasa al estado equivalente de confirmado.
 - La operación de consumo debe ser idempotente por `order_id + cupon_id`.
 - El control del límite debe ser seguro ante concurrencia.
-- Una anulación posterior del pedido **no repone automáticamente** el uso del cupón en el alcance inicial.
-- Si coincide con una promoción automática o una oferta de Pricing, no se acumulan beneficios: se compara el importe calculado sobre el precio regular. En empate cupón/automática se prioriza el cupón, pero la oferta de Pricing prevalece ante empate y no consume cupón.
+- El cupón puede definir `max_usos_global` y `max_usos_por_cliente`. El cliente se referencia mediante un identificador externo estable (`customer_ref`); Productos y Ofertas no accede a la base de datos de Seguridad.
+- La política de restitución de un uso ante cancelación se configura explícitamente (`restaurar_uso_en_cancelacion`), en lugar de asumir que todas las anulaciones consumen definitivamente el beneficio.
+- La convivencia con promociones y ofertas de Pricing se rige por la **política de combinabilidad** de la promoción asociada. Si las alternativas son incompatibles, se selecciona la combinación válida que produzca el menor importe; no se aplica un descuento dos veces sobre la misma base.
 - Si el cupón no resulta seleccionado como beneficio final, no consume uso.
 
 ## Criterios de aceptación
@@ -46,17 +50,17 @@ El cupón posee como datos propios:
 | CA-02 | Cada cupón debe tener un código único normalizado y estar asociado a una promoción cuya modalidad sea mediante cupón. |
 | CA-03 | El descuento, los productos elegibles y la vigencia utilizados para validar el cupón corresponden a su promoción asociada. |
 | CA-04 | El cupón puede tener un monto mínimo de compra propio. Si se configura, debe ser mayor que 0. |
-| CA-05 | Si se configura un límite de usos, debe ser un entero positivo y no puede reducirse por debajo de los usos ya consumidos. |
-| CA-06 | El gestor puede consultar código, promoción asociada, estado, monto mínimo, usos consumidos, usos disponibles y límite configurado. |
-| CA-07 | La validación debe rechazar códigos inexistentes, cupones o promociones desactivados, promociones fuera de vigencia, compras sin productos elegibles, compras por debajo del monto mínimo y cupones agotados. |
+| CA-05 | Si se configuran `max_usos_global` o `max_usos_por_cliente`, deben ser enteros positivos y no pueden reducirse por debajo de los consumos ya registrados en su respectivo alcance. |
+| CA-06 | El gestor puede consultar código, promoción asociada, estado, monto mínimo, usos globales consumidos/disponibles, límite global, límite por cliente y política de restitución por cancelación. No se exponen datos personales innecesarios del cliente. |
+| CA-07 | La validación debe rechazar códigos inexistentes, cupones/promociones desactivados, promociones fuera de vigencia, compras sin productos elegibles, compras por debajo del mínimo, límite global agotado o límite por `customer_ref` alcanzado. |
 | CA-08 | Un cupón válido devuelve el descuento y el importe resultante. Consultarlo o validarlo no consume un uso. |
 | CA-09 | El uso se registra únicamente cuando Ventas y Postventa confirma definitivamente el pedido y el cupón fue el beneficio seleccionado. |
 | CA-10 | Una confirmación repetida del mismo pedido y cupón no debe consumir otro uso. |
 | CA-11 | Si varias compras intentan consumir simultáneamente los últimos usos, el sistema no debe superar el límite configurado. |
-| CA-12 | Una anulación posterior del pedido no repone automáticamente el uso en el alcance inicial. |
-| CA-13 | Una promoción automática, un cupón y una oferta propia de Pricing compiten sin acumularse sobre el precio regular; se aplica el menor importe y, en empate cupón/automática, se prioriza cupón. Si la oferta de Pricing empata, se conserva la oferta sin consumir cupón. |
+| CA-12 | Una anulación posterior repone o conserva el uso según `restaurar_uso_en_cancelacion` y únicamente tras recibir una comunicación homologada de Ventas/Postventa; la operación de restitución es idempotente y nunca duplica capacidad. |
+| CA-13 | La promoción asociada declara su política de combinabilidad. El cupón puede ser exclusivo o combinarse con beneficios compatibles; el evaluador compara únicamente combinaciones permitidas y el cupón consume uso solo si forma parte del beneficio finalmente elegido. |
 
-| CA-14 | Una oferta vigente de Pricing se compara como alternativa excluyente frente a promoción automática y cupón; los descuentos se calculan sobre precio regular, no sobre una oferta ya descontada. |
+| CA-14 | Pricing entrega regular/oferta separadamente. La oferta puede participar como alternativa o como beneficio compatible únicamente si la política comercial lo permite; los porcentajes/montos se calculan sobre bases definidas explícitamente y no se reaplica accidentalmente el mismo descuento. |
 | CA-15 | Una confirmación provisional `order.confirmed` produce resultado idempotente de consumo aceptado o rechazo con `order_id` y `operation_id`; Ventas/Postventa gestiona las consecuencias comerciales y de pago de un rechazo. |
 
 ## Escenarios dado-cuando-entonces
@@ -97,17 +101,17 @@ El cupón posee como datos propios:
 * **CUANDO** dos pedidos diferentes intentan confirmarlo simultáneamente,
 * **ENTONCES** el sistema acepta como máximo uno e informa al otro que no hay usos disponibles.
 
-### Escenario 7: No consumir un cupón que pierde frente a una promoción automática
+### Escenario 7: No consumir un cupón que no pertenece a la combinación ganadora
 
-* **DADO** que el cupón deja la compra en S/ 180 y una promoción automática válida la deja en S/ 170,
-* **CUANDO** el sistema compara ambos beneficios,
-* **ENTONCES** aplica la promoción automática y el cupón no consume un uso.
+* **DADO** que el cupón es incompatible con una promoción automática que deja la compra en un importe menor,
+* **CUANDO** el evaluador compara las combinaciones permitidas,
+* **ENTONCES** selecciona la promoción automática y el cupón no consume un uso.
 
-### Escenario 8: Anular un pedido confirmado
+### Escenario 8: Anular un pedido confirmado según política de restitución
 
-* **DADO** que un pedido confirmado ya consumió un uso de cupón,
-* **CUANDO** el pedido es anulado posteriormente,
-* **ENTONCES** el uso permanece consumido en el alcance inicial.
+* **DADO** que un pedido confirmado consumió un uso de cupón y el cupón está configurado para restituirlo ante una cancelación homologada,
+* **CUANDO** Ventas/Postventa comunica la anulación aplicable,
+* **ENTONCES** el sistema restituye una sola vez el uso global y del cliente; si la política está desactivada, el uso permanece consumido.
 
 ### Escenario 9: Cupón pierde frente a oferta de Pricing
 * **DADO** una oferta vigente S/ 170 y un cupón válido que produce S/ 180 sobre el mismo regular,
@@ -123,9 +127,9 @@ El cupón posee como datos propios:
 
 | Módulo | Necesidad de interacción | Información que recibe esta funcionalidad | Información que entrega esta funcionalidad |
 | --- | --- | --- | --- |
-| Marketplace | Ingresar y validar cupones durante la compra. | Código, productos, cantidades y subtotal. | Validez, motivo de rechazo, descuento e importe resultante. |
-| Chatbot | Validar un código recibido en conversación. | Código, productos, cantidades y subtotal. | Resultado de validación y beneficio aplicable. |
-| Retail | Validar el cupón presentado por el cliente. | Código, productos, cantidades y subtotal. | Resultado de validación y descuento. |
+| Marketplace | Ingresar y validar cupones durante la compra. | Código, productos, cantidades, subtotal y `customer_ref` cuando la regla requiera límite por cliente. | Validez, motivo de rechazo, descuento e importe resultante. |
+| Chatbot | Validar un código recibido en conversación. | Código, productos, cantidades, subtotal y referencia de cliente cuando corresponda. | Resultado de validación y beneficio aplicable. |
+| Retail | Validar el cupón presentado por el cliente. | Código, productos, cantidades, subtotal y referencia de cliente cuando corresponda. | Resultado de validación y descuento. |
 | Ventas y Postventa | Confirmar definitivamente el consumo. | `order_id`, cupón, confirmación de pedido y beneficio finalmente aplicado. | Confirmación o rechazo del consumo y descuento aplicado. |
 | Seguridad y Usuarios | Autorizar la administración. | Identidad autenticada y permisos. | Solicitudes de validación cuando corresponda. |
 
@@ -140,5 +144,3 @@ El cupón posee como datos propios:
 ## Condiciones de integración
 
 Las integraciones se realizan mediante APIs, de forma asíncrona y sin acceso directo a las bases de datos de otros módulos.
-
----

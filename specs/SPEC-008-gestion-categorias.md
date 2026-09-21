@@ -1,15 +1,19 @@
 # SPEC-008 — Especificación: Gestión de categorías y subcategorías
 
+**Responsable:** Leonardo Lopez  
+**Rama:** lopez  
+**Trazabilidad:** HU [HU-008](../hu/HU-008-gestion-categorias.md) | Wireframe [WF-008](../wireframes/flows/WF-008-gestion-categorias.md)
+
 ## 1. Contexto
 El Marketplace Multicanal organiza los productos en categorías y subcategorías para navegación, filtros y clasificación en Catálogo Core. La estructura se administra centralmente en Taxonomía y se expone por API.
 
 ## 2. Propósito
-Permitir al Gestor Comercial crear, consultar, actualizar, desactivar y reactivar categorías, manteniendo una jerarquía consistente de máximo dos niveles.
+Permitir al Gestor Comercial crear, consultar, actualizar, desactivar y reactivar categorías de navegación. El modelo de datos es jerárquico y recursivo; para el MVP se configura `MAX_CATEGORY_DEPTH=2` (categoría y subcategoría), evitando que el límite docente quede embebido como una imposibilidad estructural permanente.
 
 ## 3. Alcance
 Incluye:
 - Categorías raíz y subcategorías.
-- Máximo dos niveles: raíz e hija.
+- Modelo jerárquico mediante `categoria_padre_id`; `MAX_CATEGORY_DEPTH=2` como configuración del MVP, no como restricción irreversible del esquema.
 - Edición de `categoria_padre_id`.
 - Consulta individual, listado y árbol jerárquico.
 - Baja lógica y reactivación.
@@ -26,11 +30,11 @@ El nombre NO necesita ser único. La unicidad de URL se resuelve mediante la pol
 Si se especifica padre, este debe existir y estar activo.
 
 ### Requisito 2: Jerarquía
-La jerarquía admite únicamente:
+El modelo admite una jerarquía recursiva basada en `categoria_padre_id`, sin referencias circulares. Para el alcance actual, `MAX_CATEGORY_DEPTH=2`, por lo que la interfaz y las validaciones solo permiten:
 1. categoría raíz;
 2. subcategoría.
 
-No se permiten terceros niveles ni referencias circulares.
+La profundidad máxima es un parámetro de negocio/técnico del despliegue y puede ampliarse en una evolución sin rediseñar la entidad ni las APIs básicas.
 
 ### Requisito 3: Actualizar categoría
 El sistema DEBE permitir editar nombre, descripción, orden, imagen y `categoria_padre_id`.
@@ -38,7 +42,7 @@ El sistema DEBE permitir editar nombre, descripción, orden, imagen y `categoria
 Al cambiar el padre se valida:
 - existencia y estado activo del nuevo padre;
 - ausencia de autorreferencia/ciclo;
-- cumplimiento del máximo de dos niveles.
+- cumplimiento de `MAX_CATEGORY_DEPTH` vigente (2 en el MVP).
 
 El cambio de ubicación no altera automáticamente los productos ya asociados.
 
@@ -66,7 +70,7 @@ Taxonomía **solo confirma la baja lógica tras un resultado `CLEAR` vigente**; 
 La desactivación de una categoría sigue bloqueándose cuando tiene subcategorías activas, comprobación local de Taxonomía. La reactivación vuelve a validar padre y unicidad aplicable según el tipo de entidad. Este protocolo es interno y no presupone contratos confirmados con Ventas y Postventa.
 
 ### Requisito 7: Reubicación segura de categoría
-Antes de confirmar el cambio de `categoria_padre_id`, Taxonomía calcula las características **efectivas** (directas + heredadas, sin duplicados) de la categoría trasladada y de todas las subcategorías que pudiera afectar. Rechaza el cambio si alguna excede 20, si relaja una obligatoriedad heredada, si crea un ciclo o si excede dos niveles. El cambio se confirma atómicamente con la actualización de la jerarquía y la versión de taxonomía y emite `taxonomy.category.updated`. Si aparecen nuevas características obligatorias, los productos ya existentes conservan su estado y las completan en el próximo guardado; las nuevas creaciones/activaciones deben satisfacerlas. Catálogo valida escrituras sobre una versión vigente de las reglas, no sobre proyecciones conocidas como obsoletas.
+Antes de confirmar el cambio de `categoria_padre_id`, Taxonomía comprueba existencia y estado del nuevo padre, ausencia de ciclos y cumplimiento de `MAX_CATEGORY_DEPTH`. El cambio se confirma atómicamente con la versión de taxonomía y emite `taxonomy.category.updated`; los consumidores actualizan sus proyecciones de forma eventual. **Las categorías se usan para navegación y clasificación, no para definir el esquema de atributos del producto**, por lo que reubicar una categoría no añade ni elimina características obligatorias de los productos existentes. El esquema de atributos se resuelve mediante `tipo_producto_id` y la capacidad de asociación definida en `SPEC-010-asociacion-tipo-producto-caracteristica.md`.
 
 ## 5. Requisitos no funcionales
 - Rendimiento: árbol completo < 1 s con hasta 500 categorías.
@@ -76,11 +80,9 @@ Antes de confirmar el cambio de `categoria_padre_id`, Taxonomía calcula las car
 
 ## 6. Fuera de alcance
 - CRUD de características y marcas.
-- Asociación categoría-característica, definida en `SPEC-010-asociacion-categoria-caracteristica.md`.
+- Definición del esquema de atributos por tipo de producto, especificada en `SPEC-010-asociacion-tipo-producto-caracteristica.md`; las categorías no son propietarias de esas reglas.
 - Metadatos SEO; el slug y sus colisiones se rigen por `SPEC-012-seo-metadatos.md`.
 - Asociación de productos a categoría, responsabilidad de Catálogo Core.
 
 ## Criterio de completitud
-Se considera completa cuando se cumplen creación, jerarquía de dos niveles, edición de padre, baja lógica, reactivación, validación de productos activos y consulta del árbol.
-
----
+Se considera completa cuando se cumplen creación, jerarquía recursiva con profundidad 2 configurada para el MVP, edición de padre, baja lógica, reactivación, validación de productos activos y consulta del árbol, sin acoplar la jerarquía de navegación al esquema de características.

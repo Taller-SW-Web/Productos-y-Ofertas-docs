@@ -1,5 +1,9 @@
 # HU-011 — Historia de Usuario: Gestión de marcas
 
+**Responsable:** Leonardo Lopez  
+**Rama:** lopez  
+**Trazabilidad:** Spec [SPEC-011](../specs/SPEC-011-gestion-marcas.md) | Flow [WF-011](../wireframes/flows/WF-011-gestion-marcas.md)
+
 **Como** **gestor comercial**,
 
 **quiero** crear, editar, desactivar y reactivar las marcas del catálogo
@@ -101,5 +105,3 @@
 
 * **Formato del logo:** PNG, JPG/JPEG y WebP; máximo 5 MB. SVG queda fuera del alcance inicial.
 * **País de origen:** se normaliza mediante ISO 3166-1.
-
----
