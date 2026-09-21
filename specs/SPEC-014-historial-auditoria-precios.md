@@ -8,7 +8,7 @@
 En una plataforma de comercio multicanal donde interactúan diversos administradores comerciales, los errores en la asignación de precios o modificaciones no coordinadas conllevan pérdidas de margen considerables o contingencias legales por publicidad engañosa. Para asegurar el control interno, la rendición de cuentas y la detección inmediata de incidencias, se requiere un mecanismo de registro inmutable que documente en tiempo real quién realizó el cambio, cuándo se ejecutó, el valor previo y nuevo, la variación porcentual, el motivo comercial, el canal de origen, el identificador de lote y la dirección IP de procedencia de la petición.
 
 ## 2. Propósito
-Registrar automáticamente y de forma inmutable cada modificación de precio aplicada a cualquier producto (quién, cuándo, valor anterior, valor nuevo, variación %, motivo, canal e IP), proporcionando a auditores y gestores trazabilidad total, opciones de exportación estructurada y cumplimiento de retención legal.
+Registrar automáticamente y de forma inmutable cada modificación de precio aplicada a cualquier producto (quién, cuándo, valor anterior, valor nuevo, variación %, motivo, canal e IP), proporcionando a auditores y gestores trazabilidad total, opciones de exportación estructurada y aplicación de una política configurable de retención y archivado.
 
 ## 3. Alcance
 Incluye:

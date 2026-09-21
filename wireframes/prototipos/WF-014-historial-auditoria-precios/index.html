@@ -380,7 +380,7 @@
   /*
     WF-014 — Historial de auditoría de precios
     Estados documentales inspeccionables vía query param:
-      ?state=no-permission    -> usuario sin rol (AUDITOR_COMERCIAL o ADMIN_SISTEMA)
+      ?state=no-permission    -> usuario sin permisos requeridos (PRICING_AUDIT_READ o PRICING_AUDIT_EXPORT)
       ?state=session-expired  -> sesión expirada
       ?state=s01-e            -> error temporal de consulta (S-01-E)
   */
@@ -550,7 +550,7 @@
           <span class="notice-icon" aria-hidden="true">!</span>
           <div>
             <h3>Acceso restringido</h3>
-            <p>No tienes permiso para consultar el historial de auditoría. Se requiere el rol <code>AUDITOR_COMERCIAL</code> o <code>ADMIN_SISTEMA</code>.</p>
+            <p>No tienes permiso para consultar el historial de auditoría. Se requiere el permiso <code>PRICING_AUDIT_READ</code> o <code>PRICING_AUDIT_EXPORT</code>.</p>
           </div>
         </div>
         <button class="btn" type="button" onclick="location.search=''">Volver al historial</button>
@@ -699,7 +699,7 @@
       <div class="page-header">
         <div>
           <h1>Historial de auditoría de precios</h1>
-          <p class="muted">Bitácora inmutable (Append-Only) para trazabilidad, cumplimiento legal y resolución de reclamos comerciales.</p>
+          <p class="muted">Bitácora inmutable (Append-Only) para trazabilidad, política configurable de retención y archivado, y resolución de reclamos comerciales.</p>
         </div>
         <div class="button-row">
           <button class="btn btn-quiet" id="btn-open-csv" type="button" ${records.length === 0 ? 'disabled' : ''}>Exportar a CSV</button>

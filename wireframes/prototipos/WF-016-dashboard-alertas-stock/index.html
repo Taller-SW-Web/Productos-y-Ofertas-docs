@@ -35,10 +35,10 @@
     .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
-    .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:24px}
     .page-header h1{font-size:clamp(24px, 4vw, 32px);line-height:1.15;margin:0 0 8px;font-weight:700}
     .page-header p{margin:0;color:var(--neutral-50);max-width:760px}
-    h2{font-size:24px;line-height:1.2;margin:0 0 16px}
+    h2{font-size:22px;line-height:1.2;margin:0 0 16px}
     h3{font-size:18px;line-height:1.3;margin:0 0 12px}
     .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
     .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
@@ -57,74 +57,68 @@
     .toast.show{display:block}
 
     .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
-    .kpi{border:1px solid var(--neutral-30);padding:20px}
+    .kpi{border:1px solid var(--neutral-30);padding:20px;background:var(--surface)}
     .kpi-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--neutral-50);font-family:"Roboto Mono",monospace;margin-bottom:8px}
     .kpi-value{font-size:32px;font-weight:700;line-height:1.1}
     .kpi-sub{font-size:13px;color:var(--neutral-50);margin-top:4px}
 
-    .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center}
-    .filter{min-width:150px;flex:1 1 150px}
-
-    .section{border:1px solid var(--neutral-30);padding:24px;margin-bottom:16px}
+    .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px;align-items:center}
+    .section{border:1px solid var(--neutral-30);padding:24px;margin-bottom:24px;background:var(--surface)}
     .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
     .section-head h2{margin:0}
 
-    input[type="text"],select{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:11px 12px;border-radius:var(--radius);min-height:44px}
+    input[type="text"],select{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:10px 12px;border-radius:var(--radius);min-height:44px}
 
     .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--neutral-30);padding:4px 8px;border-radius:999px;background:var(--surface)}
     .status::before{content:"";width:8px;height:8px;border:1px solid var(--neutral-90);border-radius:50%;background:var(--surface)}
+    .status.avail::before{background:var(--neutral-90)}
     .status.low::before{background:var(--surface);border-width:2px}
     .status.out::before{background:transparent;border-style:dashed}
 
-    .table-wrap{border:1px solid var(--neutral-30);overflow:hidden}
+    .table-wrap{border:1px solid var(--neutral-30);overflow-x:auto}
     table{width:100%;border-collapse:collapse}
-    th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--neutral-30);vertical-align:middle}
-    th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"Roboto Mono",ui-monospace,monospace;font-weight:600;color:var(--neutral-70);background:var(--neutral-10)}
+    th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--neutral-30);vertical-align:middle}
+    th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"Roboto Mono",ui-monospace,monospace;font-weight:600;color:var(--neutral-70);background:var(--neutral-10);white-space:nowrap}
     tbody tr:last-child td{border-bottom:0}
     .sku-code{font-family:"Roboto Mono",ui-monospace,monospace;font-size:13px;font-weight:600}
     .product-name{font-weight:600}
-
-    .top5{list-style:none;margin:0;padding:0}
-    .top5 li{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--neutral-30)}
-    .top5 li:last-child{border-bottom:0}
-    .rank{width:32px;height:32px;min-width:32px;border:1px solid var(--neutral-90);display:grid;place-items:center;font-weight:700;font-family:"Roboto Mono",monospace}
-    .top5-info{flex:1;min-width:0}
-    .top5-name{font-weight:600}
-    .top5-units{font-family:"Roboto Mono",monospace;font-size:13px;color:var(--neutral-50);font-weight:600;white-space:nowrap}
-    .bar{height:8px;background:var(--neutral-10);margin-top:6px;max-width:260px}
-    .bar-fill{height:100%;background:var(--neutral-90)}
+    .stock-num{font-family:"Roboto Mono",monospace;font-weight:600;text-align:right}
+    .tag{border:1px solid var(--neutral-30);padding:2px 8px;font-size:12px;font-family:"Roboto Mono",monospace;font-weight:600;display:inline-block;background:var(--neutral-10)}
+    .tag.strong{border-color:var(--neutral-90);background:var(--surface)}
 
     .mobile-alerts{display:none}
-    .alert-card{border:1px solid var(--neutral-30);padding:16px}
-    .alert-card + .alert-card{margin-top:12px}
+    .alert-card{border:1px solid var(--neutral-30);padding:16px;margin-bottom:12px;background:var(--surface)}
 
-    .empty-state{border:1px solid var(--neutral-30);padding:48px 24px;text-align:center}
+    .empty-state{border:1px solid var(--neutral-30);padding:48px 24px;text-align:center;background:var(--surface)}
     .empty-state h2{margin-bottom:8px}
     .empty-state p{color:var(--neutral-50);margin:0 auto 20px;max-width:520px}
 
-    .skeleton{border:1px solid var(--neutral-30);padding:16px}
+    .skeleton{border:1px solid var(--neutral-30);padding:24px}
     .sk-line{height:14px;background:var(--neutral-10);margin:8px 0}
     .sk-line.w30{width:30%}.sk-line.w50{width:50%}.sk-line.w80{width:80%}
 
-    .event-banner{border:1px dashed var(--neutral-90);padding:12px 16px;margin-bottom:24px;display:flex;gap:12px;align-items:center;font-size:14px}
-    .event-banner .mono{color:var(--neutral-50)}
-    .live-dot{width:10px;height:10px;border:1px solid var(--neutral-90);border-radius:50%;background:var(--neutral-10);flex-shrink:0}
+    .event-banner{border:1px dashed var(--neutral-90);padding:12px 16px;margin-bottom:24px;display:flex;gap:12px;align-items:center;font-size:14px;background:var(--neutral-10)}
+    .live-dot{width:10px;height:10px;border:1px solid var(--neutral-90);border-radius:50%;background:var(--neutral-90);flex-shrink:0}
+
+    .bar-wrap{display:flex;align-items:center;gap:10px}
+    .progress-bar{flex:1;height:8px;background:var(--neutral-20);border-radius:2px;overflow:hidden;max-width:180px}
+    .progress-fill{height:100%;background:var(--neutral-90)}
 
     @media (max-width:900px){
       .mobile-alerts{display:block}
       .desktop-alerts{display:none}
+      .kpis{grid-template-columns:1fr 1fr}
     }
     @media (max-width:600px){
       .topbar-inner{padding:12px 16px}
       .crumb{display:none}
       .page{padding:24px 16px 48px}
       .page-header{display:block;margin-bottom:24px}
-      .page-header h1{font-size:28px}
-      .kpis{grid-template-columns:1fr 1fr}
+      .page-header h1{font-size:24px}
+      .kpis{grid-template-columns:1fr}
       .kpi-value{font-size:26px}
       .section{padding:16px}
-      .filters{display:grid;grid-template-columns:1fr}
-      .filter{width:100%}
+      .filters{grid-template-columns:1fr}
       .section-head{display:block}
       .button-row .btn{width:100%;min-height:44px}
       .toast{left:16px;right:16px;bottom:16px}
@@ -135,7 +129,11 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div><div class="crumb">Productos / Inventario / Dashboard</div>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">PO</div>
+        <span class="brand-text">PO Productos y ofertas</span>
+      </div>
+      <div class="crumb">Productos / Inventario / Dashboard analítico y alertas</div>
     </div>
   </header>
   <main id="app" class="page" tabindex="-1"></main>
@@ -147,46 +145,36 @@
   'use strict';
 
   /*
-    Estados documentales de WF-016 que pueden inspeccionarse sin contaminar la UI:
+    WF-016 — Dashboard analítico y alertas de stock
+    Estados documentales inspeccionables vía query param:
       ?state=empty            -> panel sin inventario (S-01-E)
       ?state=list-error       -> error de carga (S-01-E)
-      ?state=top5-error       -> error del Top 5 (S-01-T)
       ?state=no-permission    -> usuario sin permiso
       ?state=session-expired  -> sesión expirada
-    No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
   */
 
-  const PERIOD_DEFAULT = '30d';
-  const PERIODS = [
-    {id:'30d', label:'Últimos 30 días'},
-    {id:'7d', label:'Últimos 7 días'},
-    {id:'90d', label:'Últimos 90 días'},
-    {id:'custom', label:'Rango personalizado'}
-  ];
+  const DEFAULT_GLOBAL_UMBRAL = 5;
 
   let skus = [
-    {id:'sk-nk-blk40', product:'Nike Air Max', sku:'NK-AM-BLK-40', attrs:'Negro / Talla 40', stock:3, umbral:5},
-    {id:'sk-nk-blk41', product:'Nike Air Max', sku:'NK-AM-BLK-41', attrs:'Negro / Talla 41', stock:0, umbral:5},
-    {id:'sk-nk-wht40', product:'Nike Air Max', sku:'NK-AM-WHT-40', attrs:'Blanco / Talla 40', stock:8, umbral:5},
-    {id:'sk-ad-pred42', product:'Adidas Predator', sku:'AD-PR-42-RD', attrs:'Rojo / Talla 42', stock:15, umbral:6},
-    {id:'sk-ad-pred43', product:'Adidas Predator', sku:'AD-PR-43-RD', attrs:'Rojo / Talla 43', stock:5, umbral:6},
-    {id:'sk-pum-ft40', product:'Puma Future', sku:'PM-FT-40-BK', attrs:'Negro / Talla 40', stock:0, umbral:4},
-    {id:'sk-pum-ft41', product:'Puma Future', sku:'PM-FT-41-BK', attrs:'Negro / Talla 41', stock:2, umbral:4}
-  ];
-  let top5 = [
-    {product:'Nike Air Max', units:45},
-    {product:'Adidas Predator', units:38},
-    {product:'Puma Future', units:30},
-    {product:'Nike Revolution', units:25},
-    {product:'Adidas Run', units:20}
+    { id: 'sk-nk-blk40', product: 'Nike Air Max', category: 'Calzado', brand: 'Nike', sku: 'NK-AM-BLK-40', attrs: 'Negro / Talla 40', location_id: 'LOC-LIMA-CENTRAL', on_hand: 12, reserved: 2, available: 10, umbral: 5, use_default: true },
+    { id: 'sk-nk-blk41', product: 'Nike Air Max', category: 'Calzado', brand: 'Nike', sku: 'NK-AM-BLK-41', attrs: 'Negro / Talla 41', location_id: 'LOC-LIMA-CENTRAL', on_hand: 4, reserved: 1, available: 3, umbral: 5, use_default: true },
+    { id: 'sk-nk-wht40', product: 'Nike Air Max', category: 'Calzado', brand: 'Nike', sku: 'NK-AM-WHT-40', attrs: 'Blanco / Talla 40', location_id: 'LOC-LIMA-SUR', on_hand: 0, reserved: 0, available: 0, umbral: 5, use_default: true },
+    { id: 'sk-ad-pred42', product: 'Adidas Predator', category: 'Calzado', brand: 'Adidas', sku: 'AD-PR-42-RD', attrs: 'Rojo / Talla 42', location_id: 'LOC-LIMA-CENTRAL', on_hand: 18, reserved: 3, available: 15, umbral: 8, use_default: false },
+    { id: 'sk-ad-pred43', product: 'Adidas Predator', category: 'Calzado', brand: 'Adidas', sku: 'AD-PR-43-RD', attrs: 'Rojo / Talla 43', location_id: 'LOC-LIMA-SUR', on_hand: 7, reserved: 2, available: 5, umbral: 6, use_default: false },
+    { id: 'sk-pum-ft40', product: 'Puma Future', category: 'Calzado', brand: 'Puma', sku: 'PM-FT-40-BK', attrs: 'Negro / Talla 40', location_id: 'LOC-LIMA-CENTRAL', on_hand: 1, reserved: 1, available: 0, umbral: 4, use_default: false },
+    { id: 'sk-pum-ft41', product: 'Puma Future', category: 'Calzado', brand: 'Puma', sku: 'PM-FT-41-BK', attrs: 'Negro / Talla 41', location_id: 'LOC-LIMA-SUR', on_hand: 3, reserved: 1, available: 2, umbral: 4, use_default: false }
   ];
 
   const state = {
-    loading:true,
-    period:'30d',
-    filters:{product:'',state:'all'},
-    queryState:new URLSearchParams(location.search).get('state') || ''
+    loading: true,
+    filters: {
+      search: '',
+      location_id: 'all',
+      status: 'all'
+    },
+    queryState: new URLSearchParams(location.search).get('state') || ''
   };
+
   let lastEvent = null;
 
   const app = document.getElementById('app');
@@ -194,220 +182,403 @@
   let toastTimer = null;
 
   function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[ch])); }
-  function showToast(message){ clearTimeout(toastTimer); toast.textContent=message; toast.classList.add('show'); toastTimer=setTimeout(()=>toast.classList.remove('show'),3200); }
-  function estadoOf(s){ if(s.stock===0) return 'out'; return s.stock<=s.umbral?'low':'avail'; }
-  function labelOf(st){ if(st==='low') return 'Stock bajo'; if(st==='out') return 'Agotado'; return 'Disponible'; }
+  function showToast(message){ clearTimeout(toastTimer); toast.textContent = message; toast.classList.add('show'); toastTimer = setTimeout(() => toast.classList.remove('show'), 3200); }
+
+  function getEffectiveUmbral(s){
+    return s.use_default ? DEFAULT_GLOBAL_UMBRAL : s.umbral;
+  }
+
+  function estadoOf(s){
+    const u = getEffectiveUmbral(s);
+    if (s.available === 0) return 'out';
+    return s.available <= u ? 'low' : 'avail';
+  }
+
+  function labelOf(st){
+    if (st === 'low') return 'Stock bajo';
+    if (st === 'out') return 'Agotado';
+    return 'Disponible';
+  }
+
   function statusBadge(s){
-    const st=estadoOf(s);
-    if(st==='avail') return '';
+    const st = estadoOf(s);
     return `<span class="status ${st}">${labelOf(st)}</span>`;
   }
-  function periodLabel(id){ const p=PERIODS.find(x=>x.id===id); return p?p.label:id; }
 
   function renderGlobalState(){
-    if(state.queryState==='no-permission'){
-      app.innerHTML=`<div class="page-header"><div><h1>Dashboard de inventario</h1><p>Indicadores, alertas de stock y Top 5 de productos más vendidos.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para consultar el dashboard.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
+    if (state.queryState === 'no-permission'){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Dashboard analítico y alertas de stock</h1>
+            <p>Monitoreo operativo de existencias y distribución por ubicación.</p>
+          </div>
+        </div>
+        <div class="notice error">
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <div>
+            <h3>Acceso restringido</h3>
+            <p>No tienes permiso para consultar el dashboard de inventario. Solicita acceso a tu administrador.</p>
+          </div>
+        </div>
+        <button class="btn" data-action="safe-back">Volver al módulo</button>`;
       return true;
     }
-    if(state.queryState==='session-expired'){
-      app.innerHTML=`<div class="page-header"><div><h1>Dashboard de inventario</h1><p>Indicadores, alertas de stock y Top 5 de productos más vendidos.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
+    if (state.queryState === 'session-expired'){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Dashboard analítico y alertas de stock</h1>
+            <p>Monitoreo operativo de existencias y distribución por ubicación.</p>
+          </div>
+        </div>
+        <div class="notice error">
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <div>
+            <h3>Tu sesión expiró</h3>
+            <p>Inicia sesión nuevamente para continuar consultando el dashboard.</p>
+          </div>
+        </div>
+        <button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
       return true;
     }
     return false;
   }
 
   function computeKpis(list){
-    const total=list.length;
-    const units=list.reduce((a,s)=>a+s.stock,0);
-    const byState={avail:0,low:0,out:0};
-    list.forEach(s=>byState[estadoOf(s)]++);
-    return {total,units,avail:byState.avail,low:byState.low,out:byState.out};
+    const total = list.length;
+    const units = list.reduce((a, s) => a + s.available, 0);
+    const byState = { avail: 0, low: 0, out: 0 };
+    list.forEach(s => byState[estadoOf(s)]++);
+    return { total, units, avail: byState.avail, low: byState.low, out: byState.out };
+  }
+
+  function computeLocationsSummary(list){
+    const map = {};
+    list.forEach(s => {
+      if (!map[s.location_id]) {
+        map[s.location_id] = { location_id: s.location_id, skus_count: 0, on_hand: 0, reserved: 0, available: 0, alerts_count: 0 };
+      }
+      map[s.location_id].skus_count++;
+      map[s.location_id].on_hand += s.on_hand;
+      map[s.location_id].reserved += s.reserved;
+      map[s.location_id].available += s.available;
+      if (estadoOf(s) !== 'avail') {
+        map[s.location_id].alerts_count++;
+      }
+    });
+    return Object.values(map);
   }
 
   function filteredSkus(){
-    return skus.filter(s=>{
-      const matchProduct=!state.filters.product || s.product.toLowerCase().includes(state.filters.product.toLowerCase()) || s.sku.toLowerCase().includes(state.filters.product.toLowerCase());
-      const st=estadoOf(s);
-      const matchState=state.filters.state==='all' || st===state.filters.state;
-      return matchProduct && matchState;
+    return skus.filter(s => {
+      const q = state.filters.search.toLowerCase();
+      const matchSearch = !q ||
+        s.product.toLowerCase().includes(q) ||
+        s.category.toLowerCase().includes(q) ||
+        s.brand.toLowerCase().includes(q) ||
+        s.sku.toLowerCase().includes(q);
+      const matchLoc = state.filters.location_id === 'all' || s.location_id === state.filters.location_id;
+      const st = estadoOf(s);
+      const matchState = state.filters.status === 'all' || st === state.filters.status;
+      return matchSearch && matchLoc && matchState;
     });
   }
 
   function renderDashboard(){
-    if(state.loading){
-      app.innerHTML=`<div class="page-header"><div><h1>Dashboard de inventario</h1><p>Cargando los indicadores y alertas de stock…</p></div></div><div class="skeleton"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div>`;
-      setTimeout(()=>{state.loading=false;render();},450);
+    if (state.loading){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Dashboard analítico y alertas de stock</h1>
+            <p>Cargando los indicadores, alertas y distribución por ubicación…</p>
+          </div>
+        </div>
+        <div class="skeleton">
+          <div class="sk-line w30"></div>
+          <div class="sk-line w80"></div>
+          <div class="sk-line w50"></div>
+        </div>`;
+      setTimeout(() => { state.loading = false; render(); }, 350);
       return;
     }
-    if(state.queryState==='list-error'){
-      app.innerHTML=`<div class="page-header"><div><h1>Dashboard de inventario</h1><p>Indicadores, alertas de stock y Top 5 de productos más vendidos.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar el dashboard.</h3><p>Vuelve a intentarlo en unos momentos.</p></div></div><button class="btn btn-primary" data-action="retry">Reintentar</button>`;
+    if (state.queryState === 'list-error'){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Dashboard analítico y alertas de stock</h1>
+            <p>Monitoreo operativo de existencias e inventario.</p>
+          </div>
+        </div>
+        <div class="notice error">
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <div>
+            <h3>Error al cargar el dashboard</h3>
+            <p>No se pudo conectar con el servicio analítico de inventario. Intente nuevamente.</p>
+          </div>
+        </div>
+        <button class="btn btn-primary" data-action="retry">Reintentar</button>`;
       bindPage();
       return;
     }
 
-    const list=filteredSkus();
-    const kpis=computeKpis(list);
-    const alerts=list.filter(s=>estadoOf(s)!=='avail');
+    const list = filteredSkus();
+    const kpis = computeKpis(list);
+    const alerts = list.filter(s => estadoOf(s) !== 'avail');
+    const locationSummaries = computeLocationsSummary(list);
 
-    const emptyInventory = skus.length===0 || state.queryState==='empty';
-    const noAlerts = alerts.length===0;
+    const emptyInventory = skus.length === 0 || state.queryState === 'empty';
 
-    const alertsBody = emptyInventory
-      ? null
-      : noAlerts
-        ? alertEmptyBlock()
-        : alertTable(alerts);
-
-    const topBody = (state.queryState==='top5-error')
-      ? `<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar los productos más vendidos.</h3><p>Intenta nuevamente. El resto del dashboard sigue disponible.</p></div></div><button class="btn btn-quiet" data-action="retry-top5">Reintentar</button>`
-      : topBlock();
-
-    const emptyBlock = emptyInventory
-      ? `<div class="empty-state"><h2>Aún no hay variantes con inventario.</h2><p>Las variantes deben existir en Gestión de variantes para que su SKU vendible aparezca aquí.</p></div>`
-      : '';
-
-    app.innerHTML=`<div class="page-header">
-        <div><h1>Dashboard de inventario</h1><p>Monitoreo del estado del inventario a nivel de SKU vendible, alertas de stock y Top 5 de productos más vendidos.</p></div>
+    app.innerHTML = `
+      <div class="page-header">
+        <div>
+          <h1>Dashboard analítico y alertas de stock</h1>
+          <p class="muted">Monitoreo reactivo a nivel de SKU vendible, alertas por umbral efectivo (<code class="mono">override SKU ?? global</code>) y distribución operativa por sede (<code class="mono">location_id</code>).</p>
+        </div>
       </div>
-      ${lastEvent?`<div class="event-banner"><span class="live-dot" aria-hidden="true"></span><div><span class="badge">Actualización en tiempo real</span> · ${escapeHtml(lastEvent)}</div></div>`:''}
+
+      ${lastEvent ? `
+        <div class="event-banner">
+          <span class="live-dot" aria-hidden="true"></span>
+          <div><strong>Actualización reactiva:</strong> ${escapeHtml(lastEvent)}</div>
+        </div>
+      ` : ''}
+
       ${filtersBlock()}
-      ${emptyBlock}
-      <div class="section">
-        <div class="section-head"><div><h2>Indicadores de inventario</h2><p class="small muted">Unidad: SKU vendible. El producto es solo agrupador comercial.</p></div></div>
-        <div class="kpis">
-          <div class="kpi"><div class="kpi-label">SKUs vendibles</div><div class="kpi-value">${kpis.total}</div><div class="kpi-sub">Total de variantes con inventario</div></div>
-          <div class="kpi"><div class="kpi-label">Unidades disponibles</div><div class="kpi-value">${kpis.units}</div><div class="kpi-sub">Suma del stock disponible</div></div>
-          <div class="kpi"><div class="kpi-label">SKUs disponibles</div><div class="kpi-value">${kpis.avail}</div><div class="kpi-sub">Por encima del umbral</div></div>
-          <div class="kpi"><div class="kpi-label">Stock bajo</div><div class="kpi-value">${kpis.low}</div><div class="kpi-sub">0 &lt; stock &le; umbral por SKU</div></div>
-          <div class="kpi"><div class="kpi-label">Agotados</div><div class="kpi-value">${kpis.out}</div><div class="kpi-sub">Sin unidades disponibles</div></div>
+
+      ${emptyInventory ? `
+        <div class="empty-state">
+          <h2>Aún no hay variantes con inventario</h2>
+          <p>Las variantes deben sincronizarse en el módulo para figurar en las métricas de disponibilidad.</p>
         </div>
-      </div>
-      <div class="section">
-        <div class="section-head"><div><h2>Alertas de stock</h2><p class="small muted">Solo se alerta a SKUs en estado Stock bajo o Agotado.</p></div></div>
-        ${alertsBody || (emptyInventory?'':`<div class="empty-state"><h2>Sin alertas.</h2><p>Todos los SKUs del filtro se encuentran disponibles.</p></div>`)}
-      </div>
-      <div class="section">
-        <div class="section-head">
-          <div><h2>Top 5 de productos más vendidos</h2><p class="small muted">Ventas confirmadas agrupadas por producto; período ${escapeHtml(periodLabel(state.period))}.</p></div>
-          ${periodSelect()}
+      ` : `
+        <!-- Sección 1: Indicadores generales (KPIs) -->
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <h2>Indicadores de inventario</h2>
+              <p class="small muted">Consolidado a nivel de SKU vendible. El producto es agrupador comercial.</p>
+            </div>
+          </div>
+          <div class="kpis">
+            <div class="kpi">
+              <div class="kpi-label">SKUs vendibles</div>
+              <div class="kpi-value">${kpis.total}</div>
+              <div class="kpi-sub">Total de variantes evaluadas</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Unidades disponibles</div>
+              <div class="kpi-value">${kpis.units}</div>
+              <div class="kpi-sub">Suma total de <code class="mono">available</code></div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">SKUs disponibles</div>
+              <div class="kpi-value">${kpis.avail}</div>
+              <div class="kpi-sub">Por encima del umbral</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Stock bajo</div>
+              <div class="kpi-value">${kpis.low}</div>
+              <div class="kpi-sub">0 &lt; available &le; umbral</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Agotados</div>
+              <div class="kpi-value">${kpis.out}</div>
+              <div class="kpi-sub">available = 0</div>
+            </div>
+          </div>
         </div>
-        ${topBody}
-      </div>`;
+
+        <!-- Sección 2: Alertas de stock bajo y agotado -->
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <h2>Alertas de reposición de stock</h2>
+              <p class="small muted">Variantes que requieren reposición inmediata o reabastecimiento (${alerts.length} alertas detectadas).</p>
+            </div>
+          </div>
+
+          ${alerts.length === 0 ? `
+            <div class="empty-state" style="padding:24px">
+              <h3>Sin alertas activas</h3>
+              <p class="small muted" style="margin:0;">Todos los SKUs seleccionados cuentan con disponibilidad suficiente por encima de sus umbrales.</p>
+            </div>
+          ` : `
+            <div class="desktop-alerts table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">SKU / Atributos</th>
+                    <th scope="col">Producto</th>
+                    <th scope="col">Ubicación</th>
+                    <th scope="col" style="text-align:right">Físico</th>
+                    <th scope="col" style="text-align:right">Reservado</th>
+                    <th scope="col" style="text-align:right">Disponible</th>
+                    <th scope="col">Umbral efectivo</th>
+                    <th scope="col">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${alerts.map(s => {
+                    const u = getEffectiveUmbral(s);
+                    return `<tr>
+                      <td>
+                        <span class="sku-code">${escapeHtml(s.sku)}</span>
+                        <div class="small muted">${escapeHtml(s.attrs)}</div>
+                      </td>
+                      <td class="product-name">${escapeHtml(s.product)} <span class="tag">${escapeHtml(s.brand)}</span></td>
+                      <td><span class="tag">${escapeHtml(s.location_id)}</span></td>
+                      <td class="stock-num">${s.on_hand}</td>
+                      <td class="stock-num muted">${s.reserved}</td>
+                      <td class="stock-num"><strong>${s.available}</strong></td>
+                      <td class="small">${u} ${s.use_default ? '(global: 5)' : '(personalizado)'}</td>
+                      <td>${statusBadge(s)}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mobile-alerts">
+              ${alerts.map(s => {
+                const u = getEffectiveUmbral(s);
+                return `
+                  <article class="alert-card">
+                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+                      <div>
+                        <div class="product-name">${escapeHtml(s.product)}</div>
+                        <div class="sku-code">${escapeHtml(s.sku)}</div>
+                        <div class="small muted">${escapeHtml(s.attrs)} · <span class="tag">${escapeHtml(s.location_id)}</span></div>
+                      </div>
+                      ${statusBadge(s)}
+                    </div>
+                    <div class="small" style="margin:10px 0">
+                      Físico: <strong>${s.on_hand}</strong> · Reservado: <strong>${s.reserved}</strong> · Disponible: <strong>${s.available}</strong> (Umbral: ${u})
+                    </div>
+                  </article>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+
+        <!-- Sección 3: Distribución operativa de stock por ubicación -->
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <h2>Distribución operativa por ubicación</h2>
+              <p class="small muted">Existencias consolidadas y SKUs en alerta desglosados por almacén/sede (<code class="mono">location_id</code>).</p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Ubicación (Sede)</th>
+                  <th scope="col" style="text-align:right">SKUs registrados</th>
+                  <th scope="col" style="text-align:right">Stock físico (on_hand)</th>
+                  <th scope="col" style="text-align:right">Reservado (reserved)</th>
+                  <th scope="col" style="text-align:right">Disponible (available)</th>
+                  <th scope="col" style="text-align:right">SKUs en alerta</th>
+                  <th scope="col">Disponibilidad operativa</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${locationSummaries.map(loc => {
+                  const maxUnits = Math.max(...locationSummaries.map(l => l.on_hand), 1);
+                  const pct = Math.round((loc.available / (loc.on_hand || 1)) * 100);
+                  return `<tr>
+                    <td><strong><span class="tag strong">${escapeHtml(loc.location_id)}</span></strong></td>
+                    <td class="stock-num">${loc.skus_count}</td>
+                    <td class="stock-num">${loc.on_hand}</td>
+                    <td class="stock-num muted">${loc.reserved}</td>
+                    <td class="stock-num"><strong>${loc.available}</strong></td>
+                    <td class="stock-num">${loc.alerts_count > 0 ? `<span class="tag" style="border-color:var(--neutral-90); font-weight:700;">${loc.alerts_count}</span>` : '0'}</td>
+                    <td>
+                      <div class="bar-wrap">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
+                          <div class="progress-fill" style="width:${pct}%"></div>
+                        </div>
+                        <span class="mono small">${pct}%</span>
+                      </div>
+                    </td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `}
+    `;
+
     bindControls();
     bindPage();
   }
 
   function filtersBlock(){
-    return `<div class="filters">
-      <input class="filter" type="text" id="fProduct" placeholder="Filtrar por producto, categoría, marca o SKU…" value="${escapeHtml(state.filters.product)}" aria-label="Buscar por producto, categoría, marca o SKU">
-      <select class="filter" id="fState" aria-label="Filtrar por estado de inventario">
-        <option value="all" ${state.filters.state==='all'?'selected':''}>Todos los estados</option>
-        <option value="avail" ${state.filters.state==='avail'?'selected':''}>Disponible</option>
-        <option value="low" ${state.filters.state==='low'?'selected':''}>Stock bajo</option>
-        <option value="out" ${state.filters.state==='out'?'selected':''}>Agotado</option>
-      </select>
-    </div>`;
-  }
-
-  function alertTable(alerts){
-    const rows=alerts.map(s=>`
-      <tr>
-        <td class="product-name">${escapeHtml(s.product)}</td>
-        <td><span class="sku-code">${escapeHtml(s.sku)}</span></td>
-        <td>${escapeHtml(s.attrs)}</td>
-        <td>${s.stock}</td>
-        <td>${s.umbral}</td>
-        <td>${statusBadge(s)}</td>
-      </tr>`).join('');
-    const cards=alerts.map(s=>`
-      <article class="alert-card">
-        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
-          <div>
-            <div class="product-name">${escapeHtml(s.product)}</div>
-            <div class="sku-code">${escapeHtml(s.sku)}</div>
-            <div class="small muted">${escapeHtml(s.attrs)}</div>
-          </div>
-          ${statusBadge(s)}
-        </div>
-        <div class="small" style="margin:10px 0">Stock: ${s.stock} · Umbral: ${s.umbral}</div>
-      </article>`).join('');
-    return `<div class="desktop-alerts table-wrap"><table>
-      <thead><tr><th>Producto</th><th>Variante/SKU</th><th>Características</th><th>Stock</th><th>Umbral</th><th>Estado</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-    <div class="mobile-alerts">${cards}</div>`;
-  }
-
-  function alertEmptyBlock(){
-    return `<div class="empty-state" style="padding:24px"><h2>Sin alertas.</h2><p>Todos los SKUs del filtro se encuentran disponibles.</p></div>`;
-  }
-
-  function periodSelect(){
-    return `<select class="filter" id="fPeriod" aria-label="Período del Top 5" style="max-width:260px">
-      ${PERIODS.map(p=>`<option value="${p.id}" ${state.period===p.id?'selected':''}>${escapeHtml(p.label)}</option>`).join('')}
-    </select>`;
-  }
-
-  function topBlock(){
-    if(top5.length===0){
-      return `<div class="empty-state" style="padding:24px"><h2>Sin ventas confirmadas en el período.</h2><p>No hay información suficiente para calcular el Top 5 en ${escapeHtml(periodLabel(state.period))}.</p></div>`;
-    }
-    const max=top5[0].units;
-    const items=top5.map((t,i)=>`
-      <li>
-        <span class="rank" aria-hidden="true">${i+1}</span>
-        <div class="top5-info">
-          <div class="top5-name">${escapeHtml(t.product)}</div>
-          <div class="bar" aria-hidden="true"><div class="bar-fill" style="width:${Math.round(t.units/max*100)}%"></div></div>
-        </div>
-        <span class="top5-units">${t.units} unds</span>
-      </li>`).join('');
-    return `<ol class="top5">${items}</ol>`;
+    const locations = [...new Set(skus.map(s => s.location_id))];
+    return `
+      <div class="filters">
+        <input type="text" id="fSearch" placeholder="Buscar por producto, categoría, marca o SKU…" value="${escapeHtml(state.filters.search)}" aria-label="Buscar por producto, categoría, marca o SKU">
+        <select id="fLocation" aria-label="Filtrar por ubicación">
+          <option value="all" ${state.filters.location_id === 'all' ? 'selected' : ''}>Todas las ubicaciones</option>
+          ${locations.map(loc => `<option value="${escapeHtml(loc)}" ${state.filters.location_id === loc ? 'selected' : ''}>${escapeHtml(loc)}</option>`).join('')}
+        </select>
+        <select id="fState" aria-label="Filtrar por estado de inventario">
+          <option value="all" ${state.filters.status === 'all' ? 'selected' : ''}>Todos los estados</option>
+          <option value="avail" ${state.filters.status === 'avail' ? 'selected' : ''}>Disponible</option>
+          <option value="low" ${state.filters.status === 'low' ? 'selected' : ''}>Stock bajo</option>
+          <option value="out" ${state.filters.status === 'out' ? 'selected' : ''}>Agotado</option>
+        </select>
+      </div>
+    `;
   }
 
   function bindControls(){
-    const fProduct=document.getElementById('fProduct');
-    const fState=document.getElementById('fState');
-    const fPeriod=document.getElementById('fPeriod');
-    if(fProduct) fProduct.addEventListener('input',()=>{ state.filters.product=fProduct.value; render(); });
-    if(fState) fState.addEventListener('change',()=>{ state.filters.state=fState.value; render(); });
-    if(fPeriod) fPeriod.addEventListener('change',()=>{ state.period=fPeriod.value; render(); showToast(`Período del Top 5: ${periodLabel(state.period)}.`); });
+    const fSearch = document.getElementById('fSearch');
+    const fLoc = document.getElementById('fLocation');
+    const fState = document.getElementById('fState');
+    if (fSearch) fSearch.addEventListener('input', () => { state.filters.search = fSearch.value; render(); });
+    if (fLoc) fLoc.addEventListener('change', () => { state.filters.location_id = fLoc.value; render(); });
+    if (fState) fState.addEventListener('change', () => { state.filters.status = fState.value; render(); });
   }
 
   function bindPage(){
-    app.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',e=>{
-      const action=e.currentTarget.dataset.action;
-      if(action==='retry'){ state.queryState=''; state.loading=true; render(); }
-      else if(action==='retry-top5'){ state.queryState=''; render(); }
-      else if(action==='safe-back'){ showToast('Redirigiendo al catálogo de productos...'); }
-      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión restaurada correctamente.'); }
+    app.querySelectorAll('[data-action]').forEach(el => el.addEventListener('click', e => {
+      const action = e.currentTarget.dataset.action;
+      if (action === 'retry') { state.queryState = ''; state.loading = true; render(); }
+      else if (action === 'safe-back') { showToast('Redirigiendo al catálogo de productos...'); }
+      else if (action === 'login') { state.queryState = ''; state.loading = true; render(); showToast('Sesión autenticada.'); }
     }));
   }
 
   function simulateEvent(){
-    // Simula un inventory.stock.changed que mueve un SKU de Disponible a Stock bajo.
-    const target=skus.find(s=>s.id==='sk-pum-ft41');
-    if(target){
-      target.stock=Math.max(0,target.stock+2);
-      lastEvent=`PM-FT-41-BK · stock: 1 → 3 · estado: Stock bajo → Stock bajo · panel recalculado`;
-    }else{
-      lastEvent='Panel recalculado ante cambio de stock notificado por inventario.';
+    // Simula un evento reactivo inventory.stock.changed que actualiza un saldo
+    const target = skus.find(s => s.sku === 'NK-AM-BLK-40');
+    if (target){
+      target.on_hand = Math.max(0, target.on_hand - 2);
+      target.available = Math.max(0, target.on_hand - target.reserved);
+      lastEvent = `inventory.stock.changed · ${target.sku} (${target.location_id}) · on_hand: 12 → ${target.on_hand}, available: 10 → ${target.available} · v109`;
+    } else {
+      lastEvent = 'inventory.stock.changed · Panel recalculado ante actualización asíncrona de inventario.';
     }
-    showToast('Existencias sincronizadas · Indicadores actualizados.');
+    render();
+    showToast('Evento inventory.stock.changed recibido. Indicadores actualizados.');
   }
 
   function render(){
-    if(renderGlobalState()){ bindPage(); return; }
+    if (renderGlobalState()){ bindPage(); return; }
     renderDashboard();
   }
 
-  document.addEventListener('keydown',e=>{
-    if((e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='s') && (e.ctrlKey||e.metaKey)){
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 's') && (e.ctrlKey || e.metaKey)){
       simulateEvent();
     }
   });
-  document.body.addEventListener('dblclick',e=>{
-    if(e.target.closest('.kpis')){ simulateEvent(); }
+  document.body.addEventListener('dblclick', e => {
+    if (e.target.closest('.kpis')){ simulateEvent(); }
   });
 
   render();

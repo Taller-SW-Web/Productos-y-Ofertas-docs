@@ -108,7 +108,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 ### Fuera de alcance
 
 - CRUD de marcas: corresponde a WF-011.
-- Asociación Categoría-Característica, herencia y obligatoriedad: WF-010.
+- Asociación Tipo de Producto-Característica y obligatoriedad: WF-010.
 - Captura de valores en el formulario de producto: Catálogo Core / WF-003.
 - Eliminación física de características o valores.
 
@@ -129,7 +129,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 El gestor comercial debe poder crear y mantener características tipadas
 (`TEXTO`, `NUMERO`, `LISTA`), gestionar los valores de las de tipo lista bajo
 los límites operativos configurados y dar de baja o reactivar características, para alimentar la
-posterior asociación con categorías.
+posterior asociación con tipos de producto.
 
 ### Resultado exitoso
 
@@ -326,7 +326,7 @@ la necesidad y reglas estén confirmadas.
 |---|---|---|
 | A-01 | Crear característica | Alberga los tres tipos |
 | A-02 | Unidad | Se exige solo en tipo NUMERO |
-| A-03 | Contador de valores | Máximo 50 activos en LISTA |
+| A-03 | Contador de valores | Límite configurado actualmente: 50 activos en LISTA |
 | A-04 | Acciones | No incluir eliminación física |
 | A-05 | Marcas/Asociación | No aparecen; son WF-011 y WF-010 |
 
@@ -445,7 +445,7 @@ la integridad por ID.
 
 #### Reglas de valores
 
-- El contador cuenta solo valores activos (máximo 50).
+- El contador cuenta solo valores activos (límite configurado actualmente: 50 activos).
 - Valor vacío o duplicado no se permite.
 - Renombrar un valor en uso lo propaga por ID a los productos existentes.
 - La baja de valor LISTA es lógica y requiere verificación asíncrona segura; rechazar si lo usa SKU ACTIVO como identidad o producto ACTIVO como valor requerido. Ante falta de respuesta no desactivar.
@@ -460,7 +460,7 @@ la integridad por ID.
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| A-14 | Contador | Límite estricto de 50 activos |
+| A-14 | Contador | Límite configurado actualmente: 50 activos |
 | A-15 | Renombrar | Se propaga por ID sin romper data |
 | A-16 | Baja de valor | Lógica; confirmación requerida |
 | A-17 | Límite alcanzado | Agregar se bloquea y explica el límite |
@@ -632,7 +632,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Limita a 50 valores activos en LISTA.
 - [ ] El renombrado de valores se propaga por ID.
 - [ ] Permite baja lógica y reactivación de características.
-- [ ] No incluye CRUD de marcas ni asociación Categoría-Característica.
+- [ ] No incluye CRUD de marcas ni asociación Tipo de Producto-Característica.
 - [ ] Incluye carga, vacío, error, permisos y sesión.
 - [ ] Funciona con teclado y no depende del color.
 - [ ] Funciona con HTML/CSS/JS estáticos.
@@ -675,7 +675,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 ### Alineación definitiva de Características
 
-- Este wireframe administra exclusivamente características y valores `TEXTO` (límite operativo configurable `MAX_TEXT_ATTRIBUTE_LENGTH`, inicial 100 caracteres), `NUMERO` (unidad obligatoria) y `LISTA` (límite operativo configurable `MAX_ACTIVE_LIST_VALUES`, inicial 50 valores activos). La asociación/herencia y el límite de 20 efectivos corresponden al **WF-010**, y el CRUD de marcas al **WF-011**; no incluir pantallas CRUD redundantes.
+- Este wireframe administra exclusivamente características y valores `TEXTO` (límite operativo configurable `MAX_TEXT_ATTRIBUTE_LENGTH`, inicial 100 caracteres), `NUMERO` (unidad obligatoria) y `LISTA` (límite operativo configurable `MAX_ACTIVE_LIST_VALUES`, inicial 50 valores activos). La asociación por Tipo de Producto y el límite de 20 efectivos corresponden al **WF-010**, y el CRUD de marcas al **WF-011**; no incluir pantallas CRUD redundantes.
 - Renombrar un valor conserva su ID y no altera SKU. La baja de valores LISTA usados por SKU ACTIVO o producto ACTIVO requerido se rechaza con verificación asíncrona segura; el tipo es inmutable.
 
 ### Estados de verificación asíncrona al desactivar valor LISTA

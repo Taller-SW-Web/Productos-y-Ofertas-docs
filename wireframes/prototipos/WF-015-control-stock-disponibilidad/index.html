@@ -21,7 +21,7 @@
     *{box-sizing:border-box}
     html{min-width:320px}
     body{margin:0;background:var(--surface);font-size:16px;line-height:1.5}
-    button,input,textarea{font:inherit;color:inherit}
+    button,input,textarea,select{font:inherit;color:inherit}
     button{min-height:44px;cursor:pointer}
     button:disabled{cursor:not-allowed;color:var(--neutral-50);border-color:var(--neutral-30);background:var(--neutral-10)}
     a,button,input,select,textarea{outline-offset:3px}
@@ -35,19 +35,18 @@
     .brand-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .crumb{color:var(--neutral-50);font-size:14px}
     .page{max-width:1200px;margin:auto;padding:32px 24px 64px}
-    .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:32px}
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:24px}
     .page-header h1{font-size:clamp(24px, 4vw, 32px);line-height:1.15;margin:0 0 8px;font-weight:700}
     .page-header p{margin:0;color:var(--neutral-50);max-width:760px}
-    h2{font-size:24px;line-height:1.2;margin:0 0 16px}
+    h2{font-size:22px;line-height:1.2;margin:0 0 16px}
     h3{font-size:18px;line-height:1.3;margin:0 0 12px}
     .mono{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.02em}
     .btn{border:1px solid var(--neutral-90);background:var(--surface);padding:10px 14px;border-radius:var(--radius);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
     .btn-primary{background:var(--neutral-90);color:var(--surface)}
-    .btn-danger{background:var(--surface);border-style:double;border-width:3px}
     .btn-quiet{border-color:var(--neutral-30);font-weight:500}
     .button-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .button-row.end{justify-content:flex-end}
-    .card{border:1px solid var(--neutral-30);background:var(--surface);padding:24px}
+    .card{border:1px solid var(--neutral-30);background:var(--surface);padding:24px;margin-bottom:20px}
     .muted{color:var(--neutral-50)}
     .small{font-size:14px}
     .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--neutral-30);padding:4px 8px;border-radius:999px;background:var(--surface)}
@@ -67,75 +66,70 @@
     .search{min-width:220px;flex:1}
     .filter{min-width:180px}
     .desktop-table,.mobile-list{width:100%}
-    .table-wrap{border:1px solid var(--neutral-30);overflow:hidden}
+    .table-wrap{border:1px solid var(--neutral-30);overflow-x:auto}
     table{width:100%;border-collapse:collapse}
-    th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--neutral-30);vertical-align:middle}
-    th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"Roboto Mono",ui-monospace,monospace;font-weight:600;color:var(--neutral-70);background:var(--neutral-10)}
+    th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--neutral-30);vertical-align:middle}
+    th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"Roboto Mono",ui-monospace,monospace;font-weight:600;color:var(--neutral-70);background:var(--neutral-10);white-space:nowrap}
     tbody tr:last-child td{border-bottom:0}
     .sku-code{font-family:"Roboto Mono",ui-monospace,monospace;font-size:13px;font-weight:600}
     .product-name{font-weight:600}
     .row-actions{display:flex;gap:4px;flex-wrap:wrap}
-    .row-actions .btn{min-height:36px;padding:6px 9px;font-size:14px}
-    .stock-num{font-weight:600;text-align:right}
-    .tag{border:1px solid var(--neutral-30);padding:2px 8px;font-size:12px;font-family:"Roboto Mono",monospace;font-weight:600;display:inline-block}
+    .row-actions .btn{min-height:36px;padding:6px 10px;font-size:13px}
+    .stock-num{font-family:"Roboto Mono",monospace;font-weight:600;text-align:right}
+    .tag{border:1px solid var(--neutral-30);padding:2px 8px;font-size:12px;font-family:"Roboto Mono",monospace;font-weight:600;display:inline-block;background:var(--neutral-10)}
+    .tag.strong{border-color:var(--neutral-90);background:var(--surface)}
     .mobile-list{display:none}
-    .sku-card{border:1px solid var(--neutral-30);padding:16px}
-    .sku-card + .sku-card{margin-top:12px}
+    .sku-card{border:1px solid var(--neutral-30);padding:16px;margin-bottom:12px;background:var(--surface)}
 
-    .detail-head{display:flex;gap:24px;align-items:flex-start;margin-bottom:24px}
-    .kv{border-top:1px solid var(--neutral-30);padding:12px 0}
-    .kv:first-of-type{border-top:0}
-    .kv-label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--neutral-50);margin-bottom:2px}
-    .kv-value{font-weight:600}
+    .detail-head{display:flex;gap:24px;align-items:flex-start;margin-bottom:20px}
+    .kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .kv-item{background:var(--neutral-10);padding:10px 14px;border:1px solid var(--neutral-30)}
+    .kv-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--neutral-50);font-weight:600;margin-bottom:4px}
+    .kv-val{font-size:14px;font-weight:600}
     .section{border:1px solid var(--neutral-30);padding:24px;margin-bottom:16px}
     .field{margin-bottom:16px}
     .field:last-child{margin-bottom:0}
-    label{display:block;font-weight:600;margin-bottom:6px}
+    label{display:block;font-weight:600;margin-bottom:6px;font-size:14px}
     .hint{display:block;font-size:13px;color:var(--neutral-50);margin-top:5px}
-    input[type="text"],input[type="number"],select{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:11px 12px;border-radius:var(--radius);min-height:44px}
+    input[type="text"],input[type="number"],select{width:100%;border:1px solid var(--neutral-30);background:var(--surface);padding:10px 12px;border-radius:var(--radius);min-height:44px}
     .field-error{display:block;color:var(--neutral-90);background:var(--neutral-10);border:1px solid var(--neutral-90);padding:8px 10px;margin-top:8px;font-size:13px;font-weight:600}
 
     .overlay{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:90;display:none;align-items:center;justify-content:center;padding:24px}
     .overlay.open{display:flex}
-    .dialog{width:min(680px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--surface);border:1px solid var(--neutral-90);padding:24px}
+    .dialog{width:min(640px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--surface);border:2px solid var(--neutral-90);padding:24px}
     .dialog.small-dialog{width:min(520px,100%)}
-    .dialog-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}
-    .dialog-header h2{margin:0}
+    .dialog-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px;border-bottom:1px solid var(--neutral-30);padding-bottom:12px}
+    .dialog-header h2{margin:0;font-size:20px}
     .icon-button{width:44px;height:44px;border:1px solid var(--neutral-90);background:var(--surface);font-size:20px;line-height:1}
-    .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--neutral-30);border-top-color:var(--neutral-90);border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-3px;margin-right:8px}
-    @keyframes sp{to{transform:rotate(360deg)}}
-    .prog-text{font-family:"Roboto Mono",monospace;font-size:13px;color:var(--neutral-50)}
 
-    .empty-state,.panel-base{border:1px solid var(--neutral-30);padding:48px 24px;text-align:center}
+    .empty-state{border:1px solid var(--neutral-30);padding:48px 24px;text-align:center;background:var(--surface)}
     .empty-state h2{margin-bottom:8px}
     .empty-state p{color:var(--neutral-50);margin:0 auto 20px;max-width:520px}
 
-    .skeleton{border:1px solid var(--neutral-30);padding:16px}
+    .skeleton{border:1px solid var(--neutral-30);padding:24px}
     .sk-line{height:14px;background:var(--neutral-10);margin:8px 0}
     .sk-line.w30{width:30%}.sk-line.w50{width:50%}.sk-line.w80{width:80%}
 
     .event-feed{border-top:1px solid var(--neutral-30);margin-top:24px;padding-top:16px}
-    .event-feed h3{font-size:14px;font-family:"Roboto Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--neutral-50)}
+    .event-feed h3{font-size:13px;font-family:"Roboto Mono",monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--neutral-50);margin-bottom:10px}
     .event-item{font-family:"Roboto Mono",monospace;font-size:12px;padding:8px 0;border-bottom:1px dashed var(--neutral-30);color:var(--neutral-70)}
 
     @media (max-width:900px){
       .desktop-table{display:none}
       .mobile-list{display:block}
       .page-header{align-items:stretch}
+      .kv-grid{grid-template-columns:1fr}
     }
     @media (max-width:600px){
       .topbar-inner{padding:12px 16px}
       .crumb{display:none}
       .page{padding:24px 16px 48px}
       .page-header{display:block;margin-bottom:24px}
-      .page-header h1{font-size:28px}
-      .page-header .button-row{margin-top:16px}
-      .page-header .btn{width:100%}
+      .page-header h1{font-size:24px}
       .section,.card{padding:16px}
       .row-actions,.button-row{display:grid;grid-template-columns:1fr;width:100%}
       .row-actions .btn,.button-row .btn{width:100%;min-height:44px}
-      .overlay{padding:12px;align-items:flex-end}
-      .dialog{max-height:92vh;padding:16px}
+      .dialog{padding:16px}
       .toast{left:16px;right:16px;bottom:16px}
     }
   </style>
@@ -144,28 +138,26 @@
 <div class="app-shell">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><div class="brand-mark" aria-hidden="true">PO</div><span class="brand-text">PO Productos y ofertas</span></div><div class="crumb">Productos / Inventario</div>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">PO</div>
+        <span class="brand-text">PO Productos y ofertas</span>
+      </div>
+      <div class="crumb">Productos / Inventario y disponibilidad</div>
     </div>
   </header>
   <main id="app" class="page" tabindex="-1"></main>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<div id="resultOverlay" class="overlay" aria-hidden="true">
-  <section class="dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
-    <div class="dialog-header">
-      <div><h2 id="resultTitle">Resultado de consumo</h2><p id="resultMeta" class="muted small"></p></div>
-      <button class="icon-button" type="button" id="resultCloseTop" aria-label="Cerrar">×</button>
-    </div>
-    <div id="resultBody"></div>
-  </section>
-</div>
-
+<!-- Modal S-03: Configurar umbral de stock bajo -->
 <div id="umbralOverlay" class="overlay" aria-hidden="true">
   <section class="dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="umbralTitle">
     <div class="dialog-header">
-      <div><h2 id="umbralTitle">Editar umbral de stock bajo</h2><p id="umbralMeta" class="muted small"></p></div>
-      <button class="icon-button" type="button" id="umbralCloseTop" aria-label="Cerrar">×</button>
+      <div>
+        <h2 id="umbralTitle">Configurar umbral de stock bajo</h2>
+        <p id="umbralMeta" class="muted small"></p>
+      </div>
+      <button class="icon-button" type="button" id="umbralCloseTop" aria-label="Cerrar modal">×</button>
     </div>
     <div id="umbralBody"></div>
   </section>
@@ -176,338 +168,495 @@
   'use strict';
 
   /*
-    Estados documentales de WF-015 que pueden inspeccionarse sin contaminar la UI:
+    WF-015 — Control de stock y disponibilidad
+    Estados documentales inspeccionables vía query param:
       ?state=empty            -> listado vacío (S-01-E)
       ?state=list-error       -> error de carga (S-01-E)
       ?state=no-permission    -> usuario sin permiso
       ?state=session-expired  -> sesión expirada
-    No se muestran controles de prototipo para cambiar de estado o tamaño de pantalla.
   */
 
-  function estadoOf(stock, umbral){
-    if(stock === 0) return 'out';
-    if(stock <= umbral) return 'low';
-    return 'avail';
-  }
+  const DEFAULT_GLOBAL_UMBRAL = 5;
 
-  let skus = [
-    {id:'sk-nk-blk40', product:'Nike Air Max', sku:'NK-AM-BLK-40', attrs:'Negro / Talla 40', stock:10, umbral:5, result:{pedido:'PED-1238', cantidad:3, estado:'aceptado'}},
-    {id:'sk-nk-blk41', product:'Nike Air Max', sku:'NK-AM-BLK-41', attrs:'Negro / Talla 41', stock:3, umbral:5, result:{pedido:'PED-1240', cantidad:6, estado:'rechazado'}},
-    {id:'sk-nk-wht40', product:'Nike Air Max', sku:'NK-AM-WHT-40', attrs:'Blanco / Talla 40', stock:0, umbral:5, result:{pedido:'PED-1241', cantidad:1, estado:'conflicto'}},
-    {id:'sk-ad-pred42', product:'Adidas Predator', sku:'AD-PR-42-RD', attrs:'Rojo / Talla 42', stock:15, umbral:6, result:{pedido:'PED-1245', cantidad:2, estado:'aceptado'}},
-    {id:'sk-ad-pred43', product:'Adidas Predator', sku:'AD-PR-43-RD', attrs:'Rojo / Talla 43', stock:5, umbral:6, result:{pedido:'PED-1247', cantidad:2, estado:'aceptado'}},
-    {id:'sk-pum-ft40', product:'Puma Future', sku:'PM-FT-40-BK', attrs:'Negro / Talla 40', stock:0, umbral:4, result:{pedido:'PED-1250', cantidad:1, estado:'conflicto'}}
+  let inventory = [
+    { id: 'inv-1', product: 'Nike Air Max', sku: 'NK-AM-BLK-40', attrs: 'Negro / Talla 40', location_id: 'LOC-LIMA-CENTRAL', on_hand: 12, reserved: 2, available: 10, umbral: 5, use_default_umbral: true, version: 102 },
+    { id: 'inv-2', product: 'Nike Air Max', sku: 'NK-AM-BLK-41', attrs: 'Negro / Talla 41', location_id: 'LOC-LIMA-CENTRAL', on_hand: 4, reserved: 1, available: 3, umbral: 5, use_default_umbral: true, version: 108 },
+    { id: 'inv-3', product: 'Nike Air Max', sku: 'NK-AM-WHT-40', attrs: 'Blanco / Talla 40', location_id: 'LOC-LIMA-SUR', on_hand: 0, reserved: 0, available: 0, umbral: 5, use_default_umbral: true, version: 95 },
+    { id: 'inv-4', product: 'Adidas Predator', sku: 'AD-PR-42-RD', attrs: 'Rojo / Talla 42', location_id: 'LOC-LIMA-CENTRAL', on_hand: 18, reserved: 3, available: 15, umbral: 8, use_default_umbral: false, version: 114 },
+    { id: 'inv-5', product: 'Adidas Predator', sku: 'AD-PR-43-RD', attrs: 'Rojo / Talla 43', location_id: 'LOC-LIMA-SUR', on_hand: 7, reserved: 2, available: 5, umbral: 6, use_default_umbral: false, version: 88 },
+    { id: 'inv-6', product: 'Puma Future', sku: 'PM-FT-40-BK', attrs: 'Negro / Talla 40', location_id: 'LOC-LIMA-CENTRAL', on_hand: 1, reserved: 1, available: 0, umbral: 4, use_default_umbral: false, version: 73 }
   ];
 
   const state = {
-    view:'list',
-    editingId:null,
-    selectedId:null,
-    loading:true,
-    search:'',
-    filter:'all',
-    queryState:new URLSearchParams(location.search).get('state') || ''
+    view: 'list',
+    selectedId: null,
+    loading: true,
+    search: '',
+    locationFilter: 'all',
+    statusFilter: 'all',
+    queryState: new URLSearchParams(location.search).get('state') || ''
   };
-  const events = ['PED-1245 · AD-PR-42-RD · stock: 17 → 15 · estado: Disponible'];
+
+  const events = [
+    'inventory.stock.changed · AD-PR-42-RD · LOC-LIMA-CENTRAL · on_hand: 20 → 18, available: 17 → 15 · v114',
+    'inventory.stock.changed · NK-AM-BLK-41 · LOC-LIMA-CENTRAL · on_hand: 5 → 4, available: 4 → 3 · v108'
+  ];
 
   const app = document.getElementById('app');
   const toast = document.getElementById('toast');
-  const resultOverlay = document.getElementById('resultOverlay');
-  const resultMeta = document.getElementById('resultMeta');
-  const resultBody = document.getElementById('resultBody');
-  const resultCloseTop = document.getElementById('resultCloseTop');
   const umbralOverlay = document.getElementById('umbralOverlay');
   const umbralMeta = document.getElementById('umbralMeta');
   const umbralBody = document.getElementById('umbralBody');
   const umbralCloseTop = document.getElementById('umbralCloseTop');
-  let resultTarget = null;
   let umbralTarget = null;
   let toastTimer = null;
 
   function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[ch])); }
-  function skuById(id){ return skus.find(s=>s.id===id); }
-  function showToast(message){ clearTimeout(toastTimer); toast.textContent=message; toast.classList.add('show'); toastTimer=setTimeout(()=>toast.classList.remove('show'),3200); }
+  function invById(id){ return inventory.find(s => s.id === id); }
+  function showToast(message){ clearTimeout(toastTimer); toast.textContent = message; toast.classList.add('show'); toastTimer = setTimeout(() => toast.classList.remove('show'), 3200); }
+
+  function getEffectiveUmbral(item){
+    return item.use_default_umbral ? DEFAULT_GLOBAL_UMBRAL : item.umbral;
+  }
+
+  function estadoOf(available, effectiveUmbral){
+    if (available === 0) return 'out';
+    if (available <= effectiveUmbral) return 'low';
+    return 'avail';
+  }
+
   function labelOf(status){
-    if(status==='avail') return 'Disponible';
-    if(status==='low') return 'Stock bajo';
+    if (status === 'avail') return 'Disponible';
+    if (status === 'low') return 'Stock bajo';
     return 'Agotado';
   }
-  function statusBadge(s){
-    const st=estadoOf(s.stock,s.umbral);
+
+  function statusBadge(item){
+    const u = getEffectiveUmbral(item);
+    const st = estadoOf(item.available, u);
     return `<span class="status ${st}">${labelOf(st)}</span>`;
   }
+
   function pushEvent(text){
     events.unshift(text);
-    if(events.length>4) events.length=4;
+    if (events.length > 5) events.length = 5;
   }
+
   function eventFeed(){
-    if(!events.length) return '';
-    return `<div class="event-feed"><h3>Historial de sincronización de existencias</h3>${events.map(e=>`<div class="event-item">${escapeHtml(e)}</div>`).join('')}</div>`;
+    if (!events.length) return '';
+    return `<div class="event-feed"><h3>Eventos asíncronos recibidos (inventory.stock.changed)</h3>${events.map(e => `<div class="event-item">${escapeHtml(e)}</div>`).join('')}</div>`;
   }
 
   function renderGlobalState(){
-    if(state.queryState==='no-permission'){
-      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta la disponibilidad de los SKUs vendibles y el resultado de los consumos confirmados.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No tienes permiso para administrar el inventario.</h3><p>Vuelve al módulo de productos o solicita acceso por el canal definido por tu organización.</p></div></div><button class="btn" data-action="safe-back">Volver a productos</button>`;
+    if (state.queryState === 'no-permission'){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Control de stock y disponibilidad</h1>
+            <p>Consulta de saldos de inventario por SKU y sede.</p>
+          </div>
+        </div>
+        <div class="notice error">
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <div>
+            <h3>Acceso restringido</h3>
+            <p>No tienes permiso para consultar o gestionar el stock. Se requiere permiso comercial de inventario.</p>
+          </div>
+        </div>
+        <button class="btn" data-action="login">Reintentar autenticación</button>`;
       return true;
     }
-    if(state.queryState==='session-expired'){
-      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta la disponibilidad de los SKUs vendibles y el resultado de los consumos confirmados.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Tu sesión expiró.</h3><p>Inicia sesión nuevamente para continuar.</p></div></div><button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
+    if (state.queryState === 'session-expired'){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Control de stock y disponibilidad</h1>
+            <p>Consulta de saldos de inventario por SKU y sede.</p>
+          </div>
+        </div>
+        <div class="notice error">
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <div>
+            <h3>Tu sesión expiró</h3>
+            <p>Inicia sesión nuevamente para continuar consultando las existencias de stock.</p>
+          </div>
+        </div>
+        <button class="btn btn-primary" data-action="login">Iniciar sesión</button>`;
       return true;
     }
     return false;
   }
 
-  function visibleSkus(){
-    return skus.filter(s=>{
-      const matchSearch=!state.search || s.product.toLowerCase().includes(state.search.toLowerCase()) || s.sku.toLowerCase().includes(state.search.toLowerCase());
-      const st=estadoOf(s.stock,s.umbral);
-      const matchFilter=state.filter==='all' || st===state.filter;
-      return matchSearch && matchFilter;
+  function visibleInventory(){
+    return inventory.filter(item => {
+      const matchSearch = !state.search ||
+        item.product.toLowerCase().includes(state.search.toLowerCase()) ||
+        item.sku.toLowerCase().includes(state.search.toLowerCase());
+      const matchLocation = state.locationFilter === 'all' || item.location_id === state.locationFilter;
+      const u = getEffectiveUmbral(item);
+      const st = estadoOf(item.available, u);
+      const matchStatus = state.statusFilter === 'all' || st === state.statusFilter;
+      return matchSearch && matchLocation && matchStatus;
     });
   }
 
   function renderList(){
-    if(state.loading){
-      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible. Un producto simple usa su sku_base; un producto con variantes usa el SKU de cada variante.</p></div></div><div class="skeleton"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div>`;
-      setTimeout(()=>{state.loading=false;render();},450);
+    if (state.loading){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Control de stock y disponibilidad</h1>
+            <p>Consulta de saldos físicos (on_hand), reservados y disponibles por SKU y ubicación (location_id).</p>
+          </div>
+        </div>
+        <div class="skeleton">
+          <div class="sk-line w30"></div>
+          <div class="sk-line w80"></div>
+          <div class="sk-line w50"></div>
+        </div>`;
+      setTimeout(() => { state.loading = false; render(); }, 350);
       return;
     }
-    if(state.queryState==='list-error'){
-      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos cargar el inventario.</h3><p>Vuelve a intentarlo en unos momentos.</p></div></div><button class="btn btn-primary" data-action="retry">Reintentar</button>`;
+    if (state.queryState === 'list-error'){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Control de stock y disponibilidad</h1>
+            <p>Consulta de saldos de stock por SKU vendible y ubicación.</p>
+          </div>
+        </div>
+        <div class="notice error">
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <div>
+            <h3>Error al consultar saldos de inventario</h3>
+            <p>No se pudo conectar con el servicio de inventario. Intente nuevamente en unos instantes.</p>
+          </div>
+        </div>
+        <button class="btn btn-primary" data-action="retry">Reintentar</button>`;
       bindPage();
       return;
     }
-    if(skus.length===0 || state.queryState==='empty'){
-      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="empty-state"><h2>Aún no hay variantes con inventario.</h2><p>Las variantes deben existir en Gestión de variantes para que su SKU vendible aparezca aquí.</p></div>`;
+    if (inventory.length === 0 || state.queryState === 'empty'){
+      app.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>Control de stock y disponibilidad</h1>
+            <p>Consulta de saldos de stock por SKU vendible y ubicación.</p>
+          </div>
+        </div>
+        <div class="empty-state">
+          <h2>Aún no hay registros de stock</h2>
+          <p>Los saldos por sede se inicializan al sincronizar el catálogo o recibir eventos de almacén.</p>
+        </div>`;
       bindPage();
       return;
     }
-    const rows=visibleSkus();
-    const hasData=rows.length>0;
-    if(!hasData && state.filter!=='all'){
-      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="toolbar">${toolbar()}</div>
-      <div class="empty-state"><h2>Sin resultados con el filtro actual.</h2><p>No hay SKUs en el estado seleccionado con el término buscado.</p><button class="btn" data-action="clear-filters">Limpiar filtros</button></div>${eventFeed()}`;
-      bindControls();
-      bindPage();
-      return;
-    }
-    if(rows.length===0){
-      app.innerHTML=`<div class="page-header"><div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible.</p></div></div><div class="toolbar">${toolbar()}</div>
-      <div class="empty-state"><h2>Sin resultados.</h2><p>Ninguna variante coincide con la búsqueda.</p><button class="btn" data-action="clear-filters">Limpiar filtros</button></div>${eventFeed()}`;
-      bindControls();
-      bindPage();
-      return;
-    }
-    const trs=rows.map(s=>{
-      const st=estadoOf(s.stock,s.umbral);
+
+    const rows = visibleInventory();
+    const locations = [...new Set(inventory.map(i => i.location_id))];
+
+    const trs = rows.map(item => {
+      const u = getEffectiveUmbral(item);
+      const umbralText = item.use_default_umbral ? `${u} (global)` : `${u} (personalizado)`;
       return `<tr>
-        <td class="product-name">${escapeHtml(s.product)}</td>
-        <td><span class="sku-code">${escapeHtml(s.sku)}</span></td>
-        <td>${escapeHtml(s.attrs)}</td>
-        <td class="stock-num">${s.stock}</td>
-        <td class="stock-num">${s.umbral}</td>
-        <td>${statusBadge(s)}</td>
-        <td><div class="row-actions">
-          <button class="btn btn-quiet" data-action="view" data-id="${s.id}">Ver</button>
-          <button class="btn btn-quiet" data-action="result" data-id="${s.id}">Ver resultado de consumo</button>
-          <button class="btn btn-quiet" data-action="umbral" data-id="${s.id}">Umbral</button>
-        </div></td>
+        <td>
+          <span class="sku-code">${escapeHtml(item.sku)}</span>
+          <div class="small muted">${escapeHtml(item.attrs)}</div>
+        </td>
+        <td class="product-name">${escapeHtml(item.product)}</td>
+        <td><span class="tag">${escapeHtml(item.location_id)}</span></td>
+        <td class="stock-num">${item.on_hand}</td>
+        <td class="stock-num muted">${item.reserved}</td>
+        <td class="stock-num"><strong>${item.available}</strong></td>
+        <td class="small col-nowrap">${escapeHtml(umbralText)}</td>
+        <td>${statusBadge(item)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-quiet" data-action="view" data-id="${item.id}">Ver detalle</button>
+            <button class="btn btn-quiet" data-action="umbral" data-id="${item.id}">Configurar umbral</button>
+          </div>
+        </td>
       </tr>`;
     }).join('');
-    const cards=rows.map(s=>{
-      const st=estadoOf(s.stock,s.umbral);
+
+    const cards = rows.map(item => {
+      const u = getEffectiveUmbral(item);
+      const umbralText = item.use_default_umbral ? `${u} (global)` : `${u} (personalizado)`;
       return `<article class="sku-card">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
           <div>
-            <div class="product-name">${escapeHtml(s.product)}</div>
-            <div class="sku-code">${escapeHtml(s.sku)}</div>
-            <div class="small muted">${escapeHtml(s.attrs)}</div>
+            <div class="product-name">${escapeHtml(item.product)}</div>
+            <div class="sku-code">${escapeHtml(item.sku)}</div>
+            <div class="small muted">${escapeHtml(item.attrs)} · <span class="tag">${escapeHtml(item.location_id)}</span></div>
           </div>
-          ${statusBadge(s)}
+          ${statusBadge(item)}
         </div>
-        <div class="small" style="margin:10px 0">Stock: ${s.stock} · Umbral: ${s.umbral}</div>
+        <div class="small" style="margin:10px 0">
+          Físico: <strong>${item.on_hand}</strong> · Reservado: <strong>${item.reserved}</strong> · Disponible: <strong>${item.available}</strong> (Umbral: ${umbralText})
+        </div>
         <div class="row-actions">
-          <button class="btn btn-quiet" data-action="view" data-id="${s.id}">Ver</button>
-          <button class="btn btn-quiet" data-action="result" data-id="${s.id}">Ver resultado de consumo</button>
-          <button class="btn btn-quiet" data-action="umbral" data-id="${s.id}">Umbral</button>
+          <button class="btn btn-quiet" data-action="view" data-id="${item.id}">Ver detalle</button>
+          <button class="btn btn-quiet" data-action="umbral" data-id="${item.id}">Configurar umbral</button>
         </div>
       </article>`;
     }).join('');
-    app.innerHTML=`<div class="page-header">
-        <div><h1>Control de stock y disponibilidad</h1><p>Consulta del stock por SKU vendible. Un producto simple usa su sku_base; un producto con variantes usa el SKU de cada variante.</p></div>
+
+    app.innerHTML = `
+      <div class="page-header">
+        <div>
+          <h1>Control de stock y disponibilidad</h1>
+          <p class="muted">Consulta de saldos físicos (<code class="mono">on_hand</code>), reservados (<code class="mono">reserved</code>) y disponibles (<code class="mono">available = on_hand - reserved</code>) por SKU y ubicación (<code class="mono">location_id</code>).</p>
+        </div>
       </div>
-      <div class="toolbar">${toolbar()}</div>
-      <div class="desktop-table table-wrap"><table>
-        <thead><tr><th>Producto</th><th>Variante/SKU</th><th>Características</th><th>Stock</th><th>Umbral</th><th>Estado</th><th>Acciones</th></tr></thead>
-        <tbody>${trs}</tbody>
-      </table></div>
-      <div class="mobile-list">${cards}</div>
-      ${eventFeed()}`;
+
+      <div class="toolbar">
+        <input class="search" type="text" id="searchInput" placeholder="Buscar por SKU o producto…" value="${escapeHtml(state.search)}" aria-label="Buscar por SKU o producto">
+        <select class="filter" id="locationFilter" aria-label="Filtrar por ubicación">
+          <option value="all" ${state.locationFilter === 'all' ? 'selected' : ''}>Todas las sedes</option>
+          ${locations.map(loc => `<option value="${escapeHtml(loc)}" ${state.locationFilter === loc ? 'selected' : ''}>${escapeHtml(loc)}</option>`).join('')}
+        </select>
+        <select class="filter" id="statusFilter" aria-label="Filtrar por estado">
+          <option value="all" ${state.statusFilter === 'all' ? 'selected' : ''}>Todos los estados</option>
+          <option value="avail" ${state.statusFilter === 'avail' ? 'selected' : ''}>Disponible</option>
+          <option value="low" ${state.statusFilter === 'low' ? 'selected' : ''}>Stock bajo</option>
+          <option value="out" ${state.statusFilter === 'out' ? 'selected' : ''}>Agotado</option>
+        </select>
+      </div>
+
+      ${rows.length === 0 ? `
+        <div class="empty-state">
+          <h2>Sin resultados</h2>
+          <p>No se encontraron registros de stock que coincidan con los filtros aplicados.</p>
+          <button class="btn" data-action="clear-filters">Limpiar filtros</button>
+        </div>
+      ` : `
+        <div class="desktop-table table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">SKU / Atributos</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Ubicación (Sede)</th>
+                <th scope="col" style="text-align:right">Físico</th>
+                <th scope="col" style="text-align:right">Reservado</th>
+                <th scope="col" style="text-align:right">Disponible</th>
+                <th scope="col">Umbral alerta</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>${trs}</tbody>
+          </table>
+        </div>
+        <div class="mobile-list">${cards}</div>
+      `}
+
+      ${eventFeed()}
+    `;
+
     bindControls();
     bindPage();
   }
 
-  function toolbar(){
-    return `
-      <input class="search" type="text" id="searchInput" placeholder="Buscar por SKU o producto…" value="${escapeHtml(state.search)}" aria-label="Buscar por SKU o producto">
-      <select class="filter" id="filterSelect" aria-label="Filtrar por estado">
-        <option value="all" ${state.filter==='all'?'selected':''}>Todos los estados</option>
-        <option value="avail" ${state.filter==='avail'?'selected':''}>Disponible</option>
-        <option value="low" ${state.filter==='low'?'selected':''}>Stock bajo</option>
-        <option value="out" ${state.filter==='out'?'selected':''}>Agotado</option>
-      </select>`;
-  }
-
   function bindControls(){
-    const searchEl=document.getElementById('searchInput');
-    const filterEl=document.getElementById('filterSelect');
-    if(searchEl) searchEl.addEventListener('input',()=>{ state.search=searchEl.value; render(); });
-    if(filterEl) filterEl.addEventListener('change',()=>{ state.filter=filterEl.value; render(); });
-  }
-
-  function backBtn(to){
-    const label=to==='list'?'Volver a inventario':'Volver';
-    return `<button class="btn" data-action="${to}">${label}</button>`;
+    const s = document.getElementById('searchInput');
+    const loc = document.getElementById('locationFilter');
+    const st = document.getElementById('statusFilter');
+    if (s) s.addEventListener('input', () => { state.search = s.value; render(); });
+    if (loc) loc.addEventListener('change', () => { state.locationFilter = loc.value; render(); });
+    if (st) st.addEventListener('change', () => { state.statusFilter = st.value; render(); });
   }
 
   function renderDetail(){
-    const s=skuById(state.selectedId);
-    if(!s){ showToast('El SKU no existe.'); state.selectedId=null; state.view='list'; render(); return; }
-    const st=estadoOf(s.stock,s.umbral);
-    app.innerHTML=`<div class="page-header">${backBtn('list')}<div style="flex:1"></div></div>
-      <div class="detail-head">
+    const item = invById(state.selectedId);
+    if (!item){ showToast('El registro de inventario no existe.'); state.selectedId = null; state.view = 'list'; render(); return; }
+
+    const u = getEffectiveUmbral(item);
+    const st = estadoOf(item.available, u);
+    const relatedLocations = inventory.filter(i => i.sku === item.sku);
+
+    app.innerHTML = `
+      <div class="page-header">
         <div>
-          <h1 style="margin:0 0 8px">${escapeHtml(s.product)}</h1>
-          <span class="sku-code">${escapeHtml(s.sku)}</span>
-          ${statusBadge(s)}
+          <button class="btn btn-quiet" data-action="list" style="margin-bottom:12px;">← Volver al listado</button>
+          <h1>${escapeHtml(item.product)}</h1>
+          <p class="mono muted">${escapeHtml(item.sku)} · ${escapeHtml(item.attrs)}</p>
+        </div>
+        <div>
+          ${statusBadge(item)}
         </div>
       </div>
-      <div class="section" style="margin-top:0">
-        <dl>
-          <div class="kv"><dt class="kv-label">Características</dt><dd class="kv-value" style="margin:0">${escapeHtml(s.attrs)}</dd></div>
-          <div class="kv"><dt class="kv-label">Stock disponible</dt><dd class="kv-value" style="margin:0">${s.stock}</dd></div>
-          <div class="kv"><dt class="kv-label">Umbral de stock bajo</dt><dd class="kv-value" style="margin:0">${s.umbral}</dd></div>
-          <div class="kv"><dt class="kv-label">Estado</dt><dd class="kv-value" style="margin:0">${labelOf(st)}</dd></div>
-        </dl>
+
+      <div class="card">
+        <h2 style="font-size:18px; margin-top:0;">Desglose de existencias — ${escapeHtml(item.location_id)}</h2>
+        <div class="kv-grid">
+          <div class="kv-item">
+            <div class="kv-lbl">Stock físico (on_hand)</div>
+            <div class="kv-val mono">${item.on_hand} unidades</div>
+          </div>
+          <div class="kv-item">
+            <div class="kv-lbl">Stock comprometido (reserved)</div>
+            <div class="kv-val mono">${item.reserved} unidades</div>
+          </div>
+          <div class="kv-item">
+            <div class="kv-lbl">Stock disponible vendible (available)</div>
+            <div class="kv-val mono" style="font-size:18px;"><strong>${item.available}</strong> unidades</div>
+          </div>
+          <div class="kv-item">
+            <div class="kv-lbl">Umbral de alerta configurado</div>
+            <div class="kv-val mono">${u} unidades ${item.use_default_umbral ? '<span class="muted small">(heredado global: 5)</span>' : '<span class="muted small">(personalizado SKU)</span>'}</div>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn btn-primary" data-action="umbral" data-id="${item.id}">Configurar umbral de stock bajo</button>
+          <button class="btn btn-quiet" data-action="list">Volver al inventario</button>
+        </div>
       </div>
-      <div class="button-row">
-        <button class="btn" data-action="list">Volver a inventario</button>
-        <button class="btn" data-action="result" data-id="${s.id}">Ver resultado de consumo</button>
-        <button class="btn btn-quiet" data-action="umbral" data-id="${s.id}">Editar umbral</button>
-      </div>`;
+
+      <div class="card">
+        <h2 style="font-size:18px; margin-top:0;">Disponibilidad del SKU en otras sedes</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Ubicación</th>
+                <th scope="col" style="text-align:right">Físico</th>
+                <th scope="col" style="text-align:right">Reservado</th>
+                <th scope="col" style="text-align:right">Disponible</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${relatedLocations.map(rel => `
+                <tr style="${rel.id === item.id ? 'font-weight:700;' : ''}">
+                  <td><span class="tag ${rel.id === item.id ? 'strong' : ''}">${escapeHtml(rel.location_id)}</span> ${rel.id === item.id ? '(actual)' : ''}</td>
+                  <td class="stock-num">${rel.on_hand}</td>
+                  <td class="stock-num muted">${rel.reserved}</td>
+                  <td class="stock-num"><strong>${rel.available}</strong></td>
+                  <td>${statusBadge(rel)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
     bindPage();
   }
 
-  function resultState(r){
-    if(r.estado==='rechazado') return 'rechazado';
-    if(r.estado==='conflicto') return 'conflicto';
-    return 'aceptado';
-  }
-  function resultLabel(r){
-    const st=resultState(r);
-    if(st==='rechazado') return 'Consumo rechazado';
-    if(st==='conflicto') return 'Conflicto de concurrencia';
-    return 'Consumo aceptado';
-  }
-  function resultNotice(s,r){
-    const st=resultState(r);
-    if(st==='rechazado'){
-      return `<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>El consumo se rechazó por stock insuficiente.</h3><p>La cantidad solicitada supera la disponibilidad al momento de aplicar la actualización condicional. No se descuenta nada; la resolución corresponde a Ventas/Postventa.</p></div></div>`;
-    }
-    if(st==='conflicto'){
-      return `<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div><h3>Conflicto de concurrencia detectado.</h3><p>Otra operación se aplicó primero sobre el saldo. Esta operación se rechaza sin bloqueo global y el stock nunca queda negativo.</p></div></div>`;
-    }
-    return `<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Salida de stock por pedido confirmado</h3><p>Las existencias se actualizaron automáticamente por órdenes confirmadas desde el canal de ventas.</p></div></div>`;
-  }
-  function resultBodyMarkup(s){
-    const r=s.result;
-    return `<div class="section" style="margin-top:0">
-      <dl>
-        <div class="kv"><dt class="kv-label">Pedido</dt><dd class="kv-value" style="margin:0">${escapeHtml(r.pedido)}</dd></div>
-        <div class="kv"><dt class="kv-label">Variante/SKU</dt><dd class="kv-value" style="margin:0">${escapeHtml(s.sku)}</dd></div>
-        <div class="kv"><dt class="kv-label">Unidades descontadas</dt><dd class="kv-value" style="margin:0">${r.cantidad} unidad(es)</dd></div>
-        <div class="kv"><dt class="kv-label">Resultado</dt><dd class="kv-value" style="margin:0">${resultLabel(r)}</dd></div>
-        <div class="kv"><dt class="kv-label">Stock disponible</dt><dd class="kv-value" style="margin:0">${s.stock}</dd></div>
-      </dl>
-      ${resultNotice(s,r)}
-      <div class="button-row end">
-        <button class="btn" type="button" data-result-back>Volver al SKU</button>
-        <button class="btn btn-quiet" type="button" id="refreshResult">Actualizar consulta</button>
-      </div>
-    </div>`;
-  }
-  function openResult(s){
-    resultTarget=s;
-    resultMeta.textContent=`${s.sku} · ${s.product} · Última sincronización de stock`;
-    resultBody.innerHTML=resultBodyMarkup(s);
-    resultOverlay.classList.add('open'); resultOverlay.setAttribute('aria-hidden','false');
-    const back=resultOverlay.querySelector('[data-result-back]');
-    back.addEventListener('click',closeResult);
-    document.getElementById('refreshResult').addEventListener('click',()=>{ showToast('Existencias actualizadas correctamente.'); });
-  }
-  function closeResult(){ resultOverlay.classList.remove('open'); resultOverlay.setAttribute('aria-hidden','true'); resultTarget=null; }
-
-  function openUmbral(s){
-    umbralTarget=s;
-    umbralMeta.textContent=`${s.sku} · ${s.product}`;
-    umbralBody.innerHTML=`
-      <form id="umbralForm" class="section" style="margin-top:0" novalidate>
+  function openUmbral(item){
+    umbralTarget = item;
+    const currentU = getEffectiveUmbral(item);
+    umbralMeta.textContent = `${item.sku} · ${item.location_id}`;
+    umbralBody.innerHTML = `
+      <form id="umbralForm" novalidate>
         <div class="field">
-          <label for="umbralValue">Umbral de stock bajo *</label>
-          <input type="number" id="umbralValue" min="0" step="1" value="${s.umbral}">
-          <span class="hint">Por debajo o igual a este valor el SKU se considera Stock bajo. Se aplica solo a este SKU.</span>
+          <label>Origen de la regla de umbral:</label>
+          <div style="margin-bottom:8px;">
+            <label style="font-weight:normal; display:flex; align-items:center; gap:8px;">
+              <input type="radio" name="umbralMode" value="default" ${item.use_default_umbral ? 'checked' : ''}>
+              Usar umbral global por defecto (<strong>${DEFAULT_GLOBAL_UMBRAL} unidades</strong>)
+            </label>
+          </div>
+          <div>
+            <label style="font-weight:normal; display:flex; align-items:center; gap:8px;">
+              <input type="radio" name="umbralMode" value="custom" ${!item.use_default_umbral ? 'checked' : ''}>
+              Personalizar umbral específico para este SKU
+            </label>
+          </div>
+        </div>
+
+        <div class="field" id="customInputWrap" style="${item.use_default_umbral ? 'display:none;' : ''}">
+          <label for="umbralValue">Valor del umbral personalizado *</label>
+          <input type="number" id="umbralValue" min="0" max="9999" step="1" value="${item.umbral}">
+          <span class="hint">Si el stock disponible es menor o igual a este valor, el SKU figurará en "Stock bajo".</span>
           <span id="umbralError" class="field-error" style="display:none"></span>
         </div>
-        <div class="button-row end">
-          <button class="btn" type="button" data-umbral-cancel>Cancelar</button>
+
+        <div class="button-row end" style="margin-top:20px; border-top:1px solid var(--neutral-30); padding-top:16px;">
+          <button class="btn btn-quiet" type="button" data-umbral-cancel>Cancelar</button>
           <button class="btn btn-primary" type="submit" id="saveUmbral">Guardar umbral</button>
         </div>
-      </form>`;
-    umbralOverlay.classList.add('open'); umbralOverlay.setAttribute('aria-hidden','false');
-    const cancel=umbralOverlay.querySelector('[data-umbral-cancel]');
-    cancel.addEventListener('click',closeUmbral);
-    const form=document.getElementById('umbralForm');
-    form.addEventListener('submit',(e)=>{
+      </form>
+    `;
+
+    umbralOverlay.classList.add('open');
+    umbralOverlay.setAttribute('aria-hidden', 'false');
+
+    const form = document.getElementById('umbralForm');
+    const customWrap = document.getElementById('customInputWrap');
+    const radios = form.querySelectorAll('input[name="umbralMode"]');
+
+    radios.forEach(r => {
+      r.addEventListener('change', () => {
+        if (r.value === 'custom') {
+          customWrap.style.display = 'block';
+        } else {
+          customWrap.style.display = 'none';
+        }
+      });
+    });
+
+    const cancel = form.querySelector('[data-umbral-cancel]');
+    cancel.addEventListener('click', closeUmbral);
+
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const v=parseInt(document.getElementById('umbralValue').value,10);
-      const err=document.getElementById('umbralError');
-      err.style.display='none';
-      if(!Number.isInteger(v)||v<0){ err.textContent='El umbral debe ser un número entero mayor o igual a 0.'; err.style.display='block'; return; }
-      s.umbral=v;
-      closeUmbral();
-      render();
-      showToast(`Umbral actualizado a ${v} para ${s.sku}.`);
+      const mode = form.querySelector('input[name="umbralMode"]:checked').value;
+      const err = document.getElementById('umbralError');
+      err.style.display = 'none';
+
+      if (mode === 'default') {
+        item.use_default_umbral = true;
+        closeUmbral();
+        render();
+        showToast(`Umbral restablecido a valor global (${DEFAULT_GLOBAL_UMBRAL}) para ${item.sku}.`);
+      } else {
+        const v = parseInt(document.getElementById('umbralValue').value, 10);
+        if (!Number.isInteger(v) || v < 0) {
+          err.textContent = 'El umbral debe ser un número entero mayor o igual a 0.';
+          err.style.display = 'block';
+          return;
+        }
+        item.use_default_umbral = false;
+        item.umbral = v;
+        closeUmbral();
+        render();
+        showToast(`Umbral personalizado guardado (${v} unidades) para ${item.sku}.`);
+      }
     });
   }
 
-  function closeUmbral(){ umbralOverlay.classList.remove('open'); umbralOverlay.setAttribute('aria-hidden','true'); umbralTarget=null; }
+  function closeUmbral(){
+    umbralOverlay.classList.remove('open');
+    umbralOverlay.setAttribute('aria-hidden', 'true');
+    umbralTarget = null;
+  }
 
   function bindPage(){
-    app.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',e=>{
-      const action=e.currentTarget.dataset.action, id=e.currentTarget.dataset.id;
-      if(action==='list'){ state.view='list'; state.editingId=null; state.selectedId=null; render(); }
-      else if(action==='view'){ state.view='detail'; state.selectedId=id; render(); }
-      else if(action==='result'){ openResult(skuById(id)); }
-      else if(action==='umbral'){ openUmbral(skuById(id)); }
-      else if(action==='retry'){ state.queryState=''; state.loading=true; render(); }
-      else if(action==='clear-filters'){ state.filter='all'; state.search=''; render(); }
-      else if(action==='safe-back'){ showToast('Redirigiendo al catálogo de productos...'); }
-      else if(action==='login'){ state.queryState=''; state.loading=true; render(); showToast('Sesión restaurada correctamente.'); }
+    app.querySelectorAll('[data-action]').forEach(el => el.addEventListener('click', e => {
+      const action = e.currentTarget.dataset.action;
+      const id = e.currentTarget.dataset.id;
+      if (action === 'list') { state.view = 'list'; state.selectedId = null; render(); }
+      else if (action === 'view') { state.view = 'detail'; state.selectedId = id; render(); }
+      else if (action === 'umbral') { openUmbral(invById(id)); }
+      else if (action === 'retry') { state.queryState = ''; state.loading = true; render(); }
+      else if (action === 'clear-filters') { state.statusFilter = 'all'; state.locationFilter = 'all'; state.search = ''; render(); }
+      else if (action === 'login') { state.queryState = ''; state.loading = true; render(); showToast('Sesión autenticada.'); }
     }));
   }
 
-  resultCloseTop.addEventListener('click',closeResult);
-  resultOverlay.addEventListener('click',e=>{ if(e.target===resultOverlay) closeResult(); });
-  umbralCloseTop.addEventListener('click',closeUmbral);
-  umbralOverlay.addEventListener('click',e=>{ if(e.target===umbralOverlay) closeUmbral(); });
-  document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'&&resultOverlay.classList.contains('open')) closeResult();
-    if(e.key==='Escape'&&umbralOverlay.classList.contains('open')) closeUmbral();
+  umbralCloseTop.addEventListener('click', closeUmbral);
+  umbralOverlay.addEventListener('click', e => { if (e.target === umbralOverlay) closeUmbral(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && umbralOverlay.classList.contains('open')) closeUmbral();
   });
 
   function render(){
-    if(renderGlobalState()){ bindPage(); return; }
-    if(state.view==='detail'){ renderDetail(); return; }
+    if (renderGlobalState()){ bindPage(); return; }
+    if (state.view === 'detail'){ renderDetail(); return; }
     renderList();
   }
 

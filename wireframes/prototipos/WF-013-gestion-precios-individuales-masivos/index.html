@@ -739,7 +739,27 @@
             </div>
           </div>
 
-          <div class="field">
+          <div class="grid-2" style="margin-top:14px;">
+            <div class="field">
+              <label for="input-channel">Ámbito de canal (channel_id) *</label>
+              <select id="input-channel" class="control" style="min-height:44px; padding:8px 12px; border:1px solid var(--neutral-30);">
+                <option value="GLOBAL" ${state.editForm.channel==='GLOBAL'?'selected':''}>GLOBAL (Todos los canales)</option>
+                <option value="ECOMMERCE" ${state.editForm.channel==='ECOMMERCE'?'selected':''}>ECOMMERCE (Tienda Online)</option>
+                <option value="MARKETPLACE_APP" ${state.editForm.channel==='MARKETPLACE_APP'?'selected':''}>MARKETPLACE_APP (App Móvil)</option>
+                <option value="RETAIL_POS" ${state.editForm.channel==='RETAIL_POS'?'selected':''}>RETAIL_POS (Puntos de Venta)</option>
+              </select>
+              <span class="hint">Canal donde aplicará esta regla de precio.</span>
+            </div>
+
+            <div class="field">
+              <label for="input-valid-until">Vigencia hasta (valid_until) <span class="muted">(Opcional)</span></label>
+              <input type="datetime-local" id="input-valid-until" value="${escapeHtml(state.editForm.validUntil||'')}">
+              <span class="hint">Dejar en blanco para vigencia indefinida.</span>
+              ${err.validUntil ? `<div class="field-error" role="alert">${escapeHtml(err.validUntil)}</div>` : ''}
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:14px;">
             <label for="input-motivo">Motivo del cambio de precio *</label>
             <textarea id="input-motivo" placeholder="Ej. Ajuste de campaña Cyber Days según orden comercial #4421..." required>${escapeHtml(state.editForm.motivo)}</textarea>
             <span class="hint">El motivo es mandatorio para fines de auditoría y trazabilidad inmutable.</span>
@@ -800,12 +820,16 @@
     const regVal = parseFloat(document.getElementById('input-regular').value);
     const ofValRaw = document.getElementById('input-oferta').value.trim();
     const ofVal = ofValRaw !== '' ? parseFloat(ofValRaw) : null;
+    const channelVal = document.getElementById('input-channel').value;
+    const validUntilVal = document.getElementById('input-valid-until').value;
     const motivoVal = document.getElementById('input-motivo').value.trim();
     const vigMode = document.querySelector('input[name="vigenciaMode"]:checked').value;
     const dateVal = document.getElementById('input-valid-from').value;
 
     state.editForm.regular = document.getElementById('input-regular').value;
     state.editForm.oferta = ofValRaw;
+    state.editForm.channel = channelVal;
+    state.editForm.validUntil = validUntilVal;
     state.editForm.motivo = motivoVal;
     state.editForm.vigenciaMode = vigMode;
     state.editForm.validFrom = dateVal;
@@ -829,6 +853,7 @@
       errors.motivo = 'El motivo del cambio de precio es mandatorio.';
     }
 
+    let startTime = Date.now();
     if (vigMode === 'scheduled') {
       if (!dateVal) {
         errors.validFrom = 'Debes especificar la fecha y hora de vigencia.';
@@ -836,7 +861,16 @@
         const selectedTime = new Date(dateVal).getTime();
         if (isNaN(selectedTime) || selectedTime <= Date.now()) {
           errors.validFrom = 'La fecha de vigencia debe ser posterior a la fecha y hora actuales.';
+        } else {
+          startTime = selectedTime;
         }
+      }
+    }
+
+    if (validUntilVal) {
+      const untilTime = new Date(validUntilVal).getTime();
+      if (isNaN(untilTime) || untilTime <= startTime) {
+        errors.validUntil = 'La fecha de fin (valid_until) debe ser estrictamente posterior al inicio de vigencia.';
       }
     }
 
@@ -848,15 +882,18 @@
     }
 
     // Abrir Modal S-03
-    openConfirmPriceModal(regVal, ofVal, motivoVal, vigMode, dateVal);
+    openConfirmPriceModal(regVal, ofVal, channelVal, validUntilVal, motivoVal, vigMode, dateVal);
   }
 
   // --- S-03: Modal Confirmar actualización ---
-  function openConfirmPriceModal(newReg, newOf, motivo, vigMode, validFrom) {
+  function openConfirmPriceModal(newReg, newOf, channelVal, validUntilVal, motivo, vigMode, validFrom) {
     const item = getCurrentSku();
     const overlay = document.getElementById('confirmPriceOverlay');
     const body = document.getElementById('confirmPriceBody');
     const title = document.getElementById('confirmPriceTitle');
+
+    const pctVar = ((newReg - item.precio_regular) / item.precio_regular) * 100;
+    const isExtreme = pctVar < -50 || pctVar > 100;
 
     title.textContent = vigMode === 'now' ? 'Confirmar actualización de precio' : 'Confirmar programación de precio';
 
@@ -881,9 +918,24 @@
               <td class="mono">${item.precio_oferta != null ? 'S/ ' + item.precio_oferta.toFixed(2) : 'Sin oferta'}</td>
               <td class="mono">${newOf != null ? '<strong>S/ ' + newOf.toFixed(2) + '</strong>' : '<span class="muted">Sin oferta</span>'}</td>
             </tr>
+            <tr>
+              <td><strong>Canal (channel_id)</strong></td>
+              <td class="mono">GLOBAL</td>
+              <td class="mono"><strong>${escapeHtml(channelVal)}</strong></td>
+            </tr>
           </tbody>
         </table>
       </div>
+
+      ${isExtreme ? `
+        <div class="notice" style="margin-top:14px; border:2px solid var(--neutral-90); background:var(--neutral-10);" role="alert">
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <div>
+            <strong>Guardrail: Variación de precio extraordinaria (${pctVar > 0 ? '+' : ''}${pctVar.toFixed(1)}%)</strong>
+            <p class="small muted" style="margin-top:4px;">Se ha detectado una variación porcentual superior a los límites típicos de operación (+100% / -50%). Confirma si este ajuste es deliberado.</p>
+          </div>
+        </div>
+      ` : ''}
 
       <div class="field" style="margin-top:14px;">
         <span class="muted small" style="display:block;">Motivo registrado:</span>
@@ -896,6 +948,7 @@
         <span class="muted small" style="display:block;">Vigencia:</span>
         <div style="font-weight:600;">
           ${vigMode === 'now' ? 'Se aplicará de inmediato al confirmar.' : 'Entrará en vigencia programada el ' + escapeHtml(validFrom.replace('T', ' '))}
+          ${validUntilVal ? ' hasta ' + escapeHtml(validUntilVal.replace('T', ' ')) : ' (indefinida)'}
         </div>
       </div>
 

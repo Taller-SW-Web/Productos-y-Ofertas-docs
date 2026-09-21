@@ -383,9 +383,9 @@
       const v=nameEl.value.trim();
       if(!v){ nameError.style.display='none'; nameOk.style.display='none'; return; }
       const selfIds=isNew?[]:[b.id];
-      const dup=brands.some(x=>!selfIds.includes(x.id)&&x.active&&x.name.toLowerCase()===v.toLowerCase());
+      const dup=brands.some(x=>!selfIds.includes(x.id)&&x.name.toLowerCase()===v.toLowerCase());
       if(dup){
-        nameError.textContent='Ya existe una marca activa con ese nombre.';
+        nameError.textContent='Ya existe una marca registrada con ese nombre.';
         nameError.style.display='block';
         nameOk.style.display='none';
         return true;
@@ -415,7 +415,7 @@
       const v=nameEl.value.trim();
       if(!v){ nameError.textContent='Ingresa un nombre para la marca.'; nameError.style.display='block'; nameEl.focus(); return; }
       const dup=checkDuplicate();
-      if(dup){ nameError.textContent='Ya existe una marca activa con ese nombre.'; nameError.style.display='block'; nameEl.focus(); return; }
+      if(dup){ nameError.textContent='Ya existe una marca registrada con ese nombre.'; nameError.style.display='block'; nameEl.focus(); return; }
       state.saving=true;
       document.getElementById('saveBrandBtn').disabled=true;
       showToast('Guardando…');

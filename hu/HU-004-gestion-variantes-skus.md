@@ -7,7 +7,7 @@
 ## Historia de usuario principal
 
 Como gestor comercial,
-quiero definir y administrar variantes (SKU) de un producto según sus características distintivas —por ejemplo, talla y color—, cada una con su propia imagen y código único generado por el sistema,
+quiero definir y administrar variantes (SKU) de un producto según sus características distintivas —por ejemplo, talla y color—, cada una con su propia imagen, identificador interno inmutable (`variant_id`) y SKU comercial único (suministrado o autogenerado),
 para que el catálogo permita vender exactamente la versión que el cliente elige, y que cada canal pueda mostrarla y consultar su disponibilidad de forma independiente.
 
 Esta funcionalidad solo aplica a productos con el atributo `tiene_variantes = true`. Una variante hereda del producto padre los datos generales (nombre, descripción, categoría, marca), pero tiene su propio SKU (inmutable) y su propia imagen. **El stock nunca lo almacena ni lo calcula este componente**: siempre es propiedad del componente de Inventario, tanto para variantes como para productos simples sin variantes.
@@ -44,8 +44,8 @@ Esta funcionalidad solo aplica a productos con el atributo `tiene_variantes = tr
 
 **Escenario 1: Registrar una variante válida**
 ● DADO que existe el producto "Zapatillas Running ProSpeed X" con `tiene_variantes = true`, en estado borrador o activo,
-● CUANDO el gestor comercial registra una variante con talla "42", color "Negro" y una imagen propia,
-● ENTONCES el sistema genera automáticamente un SKU único para la variante, la guarda en estado "borrador" y notifica al componente de Inventario para que inicialice su stock en 0.
+● CUANDO el gestor comercial registra una variante con talla "42", color "Negro", una imagen propia y no suministra un SKU comercial manual,
+● ENTONCES el sistema genera un identificador interno inmutable (`variant_id`), genera automáticamente un SKU comercial único para la variante según la regla de nomenclatura, la guarda en estado "borrador" y notifica al componente de Inventario para que inicialice su stock en 0.
 
 **Escenario 2: Rechazar una combinación de características duplicada**
 ● DADO que ya existe la variante "Talla 42 – Negro" para el producto,
@@ -102,10 +102,10 @@ Esta funcionalidad solo aplica a productos con el atributo `tiene_variantes = tr
 * **CUANDO** esta se desactiva,
 * **ENTONCES** el producto padre también pasa a INACTIVO y ambos dejan de ofrecerse para nuevas ventas.
 
-**Escenario 13: Creación masiva**
-* **DADO** una fila nueva con producto padre y atributos identificadores,
-* **CUANDO** Catálogo crea la variante,
-* **ENTONCES** genera y devuelve el SKU asociado a esa fila; no acepta un SKU manual para una variante nueva.
+**Escenario 13: Creación masiva e individual con SKU comercial o autogenerado**
+* **DADO** una fila o solicitud de registro con producto padre y atributos identificadores,
+* **CUANDO** se envía con un SKU comercial informado (ej. de ERP/proveedor), el sistema valida formato y unicidad global y lo conserva; si el campo SKU se omite o viene vacío, el sistema genera automáticamente el SKU comercial a partir de la regla configurada,
+* **ENTONCES** Catálogo asigna un `variant_id` interno inmutable, registra la variante asociada a la fila/solicitud y notifica a Inventario.
 
 **Escenario 14: Variante activa con padre borrador**
 * **DADO** una variante preparada y ACTIVA, cuyo producto padre continúa BORRADOR,

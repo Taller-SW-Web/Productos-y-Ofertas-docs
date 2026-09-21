@@ -268,19 +268,19 @@
   */
 
   const catalog = [
-    {id:'sku-cam-m', type:'SKU / variante', sku:'SKU-CAM-M', name:'Camiseta deportiva', variant:'Talla M', price:59.90, stock:10, active:true},
-    {id:'sku-med-w', type:'SKU / variante', sku:'SKU-MED-W', name:'Medias blancas', variant:'Única', price:29.90, stock:15, active:true},
-    {id:'sku-raq', type:'Producto simple', sku:'SKU-RAQ', name:'Raqueta de entrenamiento', variant:'Sin variantes', price:180.00, stock:5, active:true},
-    {id:'sku-pel', type:'Producto simple', sku:'SKU-PEL', name:'Pelotas de tenis', variant:'Pack individual', price:30.00, stock:20, active:true},
-    {id:'sku-bot-42', type:'SKU / variante', sku:'SKU-BOT-42', name:'Zapatillas running', variant:'Talla 42', price:210.00, stock:8, active:true},
-    {id:'sku-bot-43', type:'SKU / variante', sku:'SKU-BOT-43', name:'Zapatillas running', variant:'Talla 43', price:210.00, stock:0, active:true},
-    {id:'combo-demo', type:'Combo', sku:'COMBO-DEMO', name:'Combo recuperación', variant:'Combo', price:99.00, stock:null, active:true, isCombo:true},
-    {id:'sku-old', type:'SKU / variante', sku:'SKU-OLD', name:'Zapatilla edición anterior', variant:'Talla 41', price:145.00, stock:4, active:false}
+    {id:'sku-cam-m', type:'SKU / variante', sku:'SKU-CAM-M', name:'Camiseta deportiva', variant:'Talla M', price:59.90, offerPrice:49.90, stock:10, active:true},
+    {id:'sku-med-w', type:'SKU / variante', sku:'SKU-MED-W', name:'Medias blancas', variant:'Única', price:29.90, offerPrice:24.90, stock:15, active:true},
+    {id:'sku-raq', type:'Producto simple', sku:'SKU-RAQ', name:'Raqueta de entrenamiento', variant:'Sin variantes', price:180.00, offerPrice:160.00, stock:5, active:true},
+    {id:'sku-pel', type:'Producto simple', sku:'SKU-PEL', name:'Pelotas de tenis', variant:'Pack individual', price:30.00, offerPrice:25.00, stock:20, active:true},
+    {id:'sku-bot-42', type:'SKU / variante', sku:'SKU-BOT-42', name:'Zapatillas running', variant:'Talla 42', price:210.00, offerPrice:189.90, stock:8, active:true},
+    {id:'sku-bot-43', type:'SKU / variante', sku:'SKU-BOT-43', name:'Zapatillas running', variant:'Talla 43', price:210.00, offerPrice:189.90, stock:0, active:true},
+    {id:'combo-demo', type:'Combo', sku:'COMBO-DEMO', name:'Combo recuperación', variant:'Combo', price:99.00, offerPrice:99.00, stock:null, active:true, isCombo:true},
+    {id:'sku-old', type:'SKU / variante', sku:'SKU-OLD', name:'Zapatilla edición anterior', variant:'Talla 41', price:145.00, offerPrice:145.00, stock:4, active:false}
   ];
 
   let combos = [
     {
-      id:'combo-1', name:'Kit entrenamiento básico', description:'Camiseta y medias para entrenamiento diario.', price:99.90,
+      id:'combo-1', name:'Kit entrenamiento básico', description:'Camiseta y medias para entrenamiento diario.', price:89.90,
       status:'active', availabilityStatus:'ok',
       components:[
         {catalogId:'sku-cam-m', qty:1},
@@ -288,7 +288,7 @@
       ]
     },
     {
-      id:'combo-2', name:'Pack tenis inicial', description:'Raqueta y pelotas para comenzar a entrenar.', price:229.90,
+      id:'combo-2', name:'Pack tenis inicial', description:'Raqueta y pelotas para comenzar a entrenar.', price:199.90,
       status:'active', availabilityStatus:'ok',
       components:[
         {catalogId:'sku-raq', qty:1},
@@ -345,17 +345,22 @@
   function catalogItem(id){ return catalog.find(x=>x.id===id); }
   function comboById(id){ return combos.find(x=>x.id===id); }
   function enrichedComponents(comboOrForm){
-    return (comboOrForm.components||[]).map(c=>({ ...catalogItem(c.catalogId), qty:Number(c.qty), catalogId:c.catalogId }));
+    return (comboOrForm.components||[]).map(c=>{
+      const it = catalogItem(c.catalogId) || {};
+      const publicPrice = Math.min(it.price || 0, it.offerPrice ?? it.price ?? 0);
+      return { ...it, publicPrice, qty:Number(c.qty), catalogId:c.catalogId };
+    });
   }
   function calculations(comboOrForm){
     const cs=enrichedComponents(comboOrForm);
     const validQty=cs.length>0 && cs.every(c=>Number.isInteger(c.qty)&&c.qty>0);
-    const sum=cs.reduce((a,c)=>a+(c.price||0)*(Number.isFinite(c.qty)?c.qty:0),0);
-    if(!cs.length || !validQty) return {sum, availability:null, limiter:null};
+    const sumRegular=cs.reduce((a,c)=>a+(c.price||0)*(Number.isFinite(c.qty)?c.qty:0),0);
+    const sumPublic=cs.reduce((a,c)=>a+(c.publicPrice||0)*(Number.isFinite(c.qty)?c.qty:0),0);
+    if(!cs.length || !validQty) return {sumRegular, sumPublic, sum:sumRegular, availability:null, limiter:null};
     const proportional=cs.map(c=>({id:c.catalogId,value:Math.floor((c.stock||0)/c.qty)}));
     const min=Math.min(...proportional.map(x=>x.value));
     const lim=proportional.find(x=>x.value===min);
-    return {sum, availability:min, limiter:lim ? catalogItem(lim.id) : null};
+    return {sumRegular, sumPublic, sum:sumPublic, availability:min, limiter:lim ? catalogItem(lim.id) : null};
   }
   function statusMeta(combo){
     if(combo.status==='inactive-manual') return {label:'Inactivo', cls:''};
@@ -445,7 +450,9 @@
     if(f.components.length>20) errors.push({key:'components',msg:'Un combo no puede tener más de 20 componentes.'});
     f.components.forEach((c,i)=>{const q=Number(c.qty);if(!Number.isInteger(q)||q<=0) errors.push({key:`qty-${i}`,msg:'Ingresa una cantidad entera mayor que cero.'});});
     const p=Number(f.price);
-    if(!Number.isFinite(p)||p<=0||p>=calc.sum) errors.push({key:'price',msg:'El precio debe ser mayor que cero y menor que la suma de los componentes.'});
+    if(!Number.isFinite(p)||p<=0||p>=calc.sumPublic||p>=calc.sumRegular) {
+      errors.push({key:'price',msg:`El precio debe ser mayor que cero y estrictamente menor que la suma pública vigente (${money(calc.sumPublic)}) y suma regular (${money(calc.sumRegular)}).`});
+    }
     return {errors,calc,valid:errors.length===0};
   }
   function errorFor(v,key){return v.errors.find(e=>e.key===key)?.msg||''}
@@ -454,14 +461,16 @@
     if(!state.form.components.length) return `<tr><td colspan="7"><div class="muted">Aún no has añadido componentes.</div></td></tr>`;
     return enrichedComponents(state.form).map((c,i)=>{
       const qErr=errorFor(v,`qty-${i}`); const prop=Number.isInteger(c.qty)&&c.qty>0?Math.floor((c.stock||0)/c.qty):'—';
-      return `<tr><td><span class="mono">${escapeHtml(c.sku)}</span></td><td><strong>${escapeHtml(c.name)}</strong><div class="small muted">${escapeHtml(c.variant)}</div></td><td>${money(c.price)}</td><td>${c.stock}</td><td><input type="number" min="1" step="1" value="${escapeHtml(c.qty)}" data-qty-index="${i}" aria-label="Cantidad de ${escapeHtml(c.name)}" aria-invalid="${qErr?'true':'false'}"><div class="field-error ${qErr?'show':''}">${escapeHtml(qErr)}</div></td><td>${prop}</td><td><button class="btn btn-quiet" type="button" data-remove-component="${i}">Quitar</button></td></tr>`;
+      const offerBadge = c.offerPrice && c.offerPrice < c.price ? `<div class="small" style="font-weight:600">${money(c.offerPrice)} (Oferta)</div>` : '';
+      return `<tr><td><span class="mono">${escapeHtml(c.sku)}</span></td><td><strong>${escapeHtml(c.name)}</strong><div class="small muted">${escapeHtml(c.variant)}</div></td><td><div>${money(c.price)}</div>${offerBadge}</td><td>${c.stock}</td><td><input type="number" min="1" step="1" value="${escapeHtml(c.qty)}" data-qty-index="${i}" aria-label="Cantidad de ${escapeHtml(c.name)}" aria-invalid="${qErr?'true':'false'}"><div class="field-error ${qErr?'show':''}">${escapeHtml(qErr)}</div></td><td>${prop}</td><td><button class="btn btn-quiet" type="button" data-remove-component="${i}">Quitar</button></td></tr>`;
     }).join('');
   }
   function componentCards(v){
     if(!state.form.components.length) return `<div class="muted">Aún no has añadido componentes.</div>`;
     return enrichedComponents(state.form).map((c,i)=>{
       const qErr=errorFor(v,`qty-${i}`); const prop=Number.isInteger(c.qty)&&c.qty>0?Math.floor((c.stock||0)/c.qty):'—';
-      return `<article class="component-card"><div class="component-card-grid"><div class="full"><strong>${escapeHtml(c.name)}</strong><div class="small muted">${escapeHtml(c.sku)} · ${escapeHtml(c.variant)}</div></div><div><span class="small muted">Precio regular</span><div>${money(c.price)}</div></div><div><span class="small muted">Stock</span><div>${c.stock}</div></div><div><label for="qtym-${i}">Cantidad</label><input id="qtym-${i}" type="number" min="1" step="1" value="${escapeHtml(c.qty)}" data-qty-index="${i}" aria-invalid="${qErr?'true':'false'}"><div class="field-error ${qErr?'show':''}">${escapeHtml(qErr)}</div></div><div><span class="small muted">Aporte de disponibilidad</span><div>${prop}</div></div><div class="full"><button class="btn btn-quiet" type="button" data-remove-component="${i}">Quitar</button></div></div></article>`;
+      const offerBadge = c.offerPrice && c.offerPrice < c.price ? `<div class="small" style="font-weight:600">${money(c.offerPrice)} (Oferta)</div>` : '';
+      return `<article class="component-card"><div class="component-card-grid"><div class="full"><strong>${escapeHtml(c.name)}</strong><div class="small muted">${escapeHtml(c.sku)} · ${escapeHtml(c.variant)}</div></div><div><span class="small muted">Precio regular</span><div>${money(c.price)}</div>${offerBadge}</div><div><span class="small muted">Stock</span><div>${c.stock}</div></div><div><label for="qtym-${i}">Cantidad</label><input id="qtym-${i}" type="number" min="1" step="1" value="${escapeHtml(c.qty)}" data-qty-index="${i}" aria-invalid="${qErr?'true':'false'}"><div class="field-error ${qErr?'show':''}">${escapeHtml(qErr)}</div></div><div><span class="small muted">Aporte de disponibilidad</span><div>${prop}</div></div><div class="full"><button class="btn btn-quiet" type="button" data-remove-component="${i}">Quitar</button></div></div></article>`;
     }).join('');
   }
 
@@ -471,6 +480,8 @@
     const limiter=v.calc.limiter;
     const saveErrNotice=state.saveErrorShown?`<div class="notice error" role="alert"><span class="notice-icon" aria-hidden="true">!</span><div><h3>No pudimos guardar el combo.</h3><p>Se produjo un error de comunicación al persistir los cambios. Se conservaron tus datos; revisa la conexión e intenta guardar nuevamente.</p></div></div>`:'';
     const errorSummary=extraNotice?`<div class="notice error"><span class="notice-icon" aria-hidden="true">!</span><div>${extraNotice}</div></div>`:saveErrNotice;
+    const userPrice=Number(state.form.price);
+    const savingClient=Number.isFinite(userPrice)&&userPrice>0&&userPrice<v.calc.sumPublic ? v.calc.sumPublic - userPrice : null;
     app.innerHTML=`
       <div class="page-header"><div><h1>${title}</h1><p>Configura componentes directos (máximo 20), cantidades y un precio promocional válido.</p></div></div>
       ${errorSummary}
@@ -485,15 +496,17 @@
           <section class="section">
             <div class="section-head"><div><h2>Componentes</h2><p class="muted small">Cada componente debe ser un SKU vendible directo (variante o producto simple con SKU base). Máximo 20 componentes por combo.</p></div><button class="btn" type="button" data-action="add-components">Añadir componentes</button></div>
             <div class="field-error ${compErr?'show':''}" style="margin-bottom:12px">${escapeHtml(compErr)}</div>
-            <div class="component-table table-wrap"><table><thead><tr><th>SKU</th><th>Producto / variante</th><th>Precio regular</th><th>Stock</th><th>Cantidad</th><th>Aporte</th><th>Acción</th></tr></thead><tbody>${componentRows(v)}</tbody></table></div>
+            <div class="component-table table-wrap"><table><thead><tr><th>SKU</th><th>Producto / variante</th><th>Precio regular / público</th><th>Stock</th><th>Cantidad</th><th>Aporte</th><th>Acción</th></tr></thead><tbody>${componentRows(v)}</tbody></table></div>
             <div class="component-mobile">${componentCards(v)}</div>
           </section>
           <section class="section"><h2>Precio del combo</h2>
-            <div class="field"><label for="comboPrice">Precio promocional</label><input id="comboPrice" type="number" min="0" step="0.01" inputmode="decimal" value="${escapeHtml(state.form.price)}" aria-invalid="${pErr?'true':'false'}"><div class="help">Debe ser mayor que cero y estrictamente menor que ${money(v.calc.sum)}.</div><div class="field-error ${pErr?'show':''}">${escapeHtml(pErr)}</div></div>
+            <div class="field"><label for="comboPrice">Precio promocional</label><input id="comboPrice" type="number" min="0" step="0.01" inputmode="decimal" value="${escapeHtml(state.form.price)}" aria-invalid="${pErr?'true':'false'}"><div class="help">Debe ser mayor que cero y menor que ${money(v.calc.sumPublic)} (suma pública vigente) y ${money(v.calc.sumRegular)} (suma regular).</div><div class="field-error ${pErr?'show':''}">${escapeHtml(pErr)}</div></div>
           </section>
         </div>
         <aside class="section summary" aria-live="polite"><h2>Resumen</h2>
-          <div class="metric"><span class="metric-label">Suma regular vigente</span><span class="metric-value">${money(v.calc.sum)}</span><span class="metric-detail">Precio regular × cantidad de cada componente.</span></div>
+          <div class="metric"><span class="metric-label">Suma pública vigente (límite)</span><span class="metric-value">${money(v.calc.sumPublic)}</span><span class="metric-detail">Calculada con min(regular, oferta) de cada componente.</span></div>
+          <div class="metric"><span class="metric-label">Suma regular</span><span class="metric-value">${money(v.calc.sumRegular)}</span><span class="metric-detail">Precio regular total sin ofertas de Pricing.</span></div>
+          ${savingClient!=null?`<div class="metric"><span class="metric-label">Ahorro cliente vs oferta</span><span class="metric-value">${money(savingClient)}</span></div>`:''}
           <div class="metric"><span class="metric-label">Disponibilidad calculada</span><span class="metric-value">${v.calc.availability==null?'—':v.calc.availability}</span><span class="metric-detail">${limiter?`Limitada por ${escapeHtml(limiter.name)} (${escapeHtml(limiter.sku)}).`:'Añade componentes válidos para calcularla.'}</span></div>
           <div class="metric"><span class="metric-label">Componentes</span><span class="metric-value">${state.form.components.length} / 20</span></div>
         </aside>

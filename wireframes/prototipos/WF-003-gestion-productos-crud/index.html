@@ -523,26 +523,17 @@
         if (values.variants === null) errors.variants = 'Indica si el producto tendrá variantes.';
         const currentId = editing ? currentProduct().id : null;
         if (values.sku && state.products.some(p => p.id !== currentId && p.sku.toLowerCase() === values.sku.toLowerCase())) errors.sku = 'Este SKU base ya está en uso.';
-        if (values.name && values.brand && state.products.some(p => p.id !== currentId && p.name.toLowerCase() === values.name.toLowerCase() && p.brand === values.brand)) errors.name = 'Ya existe un producto con este nombre y marca.';
+        const hasDuplicateNameBrand = values.name && values.brand && state.products.some(p => p.id !== currentId && p.name.toLowerCase() === values.name.toLowerCase() && p.brand === values.brand);
         const product = currentProduct();
         const resultingImages = (editing ? product.images : 0) + (values.imageSelected ? 1 : 0);
         if (editing && product.status === 'Activo') {
           if (!values.characteristics.length) errors.characteristics = 'Un producto activo debe conservar al menos una característica.';
           if (!resultingImages) errors.image = 'Un producto activo debe conservar al menos una imagen.';
         }
-        return { values, errors, resultingImages };
+        return { values, errors, resultingImages, hasDuplicateNameBrand };
       }
 
-      function saveForm(form) {
-        const editing = state.screen === 'edit';
-        const { values, errors, resultingImages } = validateForm(form, editing);
-        state.errors = errors;
-        if (Object.keys(errors).length) {
-          renderForm(editing ? 'edit' : 'create');
-          document.querySelector('.error-summary')?.focus();
-          announce('El formulario contiene errores.');
-          return;
-        }
+      function executeProductPersist(values, editing, resultingImages) {
         if (!navigator.onLine) { toast('No se pudo guardar. Revisa tu conexión e intenta nuevamente.'); return; }
         state.saving = true;
         renderForm(editing ? 'edit' : 'create');
@@ -557,6 +548,26 @@
             state.products.unshift(product); state.saving = false; state.formDirty = false; navigate('detail', id); toast('Producto guardado como borrador.');
           }
         }, 500);
+      }
+
+      function saveForm(form) {
+        const editing = state.screen === 'edit';
+        const { values, errors, resultingImages, hasDuplicateNameBrand } = validateForm(form, editing);
+        state.errors = errors;
+        if (Object.keys(errors).length) {
+          renderForm(editing ? 'edit' : 'create');
+          document.querySelector('.error-summary')?.focus();
+          announce('El formulario contiene errores.');
+          return;
+        }
+        if (hasDuplicateNameBrand && !state.duplicateConfirmed) {
+          state.modal = { type: 'duplicate-warning', values, editing, resultingImages };
+          state.modalReturn = document.querySelector('button[type="submit"]');
+          renderModal();
+          return;
+        }
+        state.duplicateConfirmed = false;
+        executeProductPersist(values, editing, resultingImages);
       }
 
       function activationChecks(product) {
@@ -621,8 +632,14 @@
       }
 
       function renderModal() {
+        if (!state.modal) { modalRoot.innerHTML = ''; return; }
+        if (state.modal.type === 'duplicate-warning') {
+          modalRoot.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description"><h2 id="modal-title" tabindex="-1">Posible producto duplicado</h2><p id="modal-description">Ya existe un producto registrado con el nombre <strong>${escapeHtml(state.modal.values.name)}</strong> y la marca seleccionada. ¿Deseas registrar este producto de todos modos?</p><div class="notice" style="margin-top:14px"><span class="notice-icon" aria-hidden="true">i</span><div><p class="notice-title">Advertencia comercial</p><p class="muted">El sistema permite productos con el mismo nombre si tienen SKU base distinto.</p></div></div><div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Revisar formulario</button><button class="btn btn-primary" type="button" data-action="confirm-duplicate-save">Confirmar y registrar</button></div></section></div>`;
+          window.setTimeout(() => document.getElementById('modal-title')?.focus(), 0);
+          return;
+        }
         const p = currentProduct();
-        if (!state.modal || !p) { modalRoot.innerHTML = ''; return; }
+        if (!p) { modalRoot.innerHTML = ''; return; }
         if (state.modal.type === 'blocked') {
           modalRoot.innerHTML = `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description"><h2 id="modal-title" tabindex="-1">No se puede ${state.modal.operation} el producto</h2><p id="modal-description">Revisa los siguientes requisitos antes de continuar:</p><ul>${state.modal.missing.map(item => `<li>${escapeHtml(item.label)}</li>`).join('')}</ul><div class="modal-actions"><button class="btn btn-primary" type="button" data-action="close-modal">Entendido</button></div></section></div>`;
         } else {
@@ -718,6 +735,14 @@
         else if (action === 'request-status') requestStatus(el.dataset.status, el);
         else if (action === 'close-modal') closeModal();
         else if (action === 'confirm-status') confirmStatus();
+        else if (action === 'confirm-duplicate-save') {
+          if (state.modal?.values) {
+            const { values, editing, resultingImages } = state.modal;
+            state.duplicateConfirmed = true;
+            closeModal();
+            executeProductPersist(values, editing, resultingImages);
+          }
+        }
         else if (action === 'manage-variants') toast('Abriendo la gestión de variantes de este producto.');
         else if (action === 'reload-product') navigate('detail', state.selectedId);
         else if (action === 'login') toast('Redirigiendo al inicio de sesión.');

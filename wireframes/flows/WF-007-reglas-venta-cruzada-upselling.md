@@ -257,7 +257,7 @@ Confirmación de guardado y retorno al listado actualizado.
 | Vacío inicial | Mensaje + crear | Crear | Formulario |
 | Sin resultados | Mensaje contextual | Cambiar filtros | Listado |
 | Formulario inicial | Campos y lista vacía | Completar/cancelar | N/A |
-| Upsell incompleto | Errores por justificación | Corregir | Datos conservados |
+| Upsell incompleto | Errores por criterio de superioridad | Corregir | Datos conservados |
 | Origen/recomendado inválido | Error contextual | Quitar/cambiar | Formulario |
 | Guardando | Acción bloqueada | Esperar | Reintentar |
 | Éxito | Confirmación | Continuar | N/A |
@@ -291,7 +291,7 @@ Verificar 320 px, zoom 200 %, nombres y justificaciones largas, y teclado móvil
 - Objetivo WCAG 2.2 AA.
 - Encabezado principal único y landmarks claros.
 - Radios agrupados, campos etiquetados y errores asociados.
-- El producto con justificación faltante se identifica por nombre.
+- El producto con criterio de superioridad faltante se identifica por nombre.
 - Cambios dinámicos y resultados se anuncian sin interrumpir.
 - Orden visual y de lectura coherentes.
 - Diálogos contienen foco y lo devuelven al activador.
