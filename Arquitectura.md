@@ -1,11 +1,9 @@
 # Arquitectura del Módulo de Productos y Ofertas
 
-**Versión:** 1.1 · **Fecha:** 2026-09-23 · **Estado:** baseline arquitectónica interna actualizada  
 **Repositorio:** `Taller-SW-Web/Productos-y-Ofertas-docs`  
 **Ruta recomendada:** `architecture/arquitectura-modulo-productos-ofertas.md`  
-**Baseline documental:** `master@bd58ca7253bc837a396d57e88a38b98949d79bf0`
 
-> **Fuente normativa:** esta arquitectura se deriva de las 16 especificaciones en `specs/`, las 16 historias de usuario en `hu/` y los 16 flujos funcionales en `wireframes/flows/`. Los prototipos HTML de `wireframes/prototipos/` no se usan como fuente normativa para esta versión. Ante contradicción futura, la precedencia es **SPEC → HU → WF → arquitectura → prototipo**.
+Esta arquitectura se deriva de las 16 especificaciones en `specs/`, las 16 historias de usuario en `hu/` y los 16 flujos funcionales en `wireframes/flows/`.
 
 ---
 
@@ -842,36 +840,3 @@ flowchart LR
 5. Tratamiento financiero ante fallo de stock/cupón después de un pago confirmado.
 6. Infraestructura cloud definitiva y presupuesto real para broker, observabilidad y archivo de auditoría.
 7. Valores operativos finales de parámetros configurables del despliegue.
-
-Estas decisiones no bloquean la implementación interna siempre que se mantengan detrás de contratos/adaptadores versionados y no se presenten como acuerdos ya homologados.
-
----
-
-## 15. Cambios respecto de la arquitectura v1.0 (2026-09-19)
-
-Esta versión reemplaza explícitamente las siguientes decisiones obsoletas de la arquitectura anterior:
-
-- **Eliminada** la asociación/herencia Categoría–Característica. Ahora el esquema es **Tipo de Producto–Característica**.
-- **Agregados** `product_types` y `product_type_characteristics` a Taxonomía.
-- **Eliminados** los máximos rígidos de “2 niveles” y “20 características” como invariantes; pasan a parámetros configurables con valores iniciales MVP.
-- **Separados** `variant_id` interno y SKU comercial.
-- **Corregida** la activación de productos/variantes para depender de atributos obligatorios del tipo, Pricing e Inventario.
-- **Corregida** la propiedad de slugs: categoría/SEO en Taxonomía; slug de producto en Catálogo; 301 ejecutado por Marketplace.
-- **Sustituida** la plantilla Bulk v1 por `template_version=2` y sus 25 columnas contractuales.
-- **Eliminada** la regla de “Pricing siempre gana” y el no-stacking global. La combinación ahora es granular y el desempate favorece no consumir cupón.
-- **Eliminada** la exclusividad universal de combos; la convivencia comercial depende de la política correspondiente.
-- **Eliminado** el Top 5/ranking de ventas del contexto Inventario y del dashboard WF-016.
-- **Corregido** el modelo de stock a `(sku, location_id)` con `on_hand`, `reserved`, `available` y umbral configurable.
-- **Eliminado** el supuesto de reserva/consumo automático en `order.created`; actualmente no modifica stock.
-- **Corregida** la devolución: solo repone unidades físicamente aceptadas/reintegrables.
-- **Actualizada** auditoría a parámetros `AUDIT_HOT_RETENTION_MONTHS` y `AUDIT_ARCHIVE_RETENTION_YEARS` configurables.
-- **Permitidas** APIs internas de solo lectura cuando las SPEC las declaran; se mantiene la prohibición de escritura o acceso directo a BD ajena.
-
----
-
-## 16. Estado de la arquitectura
-
-Con la baseline documental actual de SPEC + HU + WF, esta arquitectura puede utilizarse como **base de implementación del módulo**.
-
-No se consideran bloqueantes las inconsistencias pendientes de algunos prototipos HTML, porque esta versión se deriva únicamente de la documentación normativa. Antes de integrar con Ventas/Postventa en un entorno real, sí debe cerrarse la homologación de sus contratos externos.
-

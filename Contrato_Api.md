@@ -1,8 +1,6 @@
 # API Contract — Módulo de Productos y Ofertas
 
-**Versión:** 0.1  
 **Fecha:** 2026-09-23  
-**Estado:** Borrador de integración / contratos externos parcialmente provisionales  
 **Módulo propietario:** Productos y Ofertas  
 **Ruta recomendada:** `contracts/API_CONTRACT.md`
 
@@ -13,11 +11,9 @@
 - `architecture/arquitectura-modulo-productos-ofertas.md`
 - `architecture/modelos-conceptuales-datos.md`
 
-> **Regla de autoridad:** ante contradicción, prevalece **SPEC → HU → WF → Arquitectura → este documento**.
->
 > Este archivo documenta el **contrato de integración a nivel de módulo**: qué información necesita Productos y Ofertas de otros módulos, qué información expone o publica, quién es propietario de cada dato y qué contratos siguen pendientes de homologación.
 >
-> Este documento **no sustituye** OpenAPI ni AsyncAPI. Las rutas o payloads no definidos por las SPEC se marcan expresamente como `TBD` o `PROPUESTO`; no deben tratarse como contratos externos homologados.
+> Las rutas o payloads no definidos por las SPEC se marcan expresamente como `TBD` o `PROPUESTO`; no deben tratarse como contratos externos homologados.
 
 ---
 
@@ -488,7 +484,7 @@ Para compensaciones por cancelación, Productos y Ofertas necesita saber si la o
 
 La arquitectura recomendada es que esa evidencia forme parte del contrato homologado de Ventas/Postventa.
 
-Si posteriormente se decide un contrato directo con Despacho, deberá añadirse como una nueva versión de este archivo; actualmente queda fuera de alcance.
+Un contrato directo con Despacho queda fuera de alcance.
 
 ---
 

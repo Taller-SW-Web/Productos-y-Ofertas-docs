@@ -1,89 +1,17 @@
 # Modelos conceptuales de datos — Módulo de Productos y Ofertas
 
-**Versión:** 1.0  
 **Fecha:** 2026-09-23  
 **Repositorio:** `Taller-SW-Web/Productos-y-Ofertas-docs`  
 **Ruta recomendada:** `architecture/modelos-conceptuales-datos.md`  
-**Baseline documental:** SPEC → HU → WF → Arquitectura v1.1  
 **Arquitectura de referencia:** `architecture/arquitectura-modulo-productos-ofertas.md`
 
-> **Alcance:** este documento define los **modelos conceptuales de datos** de los ocho bounded contexts/microservicios de negocio del módulo Productos y Ofertas y analiza si existe alguna necesidad de compartir esquemas PostgreSQL entre ellos. Los prototipos HTML no se consideran fuente normativa.
->
-> Los diagramas son **conceptuales**, no físicos: muestran entidades, relaciones y cardinalidades. No muestran atributos, claves, tipos de datos, índices ni detalles ORM. Las relaciones N:M que en un modelo lógico requerirán tablas asociativas se mantienen aquí como **rombos**, siguiendo notación Chen simplificada.
+> **Alcance:** este documento define los **modelos conceptuales de datos** de los ocho bounded contexts/microservicios de negocio del módulo Productos y Ofertas y analiza si existe alguna necesidad de compartir esquemas PostgreSQL entre ellos.
 
 ---
 
-## 1. Convención de modelado conceptual
+# 1. ¿Es necesario compartir schemas entre microservicios?
 
-### 1.1 Notación adoptada
-
-Se utiliza **notación Chen simplificada sobre Mermaid `flowchart`**:
-
-- **Rectángulo** → entidad conceptual.
-- **Rombo** → relación.
-- **Texto dentro del rombo** → significado de la relación.
-- **Etiqueta sobre cada línea** → cardinalidad del lado correspondiente.
-- **Rectángulo con borde discontinuo** → entidad que pertenece a **otro bounded context** y solo se referencia mediante su identificador/contrato.
-- No se muestran atributos en los rectángulos.
-- No se muestran PK/FK.
-- No se muestran tablas técnicas `outbox`, `inbox`, offsets o locks en los diagramas conceptuales principales.
-
-Cardinalidades utilizadas:
-
-| Notación | Significado |
-|---|---|
-| `1` | exactamente uno |
-| `0..1` | cero o uno |
-| `1..N` | uno o muchos |
-| `0..N` | cero o muchos |
-| `2..N` | dos o muchos |
-
-Ejemplo:
-
-```mermaid
-flowchart LR
-  A["PRODUCTO"]
-  R{"POSEE"}
-  B["VARIANTE"]
-
-  A ---|"1"| R
-  R ---|"0..N"| B
-```
-
-### 1.2 Conceptual ≠ lógico ≠ físico
-
-En este documento una relación N:M permanece como relación.
-
-Ejemplo conceptual:
-
-```text
-TIPO DE PRODUCTO
-        |
-        | N
-      DEFINE
-        | N
-CARACTERÍSTICA
-```
-
-En el modelo lógico esa relación probablemente se materializará como:
-
-```text
-product_type_characteristics
-```
-
-porque la asociación necesita almacenar datos propios como obligatoriedad y versión.
-
-Por tanto:
-
-- el **modelo conceptual** responde *qué conceptos existen y cómo se relacionan*;
-- el **modelo lógico** responderá *qué tablas, PK, FK internas y tablas asociativas se necesitan*;
-- el **modelo físico** añadirá tipos PostgreSQL, índices, constraints, particiones y detalles de implementación.
-
----
-
-# 2. ¿Es necesario compartir schemas entre microservicios?
-
-## 2.1 Veredicto
+## 1.1 Veredicto
 
 **No. Ningún bounded context necesita compartir físicamente un schema PostgreSQL con otro microservicio.**
 
@@ -104,7 +32,7 @@ No deben existir:
 - escrituras directas a tablas de otro servicio;
 - transacciones ACID que crucen dos microservicios.
 
-## 2.2 La necesidad de datos externos no implica schema compartido
+## 1.2 La necesidad de datos externos no implica schema compartido
 
 | Consumidor | Dato de otro dominio que necesita | Mecanismo correcto | ¿Schema compartido? |
 |---|---|---|---|
@@ -117,7 +45,7 @@ No deben existir:
 | Bulk | Catálogo, Pricing e Inventario | comandos/resultados idempotentes | **No** |
 | Gateway/BFF | vistas agregadas | read model propio alimentado por eventos | **No** |
 
-## 2.3 Qué sí comparte schema porque pertenece al mismo microservicio
+## 1.3 Qué sí comparte schema porque pertenece al mismo microservicio
 
 Esto **no** es compartir schema entre microservicios; son funcionalidades del mismo bounded context:
 
@@ -142,9 +70,9 @@ Esta agrupación es importante porque algunas invariantes **sí necesitan transa
 
 ---
 
-# 3. Modelo conceptual interdominio
+# 2. Modelo conceptual interdominio
 
-Este diagrama **no implica foreign keys cross-schema**. Las entidades discontinuas representan conceptos cuya autoridad pertenece a otro contexto.
+Las relaciones interdominio **no implican foreign keys cross-schema**.
 
 ```mermaid
 flowchart LR
@@ -213,9 +141,9 @@ flowchart LR
 
 ---
 
-# 4. `taxonomy-svc` — Modelo conceptual
+# 3. `taxonomy-svc` — Modelo conceptual
 
-## 4.1 Responsabilidad de datos
+## 3.1 Responsabilidad de datos
 
 Taxonomía es autoridad de:
 
@@ -231,7 +159,7 @@ Taxonomía es autoridad de:
 
 Las categorías **no** definen ni heredan características.
 
-## 4.2 Diagrama conceptual
+## 3.2 Diagrama conceptual
 
 ```mermaid
 flowchart LR
@@ -266,7 +194,7 @@ flowchart LR
   R_HISTORY ---|"0..N"| SLUG
 ```
 
-### 4.3 Observaciones conceptuales
+### 3.3 Observaciones conceptuales
 
 1. `CATEGORÍA (padre)` y `CATEGORÍA (hija)` son **roles de la misma entidad**, no dos tablas diferentes.
 2. Una categoría puede ser raíz; por tanto su padre es opcional.
@@ -277,7 +205,7 @@ flowchart LR
 7. SEO es de **categoría**, no de producto.
 8. El slug de producto no aparece porque pertenece a Catálogo.
 
-### 4.4 Consecuencia para el modelo lógico
+### 3.4 Consecuencia para el modelo lógico
 
 Relaciones que probablemente se materializarán como tabla:
 
@@ -297,9 +225,9 @@ porque la documentación actual separa completamente navegación y esquema de at
 
 ---
 
-# 5. `catalog-svc` — Modelo conceptual
+# 4. `catalog-svc` — Modelo conceptual
 
-## 5.1 Responsabilidad de datos
+## 4.1 Responsabilidad de datos
 
 Catálogo es autoridad de:
 
@@ -314,9 +242,9 @@ Catálogo es autoridad de:
 - valores de atributos registrados;
 - selección de características identificadoras por producto con variantes.
 
-Categoría, Marca, Tipo de Producto, Característica y Valor de Característica pertenecen a Taxonomía y se muestran con borde discontinuo.
+Categoría, Marca, Tipo de Producto, Característica y Valor de Característica pertenecen a Taxonomía.
 
-## 5.2 Diagrama conceptual
+## 4.2 Diagrama conceptual
 
 ```mermaid
 flowchart TB
@@ -372,13 +300,13 @@ flowchart TB
   class CATEGORY,BRAND,TYPE,CHAR,VALUE external;
 ```
 
-### 5.3 Observaciones conceptuales
+### 4.3 Observaciones conceptuales
 
 1. Un producto puede no tener variantes o tener muchas.
 2. Cuando `tiene_variantes=false`, `sku_base` es también el SKU vendible.
 3. Cuando `tiene_variantes=true`, el producto padre no tiene stock propio.
 4. Una variante pertenece exactamente a un producto.
-5. `variant_id` y SKU comercial son identidades distintas, aunque no se muestren como atributos en el modelo conceptual.
+5. `variant_id` y SKU comercial son identidades distintas.
 6. El producto puede existir en BORRADOR sin imágenes.
 7. La variante requiere imagen propia en el flujo de creación.
 8. `REGISTRA VALOR PARA` representa valores de atributos de producto; en el lógico se materializará una estructura de valores tipados.
@@ -386,7 +314,7 @@ flowchart TB
 10. `SE IDENTIFICA POR` usa valores LISTA estables de Taxonomía.
 11. Ninguna relación a Taxonomía implica FK cross-schema.
 
-### 5.4 Refinamiento importante respecto de la arquitectura
+### 4.4 Refinamiento importante respecto de la arquitectura
 
 La lista física preliminar de la arquitectura debe contemplar, en el modelo lógico, una persistencia para:
 
@@ -400,9 +328,9 @@ Esta asociación es necesaria porque SPEC-003/SPEC-004 establecen que un product
 
 ---
 
-# 6. `pricing-svc` — Modelo conceptual
+# 5. `pricing-svc` — Modelo conceptual
 
-## 6.1 Responsabilidad de datos
+## 5.1 Responsabilidad de datos
 
 Pricing es autoridad de:
 
@@ -418,7 +346,7 @@ Pricing es autoridad de:
 
 Producto y SKU pertenecen a Catálogo.
 
-## 6.2 Diagrama conceptual
+## 5.2 Diagrama conceptual
 
 ```mermaid
 flowchart LR
@@ -449,7 +377,7 @@ flowchart LR
   class PRODUCT,SKU external;
 ```
 
-### 6.3 Restricción XOR conceptual
+### 5.3 Restricción XOR conceptual
 
 Cada definición de precio tiene como objetivo:
 
@@ -460,7 +388,7 @@ pero no ambos simultáneamente.
 
 Ese XOR debe formalizarse en el modelo lógico.
 
-### 6.4 Vigencias
+### 5.4 Vigencias
 
 `VIGENCIA DE PRECIO` representa:
 
@@ -470,9 +398,7 @@ Ese XOR debe formalizarse en el modelo lógico.
 - scope de canal;
 - estado programado/vigente/histórico.
 
-Los atributos no se dibujan porque este es un modelo conceptual.
-
-### 6.5 Carga masiva propia
+### 5.5 Carga masiva propia
 
 `LOTE DE PRECIOS` se relaciona con múltiples SKU. En el modelo lógico, la relación `ACTUALIZA` requerirá una entidad/fila de lote para:
 
@@ -484,15 +410,15 @@ Los atributos no se dibujan porque este es un modelo conceptual.
 
 ---
 
-# 7. `price-audit-svc` — Modelo conceptual
+# 6. `price-audit-svc` — Modelo conceptual
 
-## 7.1 Responsabilidad de datos
+## 6.1 Responsabilidad de datos
 
 Price Audit es autoridad únicamente de la bitácora append-only, exportaciones y archivado de dicha bitácora.
 
 No es autoridad de Precio, Producto, SKU, Usuario ni lote Bulk.
 
-## 7.2 Diagrama conceptual
+## 6.2 Diagrama conceptual
 
 ```mermaid
 flowchart TB
@@ -534,7 +460,7 @@ flowchart TB
   class PRODUCT,SKU,USER,BATCH external;
 ```
 
-### 7.3 Razón para NO compartir el schema `pricing`
+### 6.3 Razón para NO compartir el schema `pricing`
 
 Aunque Auditoría nace de eventos de Pricing, mantener `price_audit` separado permite:
 
@@ -549,9 +475,9 @@ La relación se mantiene mediante `pricing.price.changed`, no mediante FK a `pri
 
 ---
 
-# 8. `promotions-svc` — Modelo conceptual
+# 7. `promotions-svc` — Modelo conceptual
 
-## 8.1 Responsabilidad de datos
+## 7.1 Responsabilidad de datos
 
 Este bounded context reúne:
 
@@ -565,7 +491,7 @@ Este bounded context reúne:
 
 Producto, SKU y Categoría pertenecen a otros dominios.
 
-## 8.2 Promociones y cupones
+## 7.2 Promociones y cupones
 
 ```mermaid
 flowchart LR
@@ -602,7 +528,7 @@ flowchart LR
   class PRODUCT,SKU,ORDER external;
 ```
 
-### 8.3 Recomendaciones Cross-sell / Upsell
+### 7.3 Recomendaciones Cross-sell / Upsell
 
 ```mermaid
 flowchart LR
@@ -629,7 +555,7 @@ flowchart LR
   class ORIGIN_PRODUCT,ORIGIN_CATEGORY,RECOMMENDED external;
 ```
 
-### 8.4 Restricciones conceptuales
+### 7.4 Restricciones conceptuales
 
 1. Una regla tiene **un solo tipo de origen**: Producto **o** Categoría.
 2. Una regla recomienda uno o varios productos.
@@ -640,7 +566,7 @@ flowchart LR
 7. Cupón referencia una promoción en modalidad CUPÓN.
 8. El consumo de cupón se correlaciona con un pedido externo, sin FK al schema de Ventas.
 
-### 8.5 Consecuencia lógica
+### 7.5 Consecuencia lógica
 
 Probables tablas asociativas:
 
@@ -658,9 +584,9 @@ pero conceptualmente no necesita ser una entidad independiente porque no tiene c
 
 ---
 
-# 9. `combos-svc` — Modelo conceptual
+# 8. `combos-svc` — Modelo conceptual
 
-## 9.1 Responsabilidad de datos
+## 8.1 Responsabilidad de datos
 
 Combos es autoridad de:
 
@@ -674,7 +600,7 @@ Combos es autoridad de:
 
 No es autoridad de Producto, SKU, Precio ni Stock.
 
-## 9.2 Diagrama conceptual
+## 8.2 Diagrama conceptual
 
 ```mermaid
 flowchart LR
@@ -690,14 +616,12 @@ flowchart LR
   class SKU external;
 ```
 
-### 9.3 Interpretación de la relación
+### 8.3 Interpretación de la relación
 
 La relación `SE COMPONE DE` tiene información propia, principalmente:
 
 - cantidad requerida del SKU;
 - orden/snapshot si se decide persistirlo.
-
-Como este documento no muestra atributos, esa información no aparece en el rombo.
 
 En el modelo lógico la relación se materializará como:
 
@@ -705,7 +629,7 @@ En el modelo lógico la relación se materializará como:
 combo_items
 ```
 
-### 9.4 Proyección de componentes
+### 8.4 Proyección de componentes
 
 `component_projection` no es una nueva entidad maestra.
 
@@ -723,9 +647,9 @@ Puede persistirse para latencia, pero:
 
 ---
 
-# 10. `inventory-svc` — Modelo conceptual
+# 9. `inventory-svc` — Modelo conceptual
 
-## 10.1 Responsabilidad de datos
+## 9.1 Responsabilidad de datos
 
 Inventario es autoridad de:
 
@@ -739,7 +663,7 @@ Inventario es autoridad de:
 
 SKU pertenece a Catálogo.
 
-## 10.2 Diagrama conceptual
+## 9.2 Diagrama conceptual
 
 ```mermaid
 flowchart TB
@@ -780,7 +704,7 @@ flowchart TB
   class SKU external;
 ```
 
-### 10.3 Cardinalidad del saldo
+### 9.3 Cardinalidad del saldo
 
 Cada `SALDO DE INVENTARIO` pertenece a:
 
@@ -795,7 +719,7 @@ La unicidad lógica será:
 (SKU, location_id)
 ```
 
-### 10.4 Operaciones y Kardex
+### 9.4 Operaciones y Kardex
 
 Una operación idempotente de Inventario puede afectar una o varias líneas/saldos, por ejemplo un pedido con varios SKU.
 
@@ -816,7 +740,7 @@ Esta estructura permite:
 - compensación;
 - devolución aceptada.
 
-### 10.5 Dashboard
+### 9.5 Dashboard
 
 WF-016 pertenece al mismo bounded context de Inventario.
 
@@ -831,9 +755,9 @@ No se crea un microservicio o schema separado solo para Dashboard.
 
 ---
 
-# 11. `bulk-svc` — Modelo conceptual
+# 10. `bulk-svc` — Modelo conceptual
 
-## 11.1 Responsabilidad de datos
+## 10.1 Responsabilidad de datos
 
 Bulk persiste el **proceso**, no una copia maestra de Catálogo, Pricing o Inventario.
 
@@ -849,7 +773,7 @@ Debe poder reconstruir:
 - trabajos de exportación;
 - archivos resultantes.
 
-## 11.2 Diagrama conceptual
+## 10.2 Diagrama conceptual
 
 ```mermaid
 flowchart TB
@@ -881,7 +805,7 @@ flowchart TB
   R_EXPORT ---|"0..1"| FILE
 ```
 
-### 11.3 Paso de dominio
+### 10.3 Paso de dominio
 
 Cada fila puede requerir pasos sobre:
 
@@ -900,7 +824,7 @@ Cada fila puede requerir pasos sobre:
 
 Los dominios no se modelan como FK a sus bases. El paso solo conserva el nombre/identificador del dominio y correlación de la operación.
 
-### 11.4 Razón para no leer schemas externos
+### 10.4 Razón para no leer schemas externos
 
 Aunque una exportación necesita combinar Catálogo, Precio y Stock, Bulk no debe hacer:
 
@@ -915,7 +839,7 @@ Debe solicitar la información a sus propietarios mediante los contratos definid
 
 ---
 
-# 12. `api-gateway` / BFF — Read model auxiliar
+# 11. `api-gateway` / BFF — Read model auxiliar
 
 El gateway no es un bounded context de negocio, por lo que **no se propone un modelo conceptual de dominio equivalente a los ocho anteriores**.
 
@@ -941,7 +865,7 @@ Reglas:
 
 ---
 
-# 13. Entidades técnicas comunes que NO se dibujan en los modelos conceptuales
+# 12. Entidades técnicas comunes
 
 Todos los microservicios que publiquen o consuman mensajes pueden necesitar:
 
@@ -968,7 +892,7 @@ Estas tablas son de infraestructura/aplicación. No deben convertirse en relacio
 
 ---
 
-# 14. Matriz de ownership de schemas
+# 13. Matriz de ownership de schemas
 
 | Schema | Owner exclusivo | Puede escribir | Puede leer directamente |
 |---|---|---|---|
@@ -986,7 +910,7 @@ Estas tablas son de infraestructura/aplicación. No deben convertirse en relacio
 
 ---
 
-# 15. Relaciones conceptuales que se convertirán en tablas asociativas
+# 14. Relaciones conceptuales que se convertirán en tablas asociativas
 
 Este punto es importante para no confundir el modelo conceptual con el modelo lógico.
 
@@ -1007,9 +931,9 @@ Los nombres son propuestas para el **siguiente modelo lógico**; no son todavía
 
 ---
 
-# 16. Foreign keys: dónde sí y dónde no
+# 15. Foreign keys: dónde sí y dónde no
 
-## 16.1 FK permitidas
+## 15.1 FK permitidas
 
 Solo dentro del mismo schema/owner, por ejemplo:
 
@@ -1023,7 +947,7 @@ inventory.kardex -> inventory.stock_balance
 bulk.batch_rows -> bulk.batch_jobs
 ```
 
-## 16.2 FK prohibidas arquitectónicamente
+## 15.2 FK prohibidas arquitectónicamente
 
 No crear:
 
@@ -1058,7 +982,7 @@ Esos campos pueden almacenar IDs externos, pero su integridad distribuida se man
 
 ---
 
-# 17. Datos compartidos que deben ser contrato, no tabla compartida
+# 16. Datos compartidos que deben ser contrato, no tabla compartida
 
 Algunos valores aparecen en varios servicios pero no justifican un schema común:
 
@@ -1088,7 +1012,7 @@ pero esa librería no debe exportar entidades ORM ni repositorios.
 
 ---
 
-# 18. Proyecciones locales y duplicación permitida
+# 17. Proyecciones locales y duplicación permitida
 
 La arquitectura de microservicios **sí permite duplicar datos**, siempre que se marque quién es el owner.
 
@@ -1115,9 +1039,9 @@ Una proyección:
 
 ---
 
-# 19. Transacciones: límite correcto
+# 18. Transacciones: límite correcto
 
-## 19.1 ACID local
+## 18.1 ACID local
 
 Debe existir dentro de un servicio cuando protege una invariante local.
 
@@ -1129,7 +1053,7 @@ Ejemplos:
 - Precio + vigencia + Outbox.
 - Estado de fila + paso de dominio en Bulk.
 
-## 19.2 No ACID distribuido
+## 18.2 No ACID distribuido
 
 No deben existir transacciones SQL únicas que incluyan:
 
@@ -1151,7 +1075,7 @@ La consistencia interdominio es:
 
 ---
 
-# 20. Conclusión
+# 19. Conclusión
 
 Los modelos conceptuales confirman la descomposición de la arquitectura:
 
@@ -1169,7 +1093,7 @@ Los modelos conceptuales confirman la descomposición de la arquitectura:
 
 ---
 
-# 21. Siguiente nivel recomendado
+# 20. Siguiente nivel recomendado
 
 El siguiente artefacto debería ser:
 
