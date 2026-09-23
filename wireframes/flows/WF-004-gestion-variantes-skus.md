@@ -1,6 +1,6 @@
 # WF-004 — Gestión avanzada de variantes (SKUs)
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-004-gestion-variantes-skus.md`), HU individual de esta funcionalidad (`../../hu/HU-004-gestion-variantes-skus.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -699,7 +699,7 @@ El vacío no es un error, pero debe indicar que el producto no puede activarse h
 - Disponibilidad es informativa, por SKU, proveniente de Inventario; no editar stock desde Variantes. El producto padre no tiene saldo independiente.
 
 ### Configuración de identidad por producto (Q-03 cerrada)
-En la creación del producto con variantes, seleccionar características identificadoras LISTA efectivas de la categoría **antes de crear la primera variante**. Una vez creada, esa selección queda bloqueada aunque se desactive la variante. Al crear una variante, mostrar exactamente un selector de `valor_id` por característica elegida; el SKU se genera desde IDs estables y `sku_base`, nunca a partir de textos editables. Si cambió la categoría y quedó inválida la configuración, bloquear creación/activación nueva y mostrar corrección requerida sin reescribir identidades históricas.
+En la creación del producto con variantes, seleccionar características identificadoras LISTA efectivas del tipo de producto (`tipo_producto_id`) **antes de crear la primera variante**. Una vez creada, esa selección queda bloqueada aunque se desactive la variante. Al crear una variante, mostrar exactamente un selector de `valor_id` por característica elegida; el SKU se genera desde IDs estables y `sku_base`, nunca a partir de textos editables. Si cambió el tipo de producto y quedó inválida la configuración, bloquear creación/activación nueva y mostrar corrección requerida sin reescribir identidades históricas.
 
 ## 19. Registro de revisiones
 

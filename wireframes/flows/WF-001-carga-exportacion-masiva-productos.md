@@ -1,6 +1,6 @@
 # WF-001 — Carga y exportación masiva de productos
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas de esta revisión:** `specs/SPEC-001-carga-exportacion-masiva-productos.md` y `hu/HU-001-carga-exportacion-masiva-productos.md`. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 

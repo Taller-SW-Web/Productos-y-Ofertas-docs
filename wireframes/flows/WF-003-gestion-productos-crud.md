@@ -1,6 +1,6 @@
 # WF-003 — Gestión de productos (CRUD principal)
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-003-gestion-productos-crud.md`), HU individual de esta funcionalidad (`../../hu/HU-003-gestion-productos-crud.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -41,20 +41,35 @@ Reglas de producción:
 
 - No agregues campos, permisos, endpoints, transiciones de estado ni reglas de
   validación que no estén documentadas.
-- Diferencia claramente **guardar un borrador** de **activar un producto**. La
-  creación exige nombre, descripción, categoría, marca, precio base
-  referencial, `sku_base` y `tiene_variantes`; no exige imagen ni
-  característica.
-- Para activar o reactivar, representa la revalidación de categoría y marca
-  activas, todos los valores de las características obligatorias efectivas de la categoría y al menos una imagen.
-- Cuando `tiene_variantes = true`, representa además que el producto necesita
-  al menos una variante activa con SKU e imagen válidos para poder activarse.
-  La creación y edición de esas variantes pertenece a `WF-004`.
-- `tiene_variantes` se selecciona durante la creación y es inmutable. En
-  edición debe mostrarse como información de solo lectura, con una explicación
-  clara, no como un control que parezca temporalmente deshabilitado.
-- El `slug` lo genera y mantiene el sistema. No agregues un campo editable para
-  introducirlo manualmente mientras no exista un contrato que lo permita.
+- Diferenciar claramente **Guardar borrador** de **Activar producto**.
+- Para crear un producto en BORRADOR se requieren:
+  - nombre;
+  - descripción;
+  - `categoria_id`;
+  - `tipo_producto_id`;
+  - `marca_id`;
+  - precio base referencial;
+  - `sku_base`;
+  - `tiene_variantes`.
+- No se exige imagen ni completar todavía valores de características para guardar el borrador.
+- `categoria_id` representa navegación/clasificación.
+- `tipo_producto_id` define el esquema de atributos.
+- Las categorías no aportan ni heredan características.
+- Para activar o reactivar se valida:
+  - categoría activa;
+  - tipo de producto activo;
+  - marca activa;
+  - todos los valores obligatorios definidos por el `tipo_producto_id`;
+  - al menos una imagen;
+  - preparación confirmada en Pricing;
+  - inicialización confirmada en Inventario para los SKU vendibles.
+- Si el tipo de producto no define ninguna característica obligatoria, **no se exige inventar una característica**.
+- Si `tiene_variantes=true`, además debe existir al menos una variante ACTIVA válida con SKU, atributos, imagen, precio aplicable e inventario inicializado (su gestión pertenece a `WF-004`).
+- `tiene_variantes` no se modifica mediante edición ordinaria cuando ya existe identidad comercial.
+- `tipo_producto_id` puede corregirse únicamente mientras el producto permanezca en un estado compatible con la regla de SPEC-010; si ya existen variantes o identidad publicada, el cambio requiere migración controlada.
+- El slug del producto pertenece a Catálogo Core.
+- El stock pertenece exclusivamente a Inventario.
+- Los cambios posteriores de precio pertenecen exclusivamente a Pricing.
 - Valida la unicidad global y bloqueante de `sku_base`. La combinación de nombre + marca
   se evalúa como una advertencia no bloqueante de posible duplicado, permitiendo continuar tras confirmación.
 - Los cambios válidos de un producto activo se publican inmediatamente. Si una
@@ -64,11 +79,6 @@ Reglas de producción:
   sugieras que se borran pedidos, referencias ni historial.
 - La reactivación debe volver a validar todas las condiciones de activación;
   no la representes como un cambio de estado incondicional.
-- El precio base se captura al crear el producto y puede mostrarse como dato de
-  solo lectura posteriormente. No agregues edición posterior de precios; esa
-  responsabilidad pertenece a Pricing.
-- No muestres controles para editar stock. Inventario es responsable de la
-  disponibilidad y solo inicializa en 0 el SKU vendible de un producto simple.
 - No incorpores dentro de este flujo la administración de variantes, ofertas,
   promociones, cupones, categorías, marcas, características ni metadatos SEO.
 - El evento `catalog.product.deactivated` es contexto técnico. No lo conviertas
@@ -211,9 +221,17 @@ El producto queda creado en borrador, actualizado o en el estado solicitado; la 
 
 ### Precondiciones
 
-- Sesión autenticada y autorización para la acción solicitada.
-- Catálogos de categorías y marcas disponibles y con estado vigente.
-- Para activar o reactivar: categoría y marca activas, al menos una característica y una imagen.
+- Sesión autenticada y autorización.
+- Catálogo de categorías disponible.
+- Catálogo de tipos de producto disponible.
+- Catálogo de marcas disponible.
+- Para activar/reactivar:
+  - categoría, tipo y marca activos;
+  - valores obligatorios del tipo completos;
+  - al menos una imagen;
+  - Pricing preparado;
+  - Inventario inicializado.
+- No exigir "al menos una característica" cuando el tipo no tenga características obligatorias.
 
 ### Puntos de entrada
 
@@ -248,26 +266,29 @@ El producto queda creado en borrador, actualizado o en el estado solicitado; la 
 ### Flujo B — Crear producto en borrador
 
 1. El usuario selecciona **Nuevo producto**.
-2. Completa nombre, descripción, categoría, marca, precio base referencial, `sku_base` y `tiene_variantes`.
-3. El sistema valida campos, relaciones activas y reglas de unicidad.
+2. Completa nombre, descripción, categoría, **tipo de producto**, marca, precio base referencial, `sku_base` y `tiene_variantes`.
+3. El sistema valida existencia/estado de categoría, tipo y marca, unicidad de `sku_base` y posible duplicado nombre+marca.
 4. El usuario selecciona **Guardar borrador**.
-5. El sistema crea identificador y slug, guarda el producto como `Borrador` y confirma.
+5. Catálogo genera identificador y slug, guarda el producto como BORRADOR e inicia de forma idempotente la preparación correspondiente en Pricing y, cuando aplique, Inventario.
+6. La interfaz informa el resultado sin asumir que la creación del borrador equivale a publicación comercial.
 
 ### Flujo C — Editar producto
 
-1. Desde el detalle, el usuario selecciona **Editar**.
-2. El sistema carga los datos; `tiene_variantes` se muestra solo lectura.
-3. El usuario modifica datos generales, características o imágenes permitidas.
-4. El sistema valida según el estado del producto.
-5. Guarda y muestra los datos vigentes; si estaba activo, el cambio válido se publica inmediatamente.
+1. Cargar `categoria_id`, `tipo_producto_id`, marca, datos generales, características, imágenes y estado.
+2. Mostrar `tiene_variantes` como solo lectura cuando su modificación ordinaria no esté permitida.
+3. Si el producto ya posee identidad publicada o variantes, no ofrecer cambio ordinario de `tipo_producto_id`.
+4. Si el producto está ACTIVO, rechazar de forma completa cualquier edición que rompa las condiciones de activación.
 
 ### Flujo D — Activar o reactivar
 
-1. El usuario solicita activar un borrador o reactivar un inactivo.
-2. El sistema revalida categoría, marca, características e imágenes.
-3. Si `tiene_variantes = true`, además verifica que exista al menos una variante activa con SKU e imagen válidos, según WF-004.
-4. Se presenta confirmación con el efecto de visibilidad en canales.
-5. El sistema cambia a `Activo` y confirma.
+1. Solicitar activación/reactivación.
+2. Revalidar categoría, tipo de producto y marca.
+3. Obtener el esquema vigente del `tipo_producto_id`.
+4. Exigir únicamente los valores marcados como obligatorios.
+5. Verificar imagen.
+6. Si `tiene_variantes=true`, verificar al menos una variante ACTIVA válida.
+7. Verificar preparación de Pricing e Inventario.
+8. Solo entonces cambiar el producto a ACTIVO.
 
 ### Flujo E — Desactivar
 
@@ -573,7 +594,7 @@ flowchart LR
 - [ ] Valida categoría y marca activas al crear, editar y reactivar.
 - [ ] Representa listado, filtros y detalle administrativo.
 - [ ] `tiene_variantes` es obligatorio al crear e inmutable después.
-- [ ] Activación exige al menos una imagen y todos los valores de las características obligatorias efectivas de la categoría; si no existen obligatorias, no exige una característica solo para activar. Para productos con variantes integra la condición de WF-004.
+- [ ] Activación exige al menos una imagen y todos los valores de las características obligatorias efectivas del tipo de producto; si el tipo no define características obligatorias, no se exige inventar una característica para activar. Para productos con variantes integra la condición de WF-004.
 - [ ] Los cambios inválidos sobre un producto activo no sustituyen la última versión válida.
 - [ ] Desactivar es baja lógica, conserva historial y no ofrece eliminación.
 - [ ] Reactivar vuelve a validar las condiciones de activación.

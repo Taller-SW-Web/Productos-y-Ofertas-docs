@@ -1,6 +1,6 @@
 # WF-009 — Gestión de características y sus valores
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-009-gestion-caracteristicas.md`), HU individual de esta funcionalidad (`../../hu/HU-009-gestion-caracteristicas.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -11,7 +11,7 @@ Antes de diseñar:
 
 1. Consulta ../../specs/SPEC-009-gestion-caracteristicas.md.
 2. Consulta ../../hu/HU-009-gestion-caracteristicas.md.
-3. Consulta ../../DESIGN.md.
+3. Consulta ../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
 Prioridad de fuentes:
@@ -35,8 +35,7 @@ Reglas de producción:
 - Renombrar un valor en uso lo actualiza por ID: los productos conservan el
   vínculo y muestran el nuevo texto; no se debe romper la asociación.
 - No manejes aquí el CRUD de marcas: corresponde a WF-011.
-- No manejes aquí la asociación Categoría-Característica ni la herencia:
-  corresponde a WF-010.
+- No manejes aquí la asociación Tipo de producto–Característica; corresponde a WF-010. Las categorías de navegación no determinan ni heredan características.
 - No elijas una librería de UI ni una estrategia CSS.
 - Usa datos ficticios y no consumas APIs reales.
 - Numera las anotaciones como A-01, A-02, A-03, etc.

@@ -1,6 +1,6 @@
 # WF-011 — Gestión de marcas
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas de esta revisión:** `specs/SPEC-011-gestion-marcas.md` y `hu/HU-011-gestion-marcas.md`. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -11,7 +11,7 @@ Antes de diseñar:
 
 1. Consulta ../../specs/SPEC-011-gestion-marcas.md.
 2. Consulta ../../hu/HU-011-gestion-marcas.md.
-3. Consulta ../../DESIGN.md.
+3. Consulta ../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
 Prioridad de fuentes:
@@ -109,7 +109,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 - Gestión de categorías: WF-008.
 - Gestión de características y valores: WF-009.
-- Asociación Categoría-Característica: WF-010.
+- Asociación Tipo de producto–Característica: WF-010.
 - Asignación de productos a una marca: Catálogo Core.
 - Almacenamiento físico del archivo de logo: servicio externo; aquí se gestiona
   la URL resultante.

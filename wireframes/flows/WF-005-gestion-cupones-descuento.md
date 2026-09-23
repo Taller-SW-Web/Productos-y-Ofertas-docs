@@ -1,6 +1,6 @@
 # WF-005 — Gestión de cupones de descuento
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-005-gestion-cupones-descuento.md`), HU individual de esta funcionalidad (`../../hu/HU-005-gestion-cupones-descuento.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -28,7 +28,8 @@ Reglas de producción:
 - Solo permite asociar promociones configuradas en modalidad cupón.
 - Normaliza el código quitando espacios extremos y convirtiéndolo a mayúsculas.
 - Permite configurar límite máximo global opcional, límite máximo por cliente opcional (`max_usos_por_cliente`) y política de restitución (`RESTAURAR_EN_CANCELACION | NO_RESTAURAR`).
-- No permitas reducir el límite global por debajo de los usos consumidos, ni que el límite por cliente supere al global.
+- No permitas reducir el límite global por debajo de los usos consumidos. Si existen consumos por cliente, no permitir establecer `max_usos_por_cliente` por debajo del mayor consumo ya registrado para un `customer_ref`. Cuando ambos límites existen, el límite por cliente no puede superar al global.
+- La UI debe reflejar la política de combinabilidad de la promoción asociada sin duplicar el beneficio; no mostrar una regla global de "los descuentos nunca se acumulan".
 - La validación de una compra no consume usos.
 - La confirmación de pedidos, la idempotencia y la concurrencia son contexto del
   sistema; no deben transformarse en controles administrativos.

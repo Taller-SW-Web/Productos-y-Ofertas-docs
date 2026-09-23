@@ -1,6 +1,6 @@
 # WF-006 — Gestión de ofertas y promociones
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-006-gestion-ofertas-promociones.md`), HU individual de esta funcionalidad (`../../hu/HU-006-gestion-ofertas-promociones.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -25,8 +25,8 @@ Reglas de producción:
   elegible, no por unidad.
 - Ningún descuento puede producir un importe resultante negativo.
 - Exige al menos un producto activo, inicio anterior al fin y estado inicial.
-- Configura modalidad (`AUTOMATICA | CUPON`), prioridad, canales habilitados y política de combinación (`politica_combinacion`).
-- La combinación con otras promociones, cupones u ofertas de Pricing se rige por las políticas declaradas, evaluando la mejor alternativa sobre la misma cesta.
+- Configura modalidad (`AUTOMATICA | CUPON`), prioridad, canales habilitados y política de combinación (`politica_combinacion`) granular (combinar con oferta de Pricing, combinar con otra promoción automática, combinar con cupón; todas `false` por defecto).
+- La combinación con otras promociones, cupones u ofertas de Pricing se rige por las políticas declaradas, evaluando la mejor alternativa sobre la misma cesta. En empate exacto se prioriza la opción sin cupón, luego menor prioridad y finalmente ID estable.
 - Modificar o desactivar no cambia pedidos ya confirmados.
 - No muestres criterios CA, endpoints, supuestos, decisiones técnicas ni
   anotaciones `A-xx` dentro de la interfaz simulada; son documentación.
@@ -178,8 +178,12 @@ Confirmación no bloqueante y listado o detalle actualizado después de crear, e
 | Fin | Fecha/hora | Sí | Posterior al inicio | `El fin debe ser posterior al inicio` |
 | Prioridad | Número | Sí | Entero >= 1 para orden determinista | `Ingresa una prioridad válida` |
 | Canales | Selección múltiple | No | `MARKETPLACE`, `CHATBOT`, `RETAIL` (vacío = todos) | N/A |
-| Política de combinabilidad | Selector | Sí | `EXCLUSIVE` o `COMBINABLE` | `Selecciona la política de combinabilidad` |
+| Combinar con oferta de Pricing | Booleano | Sí | `true` / `false` (default `false`) | N/A |
+| Combinar con otra promoción automática | Booleano | Sí | `true` / `false` (default `false`) | N/A |
+| Combinar con cupón | Booleano | Sí | `true` / `false` (default `false`) | N/A |
 | Alcance | Selección múltiple | Sí | Al menos un producto y/o SKU vendible activo; deduplicar SKU incluido por producto | `Selecciona al menos un producto o SKU` |
+
+> **Nota de UI:** Cuando los tres selectores de combinación son `false`, la interfaz puede mostrar la etiqueta derivada "Exclusiva", pero el contrato subyacente es granular.
 
 - Cambiar el tipo actualiza la ayuda del valor.
 - Conservar datos tras error y la última configuración válida en edición.

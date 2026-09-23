@@ -19,7 +19,7 @@
 | **CA-03** | El sistema debe permitir eliminar la asociación entre una característica y un tipo de producto cuando ya no sea aplicable, respetando las verificaciones de uso necesarias para no dejar productos activos en un estado inválido. |
 | **CA-04** | El sistema debe exponer, para un tipo de producto dado, el listado de características aplicables junto con su condición de obligatoriedad, vía API de solo lectura. |
 | **CA-05** | Si un tipo de producto o una característica se desactiva, sus asociaciones dejan de estar disponibles para nuevas altas o activaciones, sin necesidad de eliminarlas físicamente ni reescribir el histórico. |
-| **CA-06** | Las categorías y subcategorías son exclusivamente de navegación/clasificación y **no determinan ni heredan** el esquema de características. Un producto puede cambiar o ampliar su clasificación en categorías sin alterar automáticamente su tipo de producto ni sus atributos. |
+| **CA-06** | Las categorías y subcategorías son exclusivamente de navegación/clasificación y no determinan ni heredan el esquema de características. En el MVP cada producto conserva una única `categoria_id`, que puede modificarse sin alterar automáticamente su `tipo_producto_id` ni sus atributos. |
 | **CA-07** | Cada producto referencia un único `tipo_producto_id` para definir su esquema. Cambiar el tipo de producto de un producto existente no es una edición trivial: requiere validar compatibilidad de atributos obligatorios e identificadores y, si afecta identidad de variantes, debe tratarse como una migración controlada fuera del CRUD ordinario. |
 | **CA-08** | El número máximo de características asociables a un tipo de producto es un **límite técnico configurable**. Para el MVP se usa 20 como valor inicial, sin presentarlo como una restricción empresarial permanente. |
 | **CA-09** | Si una característica cambia de opcional a obligatoria, los productos existentes no se invalidan inmediatamente; la obligatoriedad se exige en la siguiente edición/guardado o proceso explícito de validación/migración. |
@@ -66,12 +66,11 @@
 * **CUANDO** el gestor comercial intenta eliminar esa asociación inexistente,
 * **ENTONCES** el sistema devuelve un error indicando que la asociación no existe.
 
-
 **Escenario 7: Categoría de navegación no modifica el esquema**
 
-* **DADO** un producto de tipo "Zapatilla" con "Talla" obligatoria que se clasifica en las categorías "Running" y "Ofertas",
-* **CUANDO** el gestor agrega o cambia una de sus categorías de navegación,
-* **ENTONCES** el producto conserva el mismo `tipo_producto_id` y el mismo esquema de características; la categoría no agrega ni retira atributos por herencia.
+* **DADO** un producto de tipo "Zapatilla" con "Talla" obligatoria y `categoria_id=Running`,
+* **CUANDO** el gestor cambia su categoría de navegación a "Ofertas",
+* **ENTONCES** el producto conserva el mismo `tipo_producto_id` y el mismo esquema de características; únicamente cambia su clasificación de navegación.
 
 **Escenario 8: Cambio de opcional a obligatoria**
 

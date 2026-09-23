@@ -38,7 +38,7 @@ El cupón posee como datos propios:
 - La operación de consumo debe ser idempotente por `order_id + cupon_id`.
 - El control del límite debe ser seguro ante concurrencia.
 - El cupón puede definir `max_usos_global` y `max_usos_por_cliente`. El cliente se referencia mediante un identificador externo estable (`customer_ref`); Productos y Ofertas no accede a la base de datos de Seguridad.
-- La política de restitución de un uso ante cancelación se configura explícitamente (`restaurar_uso_en_cancelacion`), en lugar de asumir que todas las anulaciones consumen definitivamente el beneficio.
+- La política de restitución de un uso ante cancelación se configura explícitamente mediante `politica_cancelacion` (`RESTAURAR_EN_CANCELACION | NO_RESTAURAR`), en lugar de asumir que todas las anulaciones consumen definitivamente el beneficio.
 - La convivencia con promociones y ofertas de Pricing se rige por la **política de combinabilidad** de la promoción asociada. Si las alternativas son incompatibles, se selecciona la combinación válida que produzca el menor importe; no se aplica un descuento dos veces sobre la misma base.
 - Si el cupón no resulta seleccionado como beneficio final, no consume uso.
 
@@ -50,14 +50,14 @@ El cupón posee como datos propios:
 | CA-02 | Cada cupón debe tener un código único normalizado y estar asociado a una promoción cuya modalidad sea mediante cupón. |
 | CA-03 | El descuento, los productos elegibles y la vigencia utilizados para validar el cupón corresponden a su promoción asociada. |
 | CA-04 | El cupón puede tener un monto mínimo de compra propio. Si se configura, debe ser mayor que 0. |
-| CA-05 | Si se configuran `max_usos_global` o `max_usos_por_cliente`, deben ser enteros positivos y no pueden reducirse por debajo de los consumos ya registrados en su respectivo alcance. |
-| CA-06 | El gestor puede consultar código, promoción asociada, estado, monto mínimo, usos globales consumidos/disponibles, límite global, límite por cliente y política de restitución por cancelación. No se exponen datos personales innecesarios del cliente. |
+| CA-05 | Si se configura `max_usos_global`, no puede reducirse por debajo de los usos globales ya consumidos. Si se modifica `max_usos_por_cliente`, el nuevo valor no puede ser inferior al mayor consumo ya registrado para un cliente bajo ese cupón. Cuando ambos límites existen, el límite por cliente no puede superar al global. |
+| CA-06 | El gestor puede consultar código, promoción asociada, estado, monto mínimo, usos globales consumidos/disponibles, límite global, límite por cliente y política de restitución por cancelación (`politica_cancelacion`). No se exponen datos personales innecesarios del cliente. |
 | CA-07 | La validación debe rechazar códigos inexistentes, cupones/promociones desactivados, promociones fuera de vigencia, compras sin productos elegibles, compras por debajo del mínimo, límite global agotado o límite por `customer_ref` alcanzado. |
 | CA-08 | Un cupón válido devuelve el descuento y el importe resultante. Consultarlo o validarlo no consume un uso. |
 | CA-09 | El uso se registra únicamente cuando Ventas y Postventa confirma definitivamente el pedido y el cupón fue el beneficio seleccionado. |
 | CA-10 | Una confirmación repetida del mismo pedido y cupón no debe consumir otro uso. |
 | CA-11 | Si varias compras intentan consumir simultáneamente los últimos usos, el sistema no debe superar el límite configurado. |
-| CA-12 | Una anulación posterior repone o conserva el uso según `restaurar_uso_en_cancelacion` y únicamente tras recibir una comunicación homologada de Ventas/Postventa; la operación de restitución es idempotente y nunca duplica capacidad. |
+| CA-12 | Una cancelación homologada restituye o conserva el uso de acuerdo con `politica_cancelacion`. La restitución es idempotente y nunca duplica capacidad. |
 | CA-13 | La promoción asociada declara su política de combinabilidad. El cupón puede ser exclusivo o combinarse con beneficios compatibles; el evaluador compara únicamente combinaciones permitidas y el cupón consume uso solo si forma parte del beneficio finalmente elegido. |
 
 | CA-14 | Pricing entrega regular/oferta separadamente. La oferta puede participar como alternativa o como beneficio compatible únicamente si la política comercial lo permite; los porcentajes/montos se calculan sobre bases definidas explícitamente y no se reaplica accidentalmente el mismo descuento. |

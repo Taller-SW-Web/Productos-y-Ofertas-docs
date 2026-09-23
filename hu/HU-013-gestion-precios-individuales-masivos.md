@@ -66,9 +66,9 @@
 * **Entonces** cancela la transacción completa, no actualiza ninguno de los otros 499 productos y genera un reporte detallando: "Fila 312: El precio de oferta no puede ser mayor o igual al regular".
 
 ### Escenario 6: Carga masiva con tolerancia a fallos (`allow_partial=true`)
-* **Dado** que se envía un archivo masivo de 100 filas con el parámetro `allow_partial=true`, conteniendo 98 filas válidas y 2 filas con SKU inexistente,
-* **Cuando** se ejecuta el procesamiento masivo,
-* **Entonces** el sistema actualiza de manera efectiva las 98 filas válidas, asocia a todas ellas el mismo `batch_id` para auditoría, responde HTTP 207 y provee un archivo descargable con el detalle de las 2 filas rechazadas.
+* **Dado** un archivo de 100 filas con `allow_partial=true`, 98 válidas y 2 inválidas,
+* **Cuando** se procesa mediante el flujo asíncrono de carga,
+* **Entonces** la admisión responde HTTP `202` con `batch_id`; al finalizar, el lote queda en estado de éxito parcial, aplica las 98 filas válidas dentro de Pricing y expone un reporte de las 2 rechazadas. (Si existiese una variante síncrona del contrato que complete la operación dentro de la misma solicitud, puede responder HTTP `207 Multi-Status`).
 
 ---
 

@@ -110,15 +110,16 @@ y compense transaccionalmente ante cancelaciones o devoluciones.
 
 ## Dependencias dentro de Productos y Ofertas
 
-|  |  |
-| --- | --- |
-| **Funcionalidad interna** | **Información necesaria** |
-| **Gestión de productos y variantes** | Identificador de SKU, estado (activo/inactivo) y stock unitario de cada variante para calcular disponibilidad y procesar la inhabilitación reactiva ante baja de componentes. |
-| **Gestión de inventario (Kardex)** | Ejecución de débitos y créditos transaccionales de stock sobre las variantes componentes ante eventos de compra o compensación. |
-| **Gestión de precios (individuales)** | Precios base vigentes de las variantes para validar que el precio del paquete sea estrictamente menor a su suma acumulada. |
+| Funcionalidad interna | Información necesaria |
+|---|---|
+| **Gestión de productos y variantes** | Identidad del SKU vendible, producto/variante a la que pertenece y estado comercial (`BORRADOR`, `ACTIVO`, `INACTIVO`) para impedir componentes no elegibles y reaccionar a `catalog.sku.deactivated`. **No suministra stock.** |
+| **Gestión de inventario** | `available` por SKU/ubicación para la proyección informativa de disponibilidad; ejecución ACID del consumo de componentes ante la confirmación contractual; compensaciones por cancelación/devolución cuando corresponda. |
+| **Gestión de precios** | `precio_regular` y precio público efectivo vigente del SKU (`precio_oferta` de Pricing cuando exista; de lo contrario regular) para validar que `precio_combo` sea inferior a ambas referencias. |
 
 ## Reglas acordadas de negocio y arquitectura
 
+* **Disponibilidad informativa:** La disponibilidad del combo se calcula como $\min(\lfloor available_i / cantidad_i \rfloor)$ sobre la proyección conocida de Inventario, sin constituir una reserva ni garantía de venta.
+* **Combinabilidad:** La combinabilidad del beneficio propio del combo con promociones y cupones pertenece a la política del motor de Promociones; el MVP puede usar exclusividad por defecto, pero no es una invariabilidad arquitectónica.
 * **Baja de productos individuales:** Si un SKU componente es desactivado en el catálogo, **el combo se deshabilita y oculta automáticamente en los canales de venta** y se genera una notificación al gestor comercial para su revisión.
 * **Devoluciones:** Ventas/Postventa define si una devolución de combo es total o parcial. Inventario repone únicamente las líneas y cantidades aceptadas físicamente que reciba en el contrato homologado; esta funcionalidad no impone una política de devolución al módulo propietario del pedido.
 * **Anidamiento:** **Prohibido el anidamiento**. Un paquete solo puede conformarse por artículos y variantes directas, descartando complejidades recursivas.

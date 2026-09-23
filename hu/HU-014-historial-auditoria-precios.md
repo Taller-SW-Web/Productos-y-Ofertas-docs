@@ -12,7 +12,7 @@
 | :--- | :--- |
 | **Rol (Como)** | Usuario autorizado para auditoría de precios (permisos asignados por Seguridad y Usuarios) |
 | **Acción (Quiero)** | Registrar de forma automática e inmutable cada cambio de precio con su contrato completo y consultar o exportar el historial cronológico (en CSV o PDF) con filtros por SKU, usuario, fechas, canal y lote |
-| **Beneficio (Para)** | Contar con trazabilidad absoluta (quién, cuándo, valor anterior, valor nuevo, variación %, motivo, canal, IP), resolviendo contingencias operativas, comerciales o legales y garantizando el cumplimiento normativo |
+| **Beneficio (Para)** | Contar con trazabilidad de cambios de precio para control operativo, auditoría y soporte de obligaciones aplicables, sujetas a las políticas y validaciones legales correspondientes |
 
 ---
 
@@ -28,7 +28,7 @@
 | **CA-06** | **Paginación y Tiempos de Respuesta:** La consulta debe ser paginada y responder en menos de 800 ms. Si no existen registros para los filtros seleccionados, retorna HTTP `200 OK` con un arreglo vacío (`[]`) y total de elementos 0, mostrando en interfaz: "No se registraron cambios de precio bajo los criterios seleccionados". |
 | **CA-07** | **Exportación de Registros (CSV y PDF):** Permite exportar los registros consultados. La exportación en formato **CSV** soporta hasta 100,000 filas para análisis masivo; la exportación en **PDF** está restringida a un máximo de 500 registros para reportes ejecutivos de control con membrete oficial. |
 | **CA-08** | **Seguridad y Accesos:** La consulta/exportación requiere permisos `PRICING_AUDIT_READ` y `PRICING_AUDIT_EXPORT` según operación. Seguridad y Usuarios decide qué roles reciben esos permisos; Auditoría no crea ni administra roles propios. |
-| **CA-09** | **Política de Retención y Archivado:** La retención es configurable por política (`RETENTION_HOT_MONTHS`, `RETENTION_ARCHIVE_YEARS`). Para el MVP se proponen 24 meses completos en caliente y cinco años adicionales en frío, sin afirmar que esos plazos respondan por sí solos a una obligación legal. El archivado verifica integridad/recuperabilidad antes de retirar la copia caliente. |
+| **CA-09** | **Política de Retención y Archivado:** La retención se configura mediante `AUDIT_HOT_RETENTION_MONTHS` y `AUDIT_ARCHIVE_RETENTION_YEARS`. Para el MVP los valores iniciales son 24 meses en almacenamiento caliente y 5 años adicionales de archivo. Estos valores son configuración administrativa y no se presentan como obligación legal universal. El archivado verifica integridad/recuperabilidad antes de retirar la copia caliente. |
 
 ---
 

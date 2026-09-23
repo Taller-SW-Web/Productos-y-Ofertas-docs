@@ -74,11 +74,12 @@ Si el cupón tiene monto mínimo, la compra elegible debe alcanzar o superar dic
 ### Requisito 4: Validar límites de uso
 
 Si existe límite global o por cliente:
-- cada límite debe ser un entero positivo;
-- el límite global no puede reducirse por debajo de los usos globales ya consumidos;
-- el límite por cliente no puede configurarse con un valor superior al global cuando ambos existan;
-- un cupón agotado globalmente no puede validarse como aplicable;
-- si existe `max_usos_por_cliente`, la validación requiere una `customer_ref` suministrada por el canal/Ventas y rechaza al cliente que ya alcanzó su límite. La funcionalidad no consulta directamente la base de Seguridad y Usuarios.
+- cada límite debe ser entero positivo;
+- `max_usos_global` no puede reducirse por debajo de `usos_globales_consumidos`;
+- cuando se modifique `max_usos_por_cliente`, el nuevo valor no puede quedar por debajo del mayor consumo ya registrado para un `customer_ref` bajo ese cupón;
+- si ambos límites existen, `max_usos_por_cliente <= max_usos_global`;
+- un cupón globalmente agotado no es aplicable;
+- si existe límite por cliente, la evaluación exige `customer_ref`.
 
 ### Requisito 5: Validar cupón por API sin consumirlo
 

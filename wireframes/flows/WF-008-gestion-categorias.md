@@ -1,6 +1,6 @@
 # WF-008 — Gestión de categorías y subcategorías
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-008-gestion-categorias.md`), HU individual de esta funcionalidad (`../../hu/HU-008-gestion-categorias.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -11,7 +11,7 @@ Antes de diseñar:
 
 1. Consulta ../../specs/SPEC-008-gestion-categorias.md.
 2. Consulta ../../hu/HU-008-gestion-categorias.md.
-3. Consulta ../../DESIGN.md.
+3. Consulta ../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
 Prioridad de fuentes:
@@ -40,8 +40,7 @@ Reglas de producción:
   confirma que no hay productos activos asociados.
 - La reactivación exige que el padre (si lo hay) esté activo.
 - NUNCA muestres eliminación física de una categoría.
-- No incluyas controles de SEO/slugs ni de asociación de características:
-  corresponden a WF-012 y WF-010.
+- La edición completa de slug y metadatos SEO pertenece a WF-012. Sin embargo, la creación de una categoría debe mostrar el **slug final generado por la capacidad SEO antes de completar la confirmación**, porque SPEC/HU-012 exigen que una colisión resuelta mediante sufijo no cambie la URL de manera silenciosa. WF-008 no permite editar manualmente metadatos SEO; únicamente presenta el slug generado y permite confirmar o volver antes de completar la creación/publicación administrativa. No incluyas controles de asociación de características (pertenecen a WF-010).
 - No elijas una librería de UI ni una estrategia CSS.
 - Usa datos ficticios y no consumas APIs reales.
 - Numera las anotaciones como A-01, A-02, A-03, etc.
@@ -200,20 +199,23 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 ### Flujo B — Crear categoría raíz
 
 1. Desde S-01, el gestor selecciona Crear categoría.
-2. En S-02 ingresa nombre (obligatorio) y descripción, imagen y orden
-   (opcionales).
-3. Deja el campo Categoría padre vacío.
-4. El sistema valida los datos y crea la raíz.
-5. Se muestra S-01 con el nodo creado.
+2. En S-02 ingresa nombre (obligatorio), descripción, imagen y orden (opcionales), dejando Categoría padre vacío.
+3. El sistema valida la jerarquía y solicita/genera el slug normalizado desde la capacidad SEO.
+4. Si existe colisión automática, obtiene el slug final con sufijo (`slug-2`, `slug-3`).
+5. La interfaz muestra el slug final generado al gestor para su confirmación antes de guardar.
+6. El gestor confirma.
+7. El sistema crea la categoría raíz y publica el cambio.
+8. La edición posterior de slug/metadatos se realiza en WF-012.
 
 ### Flujo C — Crear subcategoría
 
-1. Desde S-01, el gestor selecciona Añadir subcategoría sobre una raíz.
+1. Desde S-01, el gestor selecciona Añadir subcategoría sobre una raíz activa.
 2. En S-02 el campo Categoría padre llega preseleccionado con esa raíz.
 3. El gestor completa nombre, descripción, imagen y orden.
-4. El sistema valida que el padre esté activo y que no se excedan los dos
-   niveles.
-5. Se muestra S-01 con la subcategoría bajo su raíz.
+4. El sistema valida que el padre esté activo y que no se exceda `MAX_CATEGORY_DEPTH = 2`.
+5. Solicita/genera el slug normalizado (y sufijo ante colisión), mostrándolo al gestor para confirmación.
+6. El gestor confirma y el sistema crea la subcategoría bajo su raíz.
+7. La edición posterior de slug/metadatos se realiza en WF-012.
 
 ### Flujo D — Editar y reasignar padre
 

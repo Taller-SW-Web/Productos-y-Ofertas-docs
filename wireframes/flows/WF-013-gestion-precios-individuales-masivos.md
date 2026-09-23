@@ -1,6 +1,6 @@
 # WF-013 — Gestión de precios individuales y masivos
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas de esta revisión:** `specs/SPEC-013-gestion-precios-individuales-masivos.md` y `hu/HU-013-gestion-precios-individuales-masivos.md`. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -1188,7 +1188,7 @@ Aplicar DESIGN.md como fuente de representación visual.
 - Pricing es propietario de precio base del producto y overrides opcionales por SKU. El detalle debe mostrar **precio regular vigente, precio de oferta opcional, scope de canal (`channel_id`), vigencia (`valid_from`/`valid_until`), versión (`price_version`) y origen heredado/override** sin tratarlos como una sola cifra. Se aplican guardrails con advertencias ante variaciones porcentuales extraordinarias sin inferir costos de producto.
 - No se permiten intervalos temporales superpuestos para un mismo SKU, tipo de precio, canal y moneda.
 - `pricing.price.changed` es emitido **por Pricing tras un cambio persistido**; no es un comando que Bulk le envía para cambiar precios. Para la importación general de WF-001 se usa `pricing.bulk.price.apply.requested` y su resultado correlacionado. La carga de precios propia de Pricing continúa como flujo diferenciado, con **All-or-Nothing por defecto** y `allow_partial=true` como alternativa aprobada.
-- La **oferta de Pricing es alternativa** a promociones automáticas/cupones, no su base acumulativa. Los descuentos de Promociones se calculan sobre el regular vigente por SKU; al comparar totales finales de una misma cesta, oferta Pricing gana en empate con promociones o cupones.
+- Pricing solo gestiona precios base/oferta, versión, canal y vigencias; el motor de promociones y cupones resuelve combinaciones y desempates con sus propias reglas (1.º: no consume cupón; 2.º: menor prioridad numérica; 3.º: ID de promoción estable).
 - Auditoría registra primer precio como CREACION con `precio_anterior=null` y `variacion_porcentual=null`; mostrar «Sin precio anterior» en lugar de 0 o de una variación inventada.
 - El importador exclusivo de Pricing utiliza `accion_precio_oferta`: celda vacía sin acción conserva; `ESTABLECER` exige importe; `ELIMINAR` con oferta vacía la retira explícitamente. No se admite borrar oferta mediante un blanco accidental.
 

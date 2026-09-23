@@ -1,6 +1,6 @@
 # WF-002 — Gestión de combos de productos
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-002-gestion-combos-productos.md`), HU individual de esta funcionalidad (`../../hu/HU-002-gestion-combos-productos.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -11,7 +11,7 @@ Antes de diseñar:
 
 1. Consulta ../../specs/SPEC-002-gestion-combos-productos.md.
 2. Consulta ../../hu/HU-002-gestion-combos-productos.md.
-3. Consulta ../../DESIGN.md.
+3. Consulta ../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
 Prioridad de fuentes:
@@ -165,9 +165,7 @@ El patrón exacto de notificación debe alinearse con el sistema global.
 
 - El usuario tiene una sesión válida.
 - El usuario posee el permiso requerido para la acción.
-- Existen productos simples o SKU/variantes activos que puedan seleccionarse.
-- Los servicios de catálogo, precios e inventario proporcionan estado, precio
-  vigente y stock de los componentes.
+- Los componentes se identifican por SKU vendible. Catálogo suministra identidad y estado; Inventario suministra la disponibilidad proyectada y ejecuta el movimiento autoritativo de existencias. El precio del combo se valida contra `suma_regular` y `suma_publica_vigente` obtenidas de Pricing.
 
 ### Puntos de entrada
 
@@ -396,7 +394,7 @@ precio y disponibilidad antes de guardar.
 | Región | Componente | Contenido | Comportamiento |
 |---|---|---|---|
 | Datos generales | Campos | Nombre, descripción | Ambos obligatorios según CA-02 |
-| Componentes | Tabla/lista editable | SKU, producto/variante, precios vigentes (regular y oferta si existe), stock, cantidad, disponibilidad proporcional | Mínimo dos SKUs distintos |
+| Componentes | Tabla/lista editable | SKU, producto/variante, precios vigentes (regular y oferta si existe), disponibilidad proyectada de Inventario, cantidad, disponibilidad proporcional | Mínimo dos SKUs distintos |
 | Selección | Botón | Añadir componentes | Abre S-03 |
 | Precio | Resumen + campo | Suma regular, suma pública vigente y precio del combo | Validación bloqueante |
 | Disponibilidad | Resultado calculado | Unidades disponibles del combo y componente limitante | Solo lectura |

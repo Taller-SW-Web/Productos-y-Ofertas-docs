@@ -1,6 +1,6 @@
 # WF-012 — Gestión de SEO y metadatos
 
-> **Fuente normativa de esta revisión:** `specs_consolidado_final.md` y `hu_consolidado_final.md` (18-09-2026). Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas de esta revisión:** `specs/SPEC-012-seo-metadatos.md` y `hu/HU-012-seo-metadatos.md`. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -11,7 +11,7 @@ Antes de diseñar:
 
 1. Consulta ../../specs/SPEC-012-seo-metadatos.md.
 2. Consulta ../../hu/HU-012-seo-metadatos.md.
-3. Consulta ../../DESIGN.md.
+3. Consulta ../DESIGN.md.
 4. Usa este documento para la composición, interacción y estados del flujo.
 
 Prioridad de fuentes:
@@ -29,8 +29,8 @@ Reglas de producción:
 
 - No agregues campos, permisos, endpoints ni reglas no documentadas.
 - El slug se normaliza automáticamente en minúsculas, sin tildes ni espacios.
-- Política de duplicados: en la creación o regeneración automática se aplica un
-  sufijo numérico incremental silencioso (ej. `futbol-2`); en la edición manual
+- Política de duplicados y traspaso con WF-008: en la creación o regeneración automática se aplica un
+  sufijo numérico incremental (ej. `futbol-2`), el cual se muestra visible en el formulario antes de confirmar para que el usuario no descubra el cambio tras guardar; en la edición manual
   el sistema RECHAZA el duplicado con el error “El slug indicado ya está en
   uso” y no autogenera sufijos.
 - Meta-título: límite recomendado 70 caracteres. Meta-descripción: límite
