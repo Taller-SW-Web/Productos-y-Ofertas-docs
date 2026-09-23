@@ -18,9 +18,12 @@
     .btn{min-height:44px;border:1px solid var(--n90);border-radius:var(--r);background:#fff;color:var(--n90);padding:10px 16px;font-weight:650;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn:hover{background:var(--n10)}.btn-primary,.primary{background:var(--n90);color:#fff}.btn-primary:hover,.primary:hover{background:#000}.link{border-color:transparent;padding-inline:8px}.btn:disabled{color:var(--n50);border-color:var(--n30);background:var(--n10)}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .toolbar{border:1px solid var(--n30);padding:16px;display:grid;grid-template-columns:minmax(220px,1fr) 180px 180px;gap:12px;margin-bottom:16px}.field{display:grid;gap:6px}.field label,.label{font-size:13px;font-weight:700}.input,.select{width:100%;min-height:44px;border:1px solid var(--n30);border-radius:var(--r);background:#fff;color:var(--n90);padding:9px 12px}.input[aria-invalid=true],.select[aria-invalid=true]{border:2px solid var(--n90)}.hint,.error{font-size:13px}.hint{color:var(--n50)}.error{font-weight:650}.panel{border:1px solid var(--n30);padding:24px;background:#fff}.panel+.panel{margin-top:16px}.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--n30);width:100%}table{width:100%;min-width:600px;border-collapse:collapse}th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--n30);vertical-align:middle}th{background:var(--n10);font-size:12px;text-transform:uppercase;letter-spacing:.05em}tbody tr:last-child td{border-bottom:0}.status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700}.dot{width:9px;height:9px;border:1px solid var(--n90);border-radius:50%}.status.on .dot{background:var(--n90)}.actions{white-space:nowrap}
     .tabs{display:flex;border-bottom:1px solid var(--n30);margin-bottom:24px;overflow:auto}.tab{min-height:44px;border:0;border-bottom:3px solid transparent;background:#fff;padding:8px 18px;cursor:pointer;color:var(--n50);white-space:nowrap}.tab[aria-selected=true]{border-color:var(--n90);color:var(--n90);font-weight:700}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.span2{grid-column:span 2}.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}.choice{border:1px solid var(--n30);padding:14px;cursor:pointer}.choice.selected{border:2px solid var(--n90);padding:13px}.product-picker{border:1px solid var(--n30);padding:16px}.product{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--n30)}.product:first-of-type{margin-top:12px}.product input{width:20px;height:20px}.form-actions{display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--n30)}
-    .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--n30);border:1px solid var(--n30)}.metric{background:#fff;padding:18px}.metric strong{display:block;font-size:24px}.result{border:1px solid var(--n90);padding:20px;margin-top:18px}.result-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.calc{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px;padding-top:18px;border-top:1px solid var(--n30)}.calc strong{display:block;font-size:22px}.notice{border:1px solid var(--n90);padding:14px 16px;display:flex;gap:12px}.empty{text-align:center;padding:56px 20px;border:1px solid var(--n30)}
+    .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--n30);border:1px solid var(--n30)}.metric{background:#fff;padding:18px}.metric strong{display:block;font-size:24px}.notice{border:1px solid var(--n90);padding:14px 16px;display:flex;gap:12px}.empty{text-align:center;padding:56px 20px;border:1px solid var(--n30)}
     .overlay{position:fixed;inset:0;background:rgba(17,24,39,.55);display:grid;place-items:center;padding:24px;z-index:20}.dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow-y:auto;background:#fff;border:1px solid var(--n90);padding:24px}.dialog h2{margin-bottom:8px}.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}.toast{position:fixed;right:24px;bottom:24px;max-width:380px;background:#fff;border:1px solid var(--n90);padding:14px 16px;z-index:30}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    @media (max-width: 900px){.nav{display:none}.page-head{align-items:flex-start;flex-direction:column}.toolbar{grid-template-columns:1fr 1fr}.toolbar .field:first-child{grid-column:span 2}.form-grid{grid-template-columns:1fr}.span2{grid-column:auto}.metrics,.calc{grid-template-columns:1fr}.panel{padding:18px}}
+    .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600}
+    .badge-exclusive{background:var(--n90);color:#fff}
+    .badge-combinable{border:1px solid var(--n90);background:var(--n10);color:var(--n90)}
+    @media (max-width: 900px){.nav{display:none}.page-head{align-items:flex-start;flex-direction:column}.toolbar{grid-template-columns:1fr 1fr}.toolbar .field:first-child{grid-column:span 2}.form-grid{grid-template-columns:1fr}.span2{grid-column:auto}.metrics{grid-template-columns:1fr}.panel{padding:18px}}
     @media (max-width: 600px){:root{--g:16px}.toolbar{grid-template-columns:1fr}.toolbar .field:first-child{grid-column:auto}.page-head .btn{width:100%}.choices{grid-template-columns:1fr}.form-actions,.dialog-actions{flex-direction:column-reverse}.form-actions .btn,.dialog-actions .btn{width:100%}.toast{left:16px;right:16px}.topbar-in{padding-inline:16px}}
   </style>
 </head>
@@ -30,66 +33,295 @@
   <script>
   (()=>{
     const promotions=[
-      {name:'Semana Running',type:'Porcentaje',value:15,state:'ACTIVA',start:'2026-09-15T00:00',end:'2026-09-30T23:59',products:['Zapatillas Run Pro','Polo Dry Fit']},
-      {name:'S/ 25 en running',type:'Monto fijo',value:25,state:'ACTIVA',start:'2026-09-10T00:00',end:'2026-10-10T23:59',products:['Zapatillas Run Pro']},
-      {name:'Liquidación invierno',type:'Porcentaje',value:30,state:'INACTIVA',start:'2026-08-01T00:00',end:'2026-08-31T23:59',products:['Casaca térmica']}
+      {
+        name:'Semana Running',
+        type:'Porcentaje',
+        value:15,
+        state:'ACTIVA',
+        start:'2026-09-15T00:00',
+        end:'2026-09-30T23:59',
+        products:['Zapatillas Run Pro','Polo Dry Fit'],
+        modalidad:'AUTOMATICA',
+        prioridad:1,
+        canales:['Marketplace','Chatbot','Retail'],
+        acumulable_oferta_directa:false,
+        acumulable_promociones:false,
+        acumulable_cupones:false
+      },
+      {
+        name:'S/ 25 en running',
+        type:'Monto fijo',
+        value:25,
+        state:'ACTIVA',
+        start:'2026-09-10T00:00',
+        end:'2026-10-10T23:59',
+        products:['Zapatillas Run Pro'],
+        modalidad:'AUTOMATICA',
+        prioridad:2,
+        canales:['Marketplace','Retail'],
+        acumulable_oferta_directa:true,
+        acumulable_promociones:false,
+        acumulable_cupones:true
+      },
+      {
+        name:'Liquidación invierno',
+        type:'Porcentaje',
+        value:30,
+        state:'INACTIVA',
+        start:'2026-08-01T00:00',
+        end:'2026-08-31T23:59',
+        products:['Casaca térmica'],
+        modalidad:'AUTOMATICA',
+        prioridad:3,
+        canales:['Marketplace'],
+        acumulable_oferta_directa:false,
+        acumulable_promociones:false,
+        acumulable_cupones:false
+      }
     ];
     const app=document.getElementById('app'),overlay=document.getElementById('overlay'),toastEl=document.getElementById('toast');let timer;
     const esc=s=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
     function toast(t){clearTimeout(timer);toastEl.textContent=t;toastEl.hidden=false;timer=setTimeout(()=>toastEl.hidden=true,3000)}
     function head(title,copy,action=''){return `<div class="crumbs">Productos y ofertas / Promociones</div><div class="page-head"><div><h1>${title}</h1><p class="lede">${copy}</p></div>${action}</div>`}
-    function list(){location.hash='#lista';app.innerHTML=head('Ofertas y promociones','Configura beneficios y consulta cómo se aplican a una compra.','<div class="row"><button class="btn" data-action="evaluate">Evaluar compra</button><button class="btn primary" data-action="new">Crear promoción</button></div>')+`
+    
+    function getCombinationBadge(p){
+      const isExcl = !p.acumulable_oferta_directa && !p.acumulable_promociones && !p.acumulable_cupones;
+      if(isExcl) return '<span class="badge badge-exclusive" title="No combinable con ningún otro beneficio">Exclusiva</span>';
+      const parts = [];
+      if(p.acumulable_oferta_directa) parts.push('Pricing');
+      if(p.acumulable_promociones) parts.push('Otras promos');
+      if(p.acumulable_cupones) parts.push('Cupones');
+      return `<span class="badge badge-combinable" title="Combinable con: ${parts.join(', ')}">Combina (${parts.join(', ')})</span>`;
+    }
+
+    function list(){
+      location.hash='#lista';
+      app.innerHTML=head('Ofertas y promociones','Administra beneficios promocionales y su matriz de combinabilidad granular.','<div class="row"><button class="btn primary" data-action="new">Crear promoción</button></div>')+`
       <section class="toolbar" aria-label="Filtros"><div class="field"><label for="q">Buscar promoción o producto</label><input class="input" id="q" placeholder="Ej. Semana Running"></div><div class="field"><label for="state">Estado</label><select class="select" id="state"><option>Todos</option><option>Activas</option><option>Inactivas</option></select></div><div class="field"><label for="type">Tipo</label><select class="select" id="type"><option>Todos</option><option>Porcentaje</option><option>Monto fijo</option></select></div></section>
-      <section class="panel" aria-labelledby="title-list"><div class="panel-head"><div><h2 id="title-list">Promociones</h2><p class="small muted" id="count"></p></div></div><div id="rows"></div></section>`;['q','state','type'].forEach(id=>document.getElementById(id).addEventListener(id==='q'?'input':'change',rows));rows()}
-    function rows(){const q=document.getElementById('q').value.toLowerCase(),s=document.getElementById('state').value,t=document.getElementById('type').value;const data=promotions.filter(p=>(p.name+' '+p.products.join(' ')).toLowerCase().includes(q)&&(s==='Todos'||(s==='Activas'&&p.state==='ACTIVA')||(s==='Inactivas'&&p.state==='INACTIVA'))&&(t==='Todos'||t===p.type));document.getElementById('count').textContent=`${data.length} resultado${data.length===1?'':'s'}`;document.getElementById('rows').innerHTML=data.length?`<div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Descuento</th><th>Productos</th><th>Vigencia</th><th>Estado</th><th><span class="sr">Acciones</span></th></tr></thead><tbody>${data.map(p=>{const i=promotions.indexOf(p);return `<tr><td><strong>${p.name}</strong></td><td>${p.type==='Porcentaje'?p.value+' %':'S/ '+p.value.toFixed(2)}</td><td>${p.products.length} producto${p.products.length===1?'':'s'}</td><td>${date(p.start)} — ${date(p.end)}</td><td><span class="status ${p.state==='ACTIVA'?'on':''}"><span class="dot"></span>${p.state}</span></td><td class="actions"><button class="btn link" data-action="detail" data-index="${i}">Ver detalle</button></td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty"><h3>No hay coincidencias</h3><p class="muted">Ajusta los filtros de búsqueda.</p></div>'}
+      <section class="panel" aria-labelledby="title-list"><div class="panel-head"><div><h2 id="title-list">Promociones</h2><p class="small muted" id="count"></p></div></div><div id="rows"></div></section>`;
+      ['q','state','type'].forEach(id=>document.getElementById(id).addEventListener(id==='q'?'input':'change',rows));
+      rows();
+    }
+
+    function rows(){
+      const q=document.getElementById('q').value.toLowerCase(),s=document.getElementById('state').value,t=document.getElementById('type').value;
+      const data=promotions.filter(p=>(p.name+' '+p.products.join(' ')).toLowerCase().includes(q)&&(s==='Todos'||(s==='Activas'&&p.state==='ACTIVA')||(s==='Inactivas'&&p.state==='INACTIVA'))&&(t==='Todos'||t===p.type));
+      document.getElementById('count').textContent=`${data.length} resultado${data.length===1?'':'s'}`;
+      document.getElementById('rows').innerHTML=data.length?`<div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Descuento</th><th>Combinabilidad</th><th>Productos</th><th>Vigencia</th><th>Estado</th><th><span class="sr">Acciones</span></th></tr></thead><tbody>${data.map(p=>{const i=promotions.indexOf(p);return `<tr><td><strong>${esc(p.name)}</strong></td><td>${p.type==='Porcentaje'?p.value+' %':'S/ '+p.value.toFixed(2)}</td><td>${getCombinationBadge(p)}</td><td>${p.products.length} producto${p.products.length===1?'':'s'}</td><td>${date(p.start)} — ${date(p.end)}</td><td><span class="status ${p.state==='ACTIVA'?'on':''}"><span class="dot"></span>${p.state}</span></td><td class="actions"><button class="btn link" data-action="detail" data-index="${i}">Ver detalle</button></td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty"><h3>No hay coincidencias</h3><p class="muted">Ajusta los filtros de búsqueda.</p></div>';
+    }
+
     function date(v){return new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(v))}
-    function form(i=null){const p=i===null?{name:'',type:'Porcentaje',value:'',state:'ACTIVA',start:'',end:'',products:[]}:promotions[i];location.hash=i===null?'#nueva':'#editar';app.innerHTML=head(i===null?'Crear promoción':'Editar promoción','Define el descuento, los productos participantes y el periodo de aplicación.')+`
+
+    function form(i=null){
+      const p=i===null?{name:'',type:'Porcentaje',value:'',state:'ACTIVA',start:'',end:'',products:[],modalidad:'AUTOMATICA',prioridad:1,canales:['Marketplace','Chatbot','Retail'],acumulable_oferta_directa:false,acumulable_promociones:false,acumulable_cupones:false}:promotions[i];
+      location.hash=i===null?'#nueva':'#editar';
+      app.innerHTML=head(i===null?'Crear promoción':'Editar promoción','Define el descuento, modalidad, vigencia y política de combinación granular (3 vías).')+`
       <form class="panel" id="form" novalidate>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-            <div>
-              <label for="p-modalidad"><strong>Modalidad:</strong></label>
-              <select id="p-modalidad" style="width:100%;min-height:44px;border:1px solid var(--neutral-30);padding:8px 12px;background:var(--surface);">
-                <option value="AUTOMATICA">AUTOMÁTICA (Al carrito)</option>
-                <option value="CUPON">CUPÓN (Requiere código)</option>
-              </select>
-            </div>
-            <div>
-              <label for="p-prioridad"><strong>Prioridad de evaluación:</strong></label>
-              <input type="number" id="p-prioridad" value="1" min="1" style="width:100%;min-height:44px;border:1px solid var(--neutral-30);padding:8px 12px;background:var(--surface);" />
-            </div>
-          </div>
-          <div style="margin-bottom:16px;">
-            <label><strong>Canales habilitados:</strong></label>
-            <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
-              <label><input type="checkbox" id="ch-mkt" checked /> Marketplace</label>
-              <label><input type="checkbox" id="ch-chat" checked /> Chatbot</label>
-              <label><input type="checkbox" id="ch-ret" checked /> Retail</label>
-            </div>
-          </div>
-          <div style="margin-bottom:16px;">
-            <label for="p-combinabilidad"><strong>Política de combinabilidad:</strong></label>
-            <select id="p-combinabilidad" style="width:100%;min-height:44px;border:1px solid var(--neutral-30);padding:8px 12px;background:var(--surface);">
-              <option value="EXCLUSIVE">Exclusiva (No combinable con otras promociones)</option>
-              <option value="COMBINABLE">Combinable (Aplica en orden determinista de menor importe)</option>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <label for="p-modalidad"><strong>Modalidad:</strong></label>
+            <select id="p-modalidad" class="select" style="margin-top:6px">
+              <option value="AUTOMATICA" ${p.modalidad==='AUTOMATICA'?'selected':''}>AUTOMÁTICA (Al carrito)</option>
+              <option value="CUPON" ${p.modalidad==='CUPON'?'selected':''}>CUPÓN (Requiere código de cupón asociado)</option>
             </select>
           </div>
-        <div class="panel-head"><div><h2>Configuración</h2><p class="small muted">Los campos marcados con * son obligatorios.</p></div></div><div class="form-grid">
-        <div class="field span2"><label for="name">Nombre *</label><input id="name" class="input" value="${esc(p.name)}" placeholder="Ej. Semana Running"><span class="error" id="e-name" hidden></span></div>
-        <fieldset class="field span2" style="border:0;padding:0;margin:0"><legend class="label">Tipo de descuento *</legend><div class="choices"><label class="choice ${p.type==='Porcentaje'?'selected':''}"><input type="radio" name="discount" value="Porcentaje" ${p.type==='Porcentaje'?'checked':''}> Porcentaje</label><label class="choice ${p.type==='Monto fijo'?'selected':''}"><input type="radio" name="discount" value="Monto fijo" ${p.type==='Monto fijo'?'checked':''}> Monto fijo</label></div></fieldset>
-        <div class="field"><label for="value">Valor del descuento *</label><input id="value" class="input" type="number" min="0.01" step="0.01" value="${p.value}" placeholder="0.00"><span class="hint" id="value-hint">Mayor que 0 y hasta 100 %.</span><span class="error" id="e-value" hidden></span></div>
-        <div class="field"><label for="status">Estado inicial *</label><select id="status" class="select"><option ${p.state==='ACTIVA'?'selected':''}>ACTIVA</option><option ${p.state==='INACTIVA'?'selected':''}>INACTIVA</option></select></div>
-        <div class="field"><label for="start">Inicio *</label><input id="start" class="input" type="datetime-local" value="${p.start}"><span class="error" id="e-start" hidden></span></div><div class="field"><label for="end">Fin *</label><input id="end" class="input" type="datetime-local" value="${p.end}"><span class="error" id="e-end" hidden></span></div>
-        <div class="span2 product-picker"><h3>Productos participantes *</h3><p class="small muted">Solo se muestran productos activos.</p>${['Zapatillas Run Pro','Polo Dry Fit','Casaca térmica','Medias deportivas'].map((x,n)=>`<label class="product"><input type="checkbox" name="product" value="${x}" ${p.products.includes(x)?'checked':''}><span><strong>${x}</strong><span class="small muted" style="display:block">SKU-${110+n}</span></span><span>Activo</span></label>`).join('')}<span class="error" id="e-products" hidden></span></div>
-      </div><div class="form-actions"><button type="button" class="btn" data-action="back">Cancelar</button><button class="btn primary" type="submit">Guardar promoción</button></div></form>`;
-      document.querySelectorAll('[name=discount]').forEach(r=>r.addEventListener('change',discountChange));document.getElementById('form').addEventListener('submit',e=>save(e,i))}
-    function discountChange(e){document.querySelectorAll('.choice').forEach(x=>x.classList.toggle('selected',x.contains(e.target)));document.getElementById('value-hint').textContent=e.target.value==='Porcentaje'?'Mayor que 0 y hasta 100 %.':'Mayor que 0; se aplica una vez al subtotal elegible.'}
+          <div>
+            <label for="p-prioridad"><strong>Prioridad de evaluación:</strong></label>
+            <input type="number" id="p-prioridad" value="${p.prioridad||1}" min="1" class="input" style="margin-top:6px" />
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label><strong>Canales habilitados:</strong></label>
+          <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
+            <label><input type="checkbox" id="ch-mkt" ${p.canales.includes('Marketplace')?'checked':''} /> Marketplace</label>
+            <label><input type="checkbox" id="ch-chat" ${p.canales.includes('Chatbot')?'checked':''} /> Chatbot</label>
+            <label><input type="checkbox" id="ch-ret" ${p.canales.includes('Retail')?'checked':''} /> Retail</label>
+          </div>
+        </div>
+
+        <!-- Política de combinación granular 3 vías según WF-006 -->
+        <div style="border:1px solid var(--n30);padding:18px;border-radius:var(--r);margin-bottom:20px;background:var(--n10)">
+          <label style="font-weight:700;display:block;margin-bottom:4px;font-size:15px">Política de combinación (WF-006):</label>
+          <p class="small muted" style="margin:0 0 14px 0">Configura individualmente la compatibilidad con otros beneficios. Si todos los interruptores permanecen desmarcados, la promoción operará en régimen <strong>Exclusiva</strong>.</p>
+          <div style="display:grid;gap:10px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="comb-pricing" ${p.acumulable_oferta_directa?'checked':''}>
+              <span><strong>Combinar con oferta Pricing</strong> (permite acumular sobre precio oferta vigente de Pricing)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="comb-promos" ${p.acumulable_promociones?'checked':''}>
+              <span><strong>Combinar con otra promoción automática</strong> (permite coexistir con otras promociones activas)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="comb-cupones" ${p.acumulable_cupones?'checked':''}>
+              <span><strong>Combinar con cupón</strong> (permite coexistir con cupones de descuento válidos)</span>
+            </label>
+          </div>
+          <div id="comb-badge-wrap" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--n30);font-size:13px">
+            <span class="muted">Régimen resultante:</span> <span id="comb-badge-label"></span>
+          </div>
+        </div>
+
+        <div class="panel-head"><div><h2>Datos del descuento y vigencia</h2><p class="small muted">Los campos marcados con * son obligatorios.</p></div></div>
+        <div class="form-grid">
+          <div class="field span2"><label for="name">Nombre de la promoción *</label><input id="name" class="input" value="${esc(p.name)}" placeholder="Ej. Semana Running"><span class="error" id="e-name" hidden></span></div>
+          <fieldset class="field span2" style="border:0;padding:0;margin:0"><legend class="label">Tipo de descuento *</legend><div class="choices"><label class="choice ${p.type==='Porcentaje'?'selected':''}"><input type="radio" name="discount" value="Porcentaje" ${p.type==='Porcentaje'?'checked':''}> Porcentaje (%)</label><label class="choice ${p.type==='Monto fijo'?'selected':''}"><input type="radio" name="discount" value="Monto fijo" ${p.type==='Monto fijo'?'checked':''}> Monto fijo (S/)</label></div></fieldset>
+          <div class="field"><label for="value">Valor del descuento *</label><input id="value" class="input" type="number" min="0.01" step="0.01" value="${p.value}" placeholder="0.00"><span class="hint" id="value-hint">${p.type==='Porcentaje'?'Mayor que 0 y hasta 100 %.':'Mayor que 0; se aplica al subtotal elegible.'}</span><span class="error" id="e-value" hidden></span></div>
+          <div class="field"><label for="status">Estado inicial *</label><select id="status" class="select"><option ${p.state==='ACTIVA'?'selected':''}>ACTIVA</option><option ${p.state==='INACTIVA'?'selected':''}>INACTIVA</option></select></div>
+          <div class="field"><label for="start">Inicio vigencia *</label><input id="start" class="input" type="datetime-local" value="${p.start}"><span class="error" id="e-start" hidden></span></div><div class="field"><label for="end">Fin vigencia *</label><input id="end" class="input" type="datetime-local" value="${p.end}"><span class="error" id="e-end" hidden></span></div>
+          <div class="span2 product-picker"><h3>Productos participantes *</h3><p class="small muted">Solo se muestran productos activos.</p>${['Zapatillas Run Pro','Polo Dry Fit','Casaca térmica','Medias deportivas'].map((x,n)=>`<label class="product"><input type="checkbox" name="product" value="${x}" ${p.products.includes(x)?'checked':''}><span><strong>${x}</strong><span class="small muted" style="display:block">SKU-${110+n}</span></span><span>Activo</span></label>`).join('')}<span class="error" id="e-products" hidden></span></div>
+        </div>
+        <div class="form-actions"><button type="button" class="btn" data-action="back">Cancelar</button><button class="btn primary" type="submit">Guardar promoción</button></div>
+      </form>`;
+
+      function updateCombBadge(){
+        const p1 = document.getElementById('comb-pricing').checked;
+        const p2 = document.getElementById('comb-promos').checked;
+        const p3 = document.getElementById('comb-cupones').checked;
+        const lbl = document.getElementById('comb-badge-label');
+        if(!p1 && !p2 && !p3){
+          lbl.innerHTML = '<span class="badge badge-exclusive">Exclusiva</span> (No se combinará con ningún otro beneficio comercial)';
+        } else {
+          const parts = [];
+          if(p1) parts.push('Pricing');
+          if(p2) parts.push('Otras promociones');
+          if(p3) parts.push('Cupones');
+          lbl.innerHTML = `<span class="badge badge-combinable">Combinable</span> (Permite: ${parts.join(', ')})`;
+        }
+      }
+
+      ['comb-pricing','comb-promos','comb-cupones'].forEach(id=>{
+        document.getElementById(id).addEventListener('change', updateCombBadge);
+      });
+      updateCombBadge();
+
+      document.querySelectorAll('[name=discount]').forEach(r=>r.addEventListener('change',discountChange));
+      document.getElementById('form').addEventListener('submit',e=>save(e,i));
+    }
+
+    function discountChange(e){
+      document.querySelectorAll('.choice').forEach(x=>x.classList.toggle('selected',x.contains(e.target)));
+      document.getElementById('value-hint').textContent=e.target.value==='Porcentaje'?'Mayor que 0 y hasta 100 %.':'Mayor que 0; se aplica una vez al subtotal elegible.';
+    }
+
     function err(input,id,msg){input.setAttribute('aria-invalid','true');const el=document.getElementById(id);el.textContent=msg;el.hidden=false}
-    function save(e,i){e.preventDefault();document.querySelectorAll('.error').forEach(x=>x.hidden=true);document.querySelectorAll('[aria-invalid]').forEach(x=>x.removeAttribute('aria-invalid'));const name=document.getElementById('name'),value=document.getElementById('value'),start=document.getElementById('start'),end=document.getElementById('end'),type=document.querySelector('[name=discount]:checked').value,products=[...document.querySelectorAll('[name=product]:checked')];let bad=false;if(!name.value.trim()){err(name,'e-name','Ingresa un nombre.');bad=true}if(!value.value||Number(value.value)<=0||(type==='Porcentaje'&&Number(value.value)>100)){err(value,'e-value',type==='Porcentaje'?'Ingresa un porcentaje mayor que 0 y hasta 100.':'Ingresa un monto mayor que 0.');bad=true}if(!start.value){err(start,'e-start','Indica el inicio.');bad=true}if(!end.value||end.value<=start.value){err(end,'e-end','El fin debe ser posterior al inicio.');bad=true}if(!products.length){const x=document.getElementById('e-products');x.textContent='Selecciona al menos un producto.';x.hidden=false;bad=true}if(bad)return;const saved={name:name.value.trim(),type,value:Number(value.value),state:document.getElementById('status').value,start:start.value,end:end.value,products:products.map(x=>x.value)};if(i===null)promotions.unshift(saved);else promotions[i]=saved;toast(i===null?'Promoción creada correctamente.':'Cambios guardados.');setTimeout(list,500)}
-    function detail(i){const p=promotions[i];location.hash='#detalle';app.innerHTML=head(p.name,'Detalle de la promoción y sus condiciones.',`<button class="btn" data-action="edit" data-index="${i}">Editar</button>`)+`<section class="panel"><div class="panel-head"><div><h2>Resumen</h2><p class="small muted">Los cambios no alteran descuentos ya registrados en pedidos confirmados.</p></div><span class="status ${p.state==='ACTIVA'?'on':''}"><span class="dot"></span>${p.state}</span></div><div class="metrics"><div class="metric"><span class="small muted">Descuento</span><strong>${p.type==='Porcentaje'?p.value+' %':'S/ '+p.value.toFixed(2)}</strong><span class="small">${p.type}</span></div><div class="metric"><span class="small muted">Vigencia</span><strong class="small">${date(p.start)} — ${date(p.end)}</strong></div><div class="metric"><span class="small muted">Productos</span><strong>${p.products.length}</strong></div></div><div style="margin-top:20px"><h3>Productos participantes</h3><ul>${p.products.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="form-actions"><button class="btn" data-action="back">Volver al listado</button><button class="btn" data-action="confirm" data-index="${i}">${p.state==='ACTIVA'?'Desactivar':'Activar'} promoción</button></div></section>`}
-    function evaluate(){location.hash='#evaluar';app.innerHTML=head('Evaluar una compra','Compara los beneficios válidos y muestra únicamente el mejor resultado.')+`<section class="panel"><div class="panel-head"><div><h2>Datos de evaluación</h2><p class="small muted">El cálculo utiliza los precios vigentes.</p></div></div><div class="form-grid"><div class="field"><label for="product">Producto</label><select id="product" class="select"><option>Zapatillas Run Pro</option><option>Polo Dry Fit</option><option>Casaca térmica</option></select></div><div class="field"><label for="subtotal">Subtotal elegible</label><input id="subtotal" class="input" type="number" min="0" value="200"></div><div class="field span2"><label for="coupon">Cupón presentado</label><select id="coupon" class="select"><option value="">Sin cupón</option><option value="160">DEPORTE10 — resultado S/ 160.00</option><option value="170">RUNNING_25 — resultado S/ 170.00</option></select><span class="hint">Los beneficios no se acumulan.</span></div></div><div class="form-actions"><button class="btn" data-action="back">Volver</button><button class="btn primary" data-action="calculate">Evaluar beneficios</button></div></section><div id="evaluation"></div>`}
-    function calculate(){const subtotal=Math.max(0,Number(document.getElementById('subtotal').value)||0),coupon=document.getElementById('coupon').value;const automatic=Math.max(0,subtotal*.85),couponResult=coupon?Math.min(subtotal,Number(coupon)):Infinity;const result=Math.min(automatic,couponResult);const selected=couponResult<=automatic&&coupon?'Cupón presentado':'Semana Running';document.getElementById('evaluation').innerHTML=`<section class="result"><div class="result-head"><div><h2>Beneficio seleccionado</h2><p class="muted">Se aplicó la opción con el menor importe resultante.</p></div><strong>${selected}</strong></div><div class="calc"><div><span class="small muted">Importe original</span><strong>S/ ${subtotal.toFixed(2)}</strong></div><div><span class="small muted">Descuento</span><strong>S/ ${(subtotal-result).toFixed(2)}</strong></div><div><span class="small muted">Importe resultante</span><strong>S/ ${result.toFixed(2)}</strong></div></div></section>`}
-    function confirm(i){const p=promotions[i];overlay.innerHTML=`<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="d-title"><h2 id="d-title">${p.state==='ACTIVA'?'Desactivar':'Activar'} promoción</h2><p>${p.state==='ACTIVA'?'Dejará de participar en nuevas evaluaciones. Los descuentos confirmados se conservarán.':'Participará en evaluaciones cuando esté dentro de su vigencia.'}</p><div class="dialog-actions"><button class="btn" data-action="close">Cancelar</button><button class="btn primary" data-action="apply" data-index="${i}">Confirmar</button></div></section></div>`;overlay.querySelector('button').focus()}
-    document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action,i=Number(b.dataset.index);if(a==='new')form();if(a==='back')list();if(a==='detail')detail(i);if(a==='edit')form(i);if(a==='evaluate')evaluate();if(a==='calculate')calculate();if(a==='confirm')confirm(i);if(a==='close')overlay.innerHTML='';if(a==='apply'){promotions[i].state=promotions[i].state==='ACTIVA'?'INACTIVA':'ACTIVA';overlay.innerHTML='';toast('Estado actualizado.');detail(i)}});list();
+
+    function save(e,i){
+      e.preventDefault();
+      document.querySelectorAll('.error').forEach(x=>x.hidden=true);
+      document.querySelectorAll('[aria-invalid]').forEach(x=>x.removeAttribute('aria-invalid'));
+      const name=document.getElementById('name'),value=document.getElementById('value'),start=document.getElementById('start'),end=document.getElementById('end'),type=document.querySelector('[name=discount]:checked').value,products=[...document.querySelectorAll('[name=product]:checked')];
+      let bad=false;
+      if(!name.value.trim()){err(name,'e-name','Ingresa un nombre.');bad=true}
+      if(!value.value||Number(value.value)<=0||(type==='Porcentaje'&&Number(value.value)>100)){err(value,'e-value',type==='Porcentaje'?'Ingresa un porcentaje mayor que 0 y hasta 100.':'Ingresa un monto mayor que 0.');bad=true}
+      if(!start.value){err(start,'e-start','Indica el inicio.');bad=true}
+      if(!end.value||end.value<=start.value){err(end,'e-end','El fin debe ser posterior al inicio.');bad=true}
+      if(!products.length){const x=document.getElementById('e-products');x.textContent='Selecciona al menos un producto.';x.hidden=false;bad=true}
+      if(bad)return;
+
+      const canales = [];
+      if(document.getElementById('ch-mkt').checked) canales.push('Marketplace');
+      if(document.getElementById('ch-chat').checked) canales.push('Chatbot');
+      if(document.getElementById('ch-ret').checked) canales.push('Retail');
+
+      const saved={
+        name:name.value.trim(),
+        type,
+        value:Number(value.value),
+        state:document.getElementById('status').value,
+        start:start.value,
+        end:end.value,
+        products:products.map(x=>x.value),
+        modalidad:document.getElementById('p-modalidad').value,
+        prioridad:Number(document.getElementById('p-prioridad').value)||1,
+        canales:canales.length?canales:['Marketplace'],
+        acumulable_oferta_directa:document.getElementById('comb-pricing').checked,
+        acumulable_promociones:document.getElementById('comb-promos').checked,
+        acumulable_cupones:document.getElementById('comb-cupones').checked
+      };
+
+      if(i===null)promotions.unshift(saved);else promotions[i]=saved;
+      toast(i===null?'Promoción creada correctamente.':'Cambios guardados.');
+      setTimeout(list,500);
+    }
+
+    function detail(i){
+      const p=promotions[i];
+      location.hash='#detalle';
+      const isExcl = !p.acumulable_oferta_directa && !p.acumulable_promociones && !p.acumulable_cupones;
+
+      app.innerHTML=head(p.name,'Detalle de la promoción y política de combinación evaluable.',`<button class="btn" data-action="edit" data-index="${i}">Editar</button>`)+`
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Resumen general</h2>
+            <p class="small muted">Evaluada por el evaluador de Promociones sobre la cesta completa de compra.</p>
+          </div>
+          <span class="status ${p.state==='ACTIVA'?'on':''}"><span class="dot"></span>${p.state}</span>
+        </div>
+        <div class="metrics">
+          <div class="metric"><span class="small muted">Descuento</span><strong>${p.type==='Porcentaje'?p.value+' %':'S/ '+p.value.toFixed(2)}</strong><span class="small">${p.type}</span></div>
+          <div class="metric"><span class="small muted">Vigencia</span><strong class="small">${date(p.start)} — ${date(p.end)}</strong></div>
+          <div class="metric"><span class="small muted">Productos</span><strong>${p.products.length}</strong></div>
+        </div>
+
+        <div style="margin-top:24px;border:1px solid var(--n30);padding:18px;border-radius:var(--r);background:var(--n10)">
+          <h3 style="margin-bottom:8px">Matriz de combinabilidad (3 vías)</h3>
+          <p class="small muted" style="margin:0 0 14px 0">Configuración determinista conforme a SPEC-006 / WF-006.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+            <div style="background:#fff;border:1px solid var(--n30);padding:12px;border-radius:var(--r)">
+              <span class="small muted" style="display:block">Oferta de Pricing</span>
+              <strong>${p.acumulable_oferta_directa ? 'Sí (Permitida)' : 'No (Excluyente)'}</strong>
+            </div>
+            <div style="background:#fff;border:1px solid var(--n30);padding:12px;border-radius:var(--r)">
+              <span class="small muted" style="display:block">Otra promoción automática</span>
+              <strong>${p.acumulable_promociones ? 'Sí (Permitida)' : 'No (Excluyente)'}</strong>
+            </div>
+            <div style="background:#fff;border:1px solid var(--n30);padding:12px;border-radius:var(--r)">
+              <span class="small muted" style="display:block">Cupón de descuento</span>
+              <strong>${p.acumulable_cupones ? 'Sí (Permitida)' : 'No (Excluyente)'}</strong>
+            </div>
+          </div>
+          <div style="margin-top:14px;font-size:13px">
+            <span class="muted">Régimen evaluado:</span> 
+            <strong>${isExcl ? 'Exclusiva (MVP por defecto: no coexiste con otro beneficio)' : 'Combinable granular'}</strong>
+          </div>
+        </div>
+
+        <div style="margin-top:24px">
+          <h3>Productos participantes</h3>
+          <ul>${p.products.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+        </div>
+        <div class="form-actions"><button class="btn" data-action="back">Volver al listado</button><button class="btn" data-action="confirm" data-index="${i}">${p.state==='ACTIVA'?'Desactivar':'Activar'} promoción</button></div>
+      </section>`;
+    }
+
+    function confirm(i){
+      const p=promotions[i];
+      overlay.innerHTML=`<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="d-title"><h2 id="d-title">${p.state==='ACTIVA'?'Desactivar':'Activar'} promoción</h2><p>${p.state==='ACTIVA'?'Dejará de participar en nuevas evaluaciones de venta. Los pedidos ya confirmados conservan su snapshot.':'Participará en evaluaciones comerciales cuando se encuentre dentro de su vigencia.'}</p><div class="dialog-actions"><button class="btn" data-action="close">Cancelar</button><button class="btn primary" data-action="apply" data-index="${i}">Confirmar</button></div></section></div>`;
+      overlay.querySelector('button').focus();
+    }
+
+    document.addEventListener('click',e=>{
+      const b=e.target.closest('[data-action]');
+      if(!b)return;
+      const a=b.dataset.action,i=Number(b.dataset.index);
+      if(a==='new')form();
+      if(a==='back')list();
+      if(a==='detail')detail(i);
+      if(a==='edit')form(i);
+      if(a==='confirm')confirm(i);
+      if(a==='close')overlay.innerHTML='';
+      if(a==='apply'){
+        promotions[i].state=promotions[i].state==='ACTIVA'?'INACTIVA':'ACTIVA';
+        overlay.innerHTML='';
+        toast('Estado actualizado.');
+        detail(i);
+      }
+    });
+
+    list();
   })();
   </script>
 </body>

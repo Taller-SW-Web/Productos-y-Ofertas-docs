@@ -210,16 +210,32 @@
   */
 
   let categories = [
-    {id:'c-futbol', name:'Fútbol', description:'Todo lo necesario para jugar fútbol.', img:true, order:1, status:'active', parentId:null, level:1, products:12, hasCode:'FUT'},
-    {id:'c-industrial', name:'Indumentaria', description:'Camisetas y uniformes deportivos.', img:true, order:1, status:'active', parentId:'c-futbol', level:2, products:8, hasCode:'FUT-IND'},
-    {id:'c-balones', name:'Balones', description:'Balones para todas las superficies.', img:true, order:2, status:'active', parentId:'c-futbol', level:2, products:6, hasCode:'FUT-BAL'},
-    {id:'c-calzado', name:'Calzado', description:'Zapatillas y botines.', img:true, order:2, status:'active', parentId:null, level:1, products:10, hasCode:'CAL'},
-    {id:'c-zapatillas', name:'Zapatillas', description:'Zapatillas para running y uso diario.', img:true, order:1, status:'active', parentId:'c-calzado', level:2, products:7, hasCode:'CAL-ZAP'},
-    {id:'c-botines', name:'Botines', description:'Botines de fútbol por superficie.', img:true, order:2, status:'active', parentId:'c-calzado', level:2, products:0, hasCode:'CAL-BOT'},
-    {id:'c-accesorios', name:'Accesorios', description:'Accesorios deportivos sueltos.', img:true, order:3, status:'inactive', parentId:null, level:1, products:0, hasCode:'ACC'},
-    {id:'c-legacy', name:'Zapatillas Legacy', description:'Línea anterior de zapatillas.', img:false, order:4, status:'inactive', parentId:null, level:1, products:0, hasCode:'LG'},
-    {id:'c-running-legacy', name:'Running Legacy', description:'Subcategoría de la línea anterior.', img:false, order:1, status:'inactive', parentId:'c-legacy', level:2, products:0, hasCode:'LG-RUN'}
+    {id:'c-futbol', name:'Fútbol', slug:'futbol', description:'Todo lo necesario para jugar fútbol.', img:true, order:1, status:'active', parentId:null, level:1, products:12, hasCode:'FUT'},
+    {id:'c-industrial', name:'Indumentaria', slug:'indumentaria', description:'Camisetas y uniformes deportivos.', img:true, order:1, status:'active', parentId:'c-futbol', level:2, products:8, hasCode:'FUT-IND'},
+    {id:'c-balones', name:'Balones', slug:'balones', description:'Balones para todas las superficies.', img:true, order:2, status:'active', parentId:'c-futbol', level:2, products:6, hasCode:'FUT-BAL'},
+    {id:'c-calzado', name:'Calzado', slug:'calzado', description:'Zapatillas y botines.', img:true, order:2, status:'active', parentId:null, level:1, products:10, hasCode:'CAL'},
+    {id:'c-zapatillas', name:'Zapatillas', slug:'zapatillas', description:'Zapatillas para running y uso diario.', img:true, order:1, status:'active', parentId:'c-calzado', level:2, products:7, hasCode:'CAL-ZAP'},
+    {id:'c-botines', name:'Botines', slug:'botines', description:'Botines de fútbol por superficie.', img:true, order:2, status:'active', parentId:'c-calzado', level:2, products:0, hasCode:'CAL-BOT'},
+    {id:'c-accesorios', name:'Accesorios', slug:'accesorios', description:'Accesorios deportivos sueltos.', img:true, order:3, status:'inactive', parentId:null, level:1, products:0, hasCode:'ACC'},
+    {id:'c-legacy', name:'Zapatillas Legacy', slug:'zapatillas-legacy', description:'Línea anterior de zapatillas.', img:false, order:4, status:'inactive', parentId:null, level:1, products:0, hasCode:'LG'},
+    {id:'c-running-legacy', name:'Running Legacy', slug:'running-legacy', description:'Subcategoría de la línea anterior.', img:false, order:1, status:'inactive', parentId:'c-legacy', level:2, products:0, hasCode:'LG-RUN'}
   ];
+
+  function normalizeSlug(str){
+    return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  }
+
+  function resolveUniqueSlug(baseSlug, excludeId){
+    if(!baseSlug) return '';
+    let candidate = baseSlug;
+    let count = 2;
+    const existing = categories.filter(c=>c.id!==excludeId).map(c=>c.slug||normalizeSlug(c.name));
+    while(existing.includes(candidate)){
+      candidate = `${baseSlug}-${count}`;
+      count++;
+    }
+    return candidate;
+  }
 
   const state = {
     view:'tree',
@@ -372,14 +388,38 @@
     const v=formValidation(); const mode=state.formMode; const title=mode==='create'?'Crear categoría':'Editar categoría';
     const nameErr=errorFor(v,'name'); const pen=parentErr();
     const isChildPreset=state.form.parentId?catById(state.form.parentId):null;
+    const cat=state.currentId?catById(state.currentId):null;
+    const baseSlug=normalizeSlug(state.form.name.trim());
+    const uniqueSlug=mode==='create'?resolveUniqueSlug(baseSlug, null):(cat?.slug||normalizeSlug(cat?.name||''));
+    const isCollision=mode==='create' && baseSlug!=='' && uniqueSlug!==baseSlug;
+
     app.innerHTML=`
-      <div class="page-header"><div><h1>${title}</h1><p>${mode==='create'?(isChildPreset?`La categoría se creará como subcategoría de ${escapeHtml(isChildPreset.name)}.`:'Define los datos de la categoría raíz.'):'Actualiza los datos y la ubicación de la categoría en el árbol.'})</p></div></div>
+      <div class="page-header"><div><h1>${title}</h1><p>${mode==='create'?(isChildPreset?`La categoría se creará como subcategoría de ${escapeHtml(isChildPreset.name)}.`:'Define los datos de la categoría raíz.'):'Actualiza los datos y la ubicación de la categoría en el árbol.'}</p></div></div>
       <div id="formErrorSummary" class="error-summary" tabindex="-1"><h3>Revisa los datos antes de guardar.</h3><ul>${v.errors.map(e=>`<li>${escapeHtml(e.msg)}</li>`).join('')}</ul></div>
       <form id="catForm" novalidate>
       <div class="form-layout">
         <div>
           <section class="section"><h2>Datos generales</h2>
             <div class="field"><label for="catName">Nombre</label><input id="catName" type="text" value="${escapeHtml(state.form.name)}" aria-invalid="${nameErr?'true':'false'}"><div class="help">El nombre no necesita ser único: puede repetirse en distintas ramas.</div><div class="field-error ${nameErr?'show':''}">${escapeHtml(nameErr)}</div></div>
+            
+            <div class="field">
+              <label>Slug público resultante (Handoff SEO / Marketplace)</label>
+              <div style="margin-top:4px">
+                <div id="catSlugPreview" class="mono" style="background:#f1f5f9;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-weight:600;color:#0f172a">
+                  ${uniqueSlug ? `/categoria/${escapeHtml(uniqueSlug)}` : 'Se generará a partir del nombre...'}
+                </div>
+                <div id="catSlugCollisionAlert" class="notice" style="margin-top:8px;padding:8px 12px;background:#fef3c7;border-color:#f59e0b;display:${isCollision?'flex':'none'}">
+                  <span class="notice-icon" aria-hidden="true" style="color:#d97706">i</span>
+                  <div style="font-size:12px;color:#92400e">
+                    <strong>Aviso de colisión:</strong> El slug base <code>${escapeHtml(baseSlug)}</code> ya existe. Se asignó automáticamente el sufijo <code>${escapeHtml(uniqueSlug)}</code> visible antes de confirmar la creación.
+                  </div>
+                </div>
+                <div class="help" style="margin-top:4px">
+                  ${mode==='create'?'Generado en tiempo real según normas SEO. Se muestra el slug final antes de confirmar la creación.':'El slug no se edita en este flujo. La edición de slug y la resolución permanente (Marketplace → HTTP 301) corresponden a WF-012.'}
+                </div>
+              </div>
+            </div>
+
             <div class="field"><label for="catDesc">Descripción</label><textarea id="catDesc" aria-invalid="false">${escapeHtml(state.form.description)}</textarea></div>
             <div class="field"><label for="catImage">Imagen</label><input id="catImage" type="text" value="${escapeHtml(state.form.image)}" placeholder="Opcional"><div class="help">Formatos admitidos: JPG o PNG. Tamaño máximo recomendado: 2 MB.</div></div>
             <div class="field"><label for="catOrder">Orden</label><input id="catOrder" type="number" value="${escapeHtml(state.form.order)}" placeholder="Opcional"></div>
@@ -390,6 +430,7 @@
         </div>
         <aside class="section summary" aria-live="polite"><h2>Resultado</h2>
           <div class="metric"><span class="metric-label">Nivel</span><span class="metric-value">${state.form.parentId?'Subcategoría':'Raíz'}</span><span class="metric-detail">Máximo dos niveles de jerarquía.</span></div>
+          <div class="metric"><span class="metric-label">Slug asignado</span><span class="metric-value mono" style="font-size:13px">${uniqueSlug?`/${escapeHtml(uniqueSlug)}`:'—'}</span><span class="metric-detail">Resuelto antes de persistir.</span></div>
           <div class="metric"><span class="metric-label">Productos afectados</span><span class="metric-value">—</span><span class="metric-detail">Cambiar el padre no afecta productos ya asociados.</span></div>
         </aside>
       </div>
@@ -414,6 +455,7 @@
         <section class="section"><div class="detail-intro"><div><span class="status ${c.status==='active'?'active':''}">${c.status==='active'?'Activo':'Inactivo'}</span><div class="small muted" style="margin-top:8px">Nivel: ${c.level===1?'Raíz':'Subcategoría'}</div></div>${c.img?`<div class="img-frame" aria-hidden="true">IMG</div>`:''}</div></section>
         <section class="section"><h2>Datos de la categoría</h2><dl class="definition-list">
           <dt>Nombre</dt><dd>${escapeHtml(c.name)}</dd>
+          <dt>Slug público</dt><dd><span class="mono" style="background:#f1f5f9;padding:2px 6px;border-radius:4px">/categoria/${escapeHtml(c.slug||normalizeSlug(c.name))}</span></dd>
           <dt>Descripción</dt><dd>${escapeHtml(c.description)}</dd>
           <dt>Orden</dt><dd>${c.order}</dd>
           <dt>Código</dt><dd><span class="mono">${escapeHtml(c.hasCode)}</span></dd>
@@ -423,6 +465,7 @@
         </dl></section>
       </div><aside class="section summary"><h2>Acciones disponibles</h2>
         <div class="metric"><span class="metric-label">Editar</span><span class="metric-value">${'Sí'}</span><span class="metric-detail">Incluye reasignar la categoría padre.</span></div>
+        <div class="metric"><span class="metric-label">SEO y Redirección</span><span class="metric-value">WF-012</span><span class="metric-detail">Metadatos y resolución 301 en Taxonomía y SEO.</span></div>
         <div class="metric"><span class="metric-label">${c.status==='active'?'Desactivar':'Reactivar'}</span><span class="metric-value">${c.status==='active'?'Sí':'Requisito: padre activo'}</span><span class="metric-detail">${c.status==='active'?'La baja valida productos activos.':'Si el padre está inactivo, debe reactivarse primero.'}</span></div>
       </aside></div>`;
   }
@@ -487,8 +530,22 @@
       if(state.formMode==='create'){
         const id='c-'+Date.now();
         const parent=state.form.parentId?catById(state.form.parentId):null;
-        categories.push({id,name:state.form.name.trim(),description:state.form.description.trim(),order:Number(state.form.order)||99,img:state.form.image.trim()!=='',status:'active',parentId:state.form.parentId||null,level:parent?2:1,products:0,hasCode:'NEW'});
-        state.view='tree';state.saving=false;render();showToast('Categoría creada.');
+        const baseSlug = normalizeSlug(state.form.name.trim());
+        const finalSlug = resolveUniqueSlug(baseSlug, null);
+        categories.push({
+          id,
+          name:state.form.name.trim(),
+          slug:finalSlug,
+          description:state.form.description.trim(),
+          order:Number(state.form.order)||99,
+          img:state.form.image.trim()!=='',
+          status:'active',
+          parentId:state.form.parentId||null,
+          level:parent?2:1,
+          products:0,
+          hasCode:'NEW'
+        });
+        state.view='tree';state.saving=false;render();showToast(`Categoría creada con slug: /categoria/${finalSlug}`);
       }else{
         const c=catById(state.currentId);
         const parent=state.form.parentId?catById(state.form.parentId):null;
@@ -519,7 +576,25 @@
     if(form){
       form.addEventListener('submit',e=>{e.preventDefault();submitForm();});
       const name=document.getElementById('catName'), desc=document.getElementById('catDesc'), img=document.getElementById('catImage'), ord=document.getElementById('catOrder'), parent=document.getElementById('catParent');
-      name?.addEventListener('input',e=>{state.form.name=e.target.value;state.dirty=true;});
+      name?.addEventListener('input',e=>{
+        state.form.name=e.target.value;
+        state.dirty=true;
+        if(state.formMode==='create'){
+          const base = normalizeSlug(state.form.name.trim());
+          const unq = resolveUniqueSlug(base, null);
+          const slugPreview = document.getElementById('catSlugPreview');
+          const alert = document.getElementById('catSlugCollisionAlert');
+          if(slugPreview) slugPreview.textContent = unq ? `/categoria/${unq}` : 'Se generará a partir del nombre...';
+          if(alert){
+            if(unq && unq !== base){
+              alert.style.display = 'flex';
+              alert.querySelector('div').innerHTML = `<strong>Aviso de colisión:</strong> El slug base <code>${base}</code> ya existe. Se asignó automáticamente el sufijo <code>${unq}</code> visible antes de confirmar la creación.`;
+            } else {
+              alert.style.display = 'none';
+            }
+          }
+        }
+      });
       desc?.addEventListener('input',e=>{state.form.description=e.target.value;state.dirty=true;});
       img?.addEventListener('input',e=>{state.form.image=e.target.value;state.dirty=true;});
       ord?.addEventListener('input',e=>{state.form.order=e.target.value;state.dirty=true;});

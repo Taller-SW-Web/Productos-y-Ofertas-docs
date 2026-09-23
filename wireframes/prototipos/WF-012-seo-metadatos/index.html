@@ -412,7 +412,7 @@
         c.configured=true;
         if(prevSlug && prevSlug!==manual){
           c.history.push({old:prevSlug, date:new Date().toISOString().slice(0,10)});
-          showToast('SEO guardado. Redirección 301 registrada del slug anterior.');
+          showToast('SEO guardado. Se registró la resolución permanente del slug anterior.');
         }else{
           showToast('SEO guardado.');
         }
@@ -426,7 +426,7 @@
     const c=catById(state.historyId);
     if(!c){ showToast('La categoría no existe.'); state.view='list'; state.historyId=null; render(); return; }
     const rows=c.history.map(h=>`
-      <tr><td class="slug-cell">${escapeHtml(h.old)}</td><td><span class="tag strong">301</span></td><td class="slug-cell">→ ${escapeHtml(c.slug)}</td><td>${escapeHtml(h.date||'')}</td></tr>`).join('');
+      <tr><td class="slug-cell">${escapeHtml(h.old)}</td><td><span class="tag strong" title="Marketplace ejecuta HTTP 301">Resolución permanente (Marketplace → HTTP 301)</span></td><td class="slug-cell">→ ${escapeHtml(c.slug)}</td><td>${escapeHtml(h.date||'')}</td></tr>`).join('');
     const histMarkup=c.configured
       ?(c.history.length
         ?`<div class="table-wrap"><table><thead><tr><th>Slug anterior</th><th>Redirección</th><th>Nuevo slug</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table></div>`

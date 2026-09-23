@@ -489,7 +489,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | Auto-generación | Se aplicó “-2” porque ese slug ya estaba en uso. | Escenario 1 |
 | Título | Superaste el límite recomendado de 70 caracteres. | Requisito 1 |
 | Descripción | Superaste el límite recomendado de 160 caracteres. | Requisito 1 |
-| Cambio de slug | Se registró la redirección 301 del slug anterior. | Requisito 3 |
+| Cambio de slug | SEO guardado. Se registró la resolución permanente del slug anterior. | Requisito 3 |
 | Endpoint | Endpoint público por slug activo. | Requisito 4 / CA-06 |
 
 ## 14. Restricciones técnicas relevantes
@@ -557,7 +557,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 | ID | Pregunta o decisión | Responsable | Bloquea wireframe | Estado |
 |---|---|---|---|---|
 | Q-01 | ¿El slug admite números, guiones o solo letras? | Producto | No para wireframe | Abierta |
-| Q-02 | ¿Dónde se gestiona el slug al crear la categoría además de WF-012? | Producto | No | Abierta |
+| Q-02 | ¿Dónde se gestiona el slug al crear la categoría además de WF-012? | Producto | Resuelta: WF-008 consume la autogeneración/colisión de WF-012 y muestra el slug final antes de confirmar; la edición posterior se gestiona en WF-012 | Cerrada |
 | Q-03 | ¿Hay límite de cantidad de slugs en el historial? | Producto | No | Abierta |
 | Q-04 | ¿Debe advertirse al salir con cambios sin guardar? | Producto/UX | No | Abierta |
 | D-01 | Selección de librería UI y estrategia CSS | Frontend | No para wireframe; sí para implementación | Pendiente |

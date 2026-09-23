@@ -39,22 +39,22 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 
 **Escenario 1: Registrar un producto en borrador**
 ● DADO que el gestor comercial tiene permisos,
-● CUANDO registra un producto con nombre, descripción, categoría, marca y precio base válidos, sin imagen ni características todavía,
+● CUANDO registra un producto con nombre, descripción, categoría de navegación (`categoria_id`), `tipo_producto_id`, marca, precio base referencial, `sku_base` y `tiene_variantes` válidos, sin imagen ni completar aún todos los atributos del tipo,
 ● ENTONCES el sistema lo guarda en estado "borrador", genera su identificador y slug, y confirma el registro al gestor.
 
 **Escenario 2: Activar un producto completo**
-● DADO que un producto en borrador ya tiene categoría y marca activas, todos los valores de sus características obligatorias efectivas completos y al menos una imagen,
+● DADO que un producto en borrador tiene categoría (`categoria_id`), tipo de producto (`tipo_producto_id`) y marca activos, todos los valores obligatorios definidos por su tipo completos (o ninguno si el tipo no exige obligatorios), al menos una imagen, variante activa válida si `tiene_variantes=true`, y confirmación de preparación de Pricing e Inventario,
 ● CUANDO el gestor comercial solicita su activación,
 ● ENTONCES el sistema cambia su estado a "activo" y lo hace visible para los canales de venta.
 
 **Escenario 3: Rechazar activación incompleta**
-● DADO que un producto en borrador no tiene ninguna imagen o tiene una o más características obligatorias efectivas sin valor,
+● DADO que un producto en borrador no tiene ninguna imagen, o tiene una o más características obligatorias definidas por su tipo de producto (`tipo_producto_id`) sin valor, o `tiene_variantes=true` sin al menos una variante activa, o no cuenta con la confirmación de Pricing o Inventario,
 ● CUANDO el gestor comercial intenta activarlo,
 ● ENTONCES el sistema impide la activación, indica qué requisito falta y mantiene el producto en "borrador".
 
-**Escenario 4: Rechazar categoría o marca inválida**
+**Escenario 4: Rechazar categoría, tipo o marca inválida**
 ● DADO que el gestor comercial está registrando o actualizando un producto,
-● CUANDO selecciona una categoría o marca que no existe o está desactivada,
+● CUANDO selecciona una categoría, tipo de producto o marca que no existe o está desactivada,
 ● ENTONCES el sistema impide guardar el producto e indica cuál relación no es válida.
 
 **Escenario 5: Rechazar `sku_base` duplicado y advertir posible duplicado nombre+marca**
@@ -64,7 +64,7 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 
 **Escenario 6: Actualizar un producto existente**
 ● DADO que existe un producto registrado y el gestor comercial cuenta con permisos,
-● CUANDO modifica su descripción, características o imágenes con datos válidos,
+● CUANDO modifica su descripción, valores de atributos del tipo o imágenes con datos válidos,
 ● ENTONCES el sistema guarda los cambios, conserva el historial de la modificación y actualiza la información disponible para los canales.
 
 **Escenario 7: Consultar productos por filtros**
@@ -80,7 +80,7 @@ Un producto pasa por tres estados: **borrador** (recién creado, aún no visible
 **Escenario 9: Reactivar un producto**
 ● DADO que existe un producto inactivo que, en su momento, cumplía las condiciones de CA-05,
 ● CUANDO el gestor comercial solicita su reactivación,
-● ENTONCES el sistema vuelve a validar categoría, marca, característica e imagen; si todo es válido lo marca como "activo", y si algo cambió (ej. la categoría fue desactivada) rechaza la reactivación e indica el motivo.
+● ENTONCES el sistema vuelve a validar categoría, tipo de producto, marca, características obligatorias de su tipo, variante activa (si aplica) e imagen; si todo es válido lo marca como "activo", y si algo cambió (ej. la categoría o el tipo de producto fue desactivado) rechaza la reactivación e indica el motivo.
 
 **Escenario 10: Usuario sin permisos intenta modificar un producto**
 ● DADO que un usuario autenticado no tiene el rol de gestor comercial ni el permiso correspondiente,
@@ -114,7 +114,7 @@ Estas son coordinaciones internas con otras funcionalidades del mismo módulo.
 | Funcionalidad interna | Información necesaria |
 |---|---|
 | Categorías y subcategorías — Persona 1 | Identificador, nombre y estado de la categoría, para validar su existencia al registrar, actualizar o reactivar un producto. |
-| Marcas y características — Persona 1 | Identificador, nombre y estado de la marca; catálogo de características disponibles para asociarlas al producto. |
+| Tipos de producto, marcas y características — Persona 1 | Identificador, nombre y estado del tipo de producto y marca; esquema de características definidas por el tipo de producto para asociarlas al producto. |
 | Taxonomía y SEO — Persona 1 | El slug del producto es propiedad de Catálogo Core y se genera aquí; Taxonomía y SEO solo gestiona metadatos adicionales (meta-título, meta-descripción, palabras clave) y no lo sobrescribe. |
 | Gestión de precios — Persona 3 | Recibe el precio base inicial del producto al crearse, para abrir su historial de auditoría. Los cambios posteriores del precio (individuales o masivos) son responsabilidad exclusiva de este componente, no de Catálogo Core. |
 | Inventario y stock — Persona 6 | Notificación de producto creado para inicializar su stock en 0, **solo si el producto no maneja variantes** (`tiene_variantes = false`). Si el producto maneja variantes, el stock se inicializa por cada variante y no a nivel de producto (ver HU de Gestión de Variantes). |

@@ -110,6 +110,7 @@
           <p>Define las características aplicables y su obligatoriedad por cada Tipo de Producto. Las categorías de navegación no alteran este esquema estructural.</p>
         </div>
         <div class="button-row">
+          <button class="btn btn-quiet" id="btn-open-create-type">+ Nuevo tipo de producto</button>
           <button class="btn btn-primary" id="btn-open-associate">+ Asociar característica</button>
         </div>
       </div>
@@ -118,13 +119,16 @@
         <div class="notice-icon" aria-hidden="true">i</div>
         <div>
           <h3>Desacoplamiento de Navegación y Esquema</h3>
-          <p>El esquema de atributos pertenece al <strong>Tipo de Producto</strong> (máx. 20 características activas). Un producto puede cambiar de categoría sin alterar sus características técnicas.</p>
+          <p>El esquema de atributos pertenece al <strong>Tipo de Producto</strong> (máx. <code>{MAX_PRODUCT_TYPE_ATTRIBUTES}</code> activas, valor inicial MVP: 20). Un producto puede cambiar de categoría de navegación sin alterar sus características técnicas.</p>
         </div>
       </div>
 
       <div class="layout">
         <aside class="type-nav">
-          <h2>Tipos de Producto</h2>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--neutral-30)">
+            <h2 style="padding:0;margin:0;border:0;font-size:16px">Tipos de Producto</h2>
+            <button class="btn btn-quiet" id="btn-add-type-nav" style="min-height:30px;padding:2px 8px;font-size:12px" title="Crear tipo de producto ligero">+ Nuevo</button>
+          </div>
           <div id="type-list">
             <!-- Rendered by JS -->
           </div>
@@ -141,7 +145,7 @@
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
             <span class="small" id="attr-count-label"><strong>3 / 20</strong> características activas asignadas</span>
-            <span class="small muted mono">MAX_PRODUCT_TYPE_ATTRIBUTES = 20</span>
+            <span class="small muted mono">{MAX_PRODUCT_TYPE_ATTRIBUTES} = 20 (Configurable)</span>
           </div>
 
           <div class="table-wrap">
@@ -199,7 +203,7 @@
         <div class="notice-icon">!</div>
         <div>
           <h3>Límite operativo alcanzado</h3>
-          <p>Este tipo de producto ya alcanzó el límite máximo de 20 características activas asignadas.</p>
+          <p>Este tipo de producto ya alcanzó el límite máximo permitido (<code>{MAX_PRODUCT_TYPE_ATTRIBUTES}</code> = 20) de características activas asignadas.</p>
         </div>
       </div>
 
@@ -222,9 +226,52 @@
     </div>
   </div>
 
+  <!-- Modal Crear Tipo de Producto Ligero -->
+  <div class="overlay" id="modal-create-type">
+    <div class="dialog">
+      <div class="dialog-header">
+        <div>
+          <h2>Nuevo Tipo de Producto (Ligero)</h2>
+          <p class="small muted">Crea una entidad ligera para definir un esquema técnico de atributos independiente de la navegación.</p>
+        </div>
+        <button class="btn btn-quiet" id="btn-close-create-type">✕</button>
+      </div>
+
+      <div class="notice">
+        <div class="notice-icon" aria-hidden="true">i</div>
+        <div>
+          <h3>Entidad normativa de características</h3>
+          <p>El tipo de producto agrupa las características técnicas requeridas y opcionales. No requiere que existan categorías previas.</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="input-type-code">Código identificador (ID):</label>
+        <input type="text" id="input-type-code" placeholder="Ej: TP-04 o TEC-OUTDOOR" class="mono" />
+      </div>
+
+      <div class="field">
+        <label for="input-type-name">Nombre del tipo de producto: *</label>
+        <input type="text" id="input-type-name" placeholder="Ej: Equipamiento Outdoor" required />
+      </div>
+
+      <div class="field">
+        <label for="input-type-desc">Descripción técnica:</label>
+        <input type="text" id="input-type-desc" placeholder="Ej: Esquema para mochilas, carpas y accesorios de montaña" />
+      </div>
+
+      <div class="button-row end" style="margin-top:24px;">
+        <button class="btn btn-quiet" id="btn-cancel-create-type">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-type">Crear tipo de producto</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
+    const MAX_PRODUCT_TYPE_ATTRIBUTES = 20;
+
     const state = {
       types: [
         {
@@ -290,12 +337,12 @@
       if(!cur) return;
       document.getElementById('selected-type-title').textContent = cur.name;
       document.getElementById('selected-type-desc').textContent = cur.desc;
-      document.getElementById('attr-count-label').innerHTML = `<strong>${cur.attrs.length} / 20</strong> características activas asignadas`;
+      document.getElementById('attr-count-label').innerHTML = `<strong>${cur.attrs.length} / ${MAX_PRODUCT_TYPE_ATTRIBUTES}</strong> características activas asignadas`;
 
       const tbody = document.getElementById('attr-table-body');
       tbody.innerHTML = '';
       if(cur.attrs.length === 0){
-        tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center;padding:24px;">No hay características asociadas a este tipo de producto.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center;padding:24px;">No hay características asociadas a este tipo de producto. Haz clic en "+ Asociar característica" para añadir la primera.</td></tr>';
         return;
       }
       cur.attrs.forEach((a, idx) => {
@@ -360,7 +407,7 @@
 
     function executeSave(){
       const cur = state.types.find(t => t.id === state.selectedTypeId);
-      if(cur.attrs.length >= 20){
+      if(cur.attrs.length >= MAX_PRODUCT_TYPE_ATTRIBUTES){
         document.getElementById('limit-error').style.display = 'flex';
         return;
       }
@@ -389,6 +436,48 @@
 
     document.getElementById('btn-save-assoc').onclick = executeSave;
     document.getElementById('btn-retry-persist').onclick = executeSave;
+
+    // Crear Tipo de Producto Ligero
+    const modalCreateType = document.getElementById('modal-create-type');
+    function openCreateTypeModal(){
+      document.getElementById('input-type-code').value = 'TP-0' + (state.types.length + 1);
+      document.getElementById('input-type-name').value = '';
+      document.getElementById('input-type-desc').value = '';
+      modalCreateType.classList.add('open');
+      setTimeout(() => document.getElementById('input-type-name').focus(), 50);
+    }
+    function closeCreateTypeModal(){
+      modalCreateType.classList.remove('open');
+    }
+    document.getElementById('btn-open-create-type').onclick = openCreateTypeModal;
+    document.getElementById('btn-add-type-nav').onclick = openCreateTypeModal;
+    document.getElementById('btn-close-create-type').onclick = closeCreateTypeModal;
+    document.getElementById('btn-cancel-create-type').onclick = closeCreateTypeModal;
+
+    document.getElementById('btn-save-type').onclick = function(){
+      const name = document.getElementById('input-type-name').value.trim();
+      if(!name){
+        alert('Por favor ingresa un nombre para el tipo de producto.');
+        document.getElementById('input-type-name').focus();
+        return;
+      }
+      let code = document.getElementById('input-type-code').value.trim();
+      if(!code) code = 'TP-0' + (state.types.length + 1);
+      const desc = document.getElementById('input-type-desc').value.trim() || 'Sin descripción técnica.';
+
+      const newType = {
+        id: code,
+        name: name,
+        desc: desc,
+        attrs: []
+      };
+      state.types.push(newType);
+      state.selectedTypeId = code;
+      closeCreateTypeModal();
+      renderTypes();
+      renderDetail();
+      showToast(`Tipo de producto "${name}" creado exitosamente.`);
+    };
 
     renderTypes();
     renderDetail();
