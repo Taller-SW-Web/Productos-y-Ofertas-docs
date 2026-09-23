@@ -1,6 +1,6 @@
 # WF-012 — Gestión de SEO y metadatos
 
-> **Fuentes normativas de esta revisión:** `specs/SPEC-012-seo-metadatos.md` y `hu/HU-012-seo-metadatos.md`. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-012-seo-metadatos.md`), HU individual de esta funcionalidad (`../../hu/HU-012-seo-metadatos.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -12,7 +12,8 @@ Antes de diseñar:
 1. Consulta ../../specs/SPEC-012-seo-metadatos.md.
 2. Consulta ../../hu/HU-012-seo-metadatos.md.
 3. Consulta ../DESIGN.md.
-4. Usa este documento para la composición, interacción y estados del flujo.
+4. Consulta ../INDEX.md.
+5. Usa este documento para la composición, interacción y estados del flujo.
 
 Prioridad de fuentes:
 
@@ -61,7 +62,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 1. Consulta del estado SEO por categoría.
 2. Editor de slug con regeneración automática desde el nombre.
-3. Política de duplicados visible: sufijo silencioso en auto-generación y
+3. Política de duplicados visible: sufijo incremental autogenerado visible antes de confirmar/publicar y
    error explícito en edición manual.
 4. Contadores vivos y advertencias de 70/160 caracteres.
 5. Vista previa del snippet de búsqueda.
@@ -98,7 +99,7 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 - Consultar el estado de configuración SEO por categoría.
 - Generar automáticamente el slug normalizado desde el nombre.
 - Editar manualmente el slug de una categoría.
-- Aplicar sufijo incremental silencioso en auto-generación con duplicado.
+- Aplicar sufijo incremental autogenerado visible antes de confirmar/guardar en caso de duplicado.
 - Rechazar duplicados en la edición manual con error explícito.
 - Editar meta-título y meta-descripción con límites 70/160 y advertencias.
 - Mantener historial de slugs y exponer resolución permanente `old_slug -> new_slug`.
@@ -170,7 +171,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 |---|---|
 | Guardado exitoso | S-01 con estado Configurado actualizado |
 | Slug duplicado en edición manual | Error en S-02 sin guardar |
-| Slug duplicado en auto-generación | Sufijo silencioso y guardado permitido |
+| Slug duplicado en auto-generación | Sufijo autogenerado visible antes de confirmar/guardar |
 | Cambio de slug | S-03 actualizado con resolución de redirección |
 | Cancelación | Regresa a S-01 o al origen |
 | Endpoint consultado | Simulación de respuesta de metadatos o resolución permanente |
@@ -189,7 +190,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 1. El gestor abre una categoría sin configurar.
 2. En S-02 el sistema sugiere el slug normalizado desde el nombre.
 3. El gestor rellena o confirma meta-título y meta-descripción.
-4. Valida duplicados según origen (automático con sufijo; manual con error).
+4. Valida duplicados según origen (automático con sufijo visible; manual con error).
 5. Guarda; la categoría pasa a estado Configurado.
 
 ### Flujo C — Editar slug manualmente
@@ -203,7 +204,7 @@ Las rutas y ubicación exactas son propuestas de wireframe y deben confirmarse.
 ### Flujo D — Regenerar slug desde el nombre
 
 1. El gestor elige Regenerar desde el nombre.
-2. El sistema normaliza y, ante duplicado, aplica sufijo silencioso.
+2. El sistema normaliza y, ante duplicado, genera un sufijo numérico visible en el formulario antes de confirmar.
 3. El gestor guarda; se registran historial y resolución si aplica.
 
 ### Flujo E — Consultar historial y endpoint
@@ -349,8 +350,8 @@ búsqueda.
 | Meta-título | Texto | No | Advertencia si > 70 | Superaste el límite recomendado de 70 caracteres. |
 | Meta-descripción | Texto multilínea | No | Advertencia si > 160 | Superaste el límite recomendado de 160 caracteres. |
 
-- Slug de origen automático con duplicado: se aplica sufijo incremental
-  silencioso (ej. `futbol-2`) y se informa de forma discreta.
+- Slug de origen automático con duplicado: se aplica un sufijo incremental
+  (ej. `futbol-2`), el cual se muestra visible en el formulario antes de confirmar para que el usuario no descubra el cambio tras guardar.
 - Slug de origen manual con duplicado: error visible y guardado bloqueado; no
   se autogeneran sufijos.
 
@@ -369,8 +370,8 @@ búsqueda.
 
 | ID | Elemento | Anotación |
 |---|---|---|
-| A-06 | Slug | Normalização: minúsculas, sin tildes ni espacios |
-| A-07 | Auto-generación | Duplicado recibe sufijo silencioso |
+| A-06 | Slug | Normalización: minúsculas, sin tildes ni espacios |
+| A-07 | Auto-generación | Duplicado recibe sufijo numérico visible antes de confirmar |
 | A-08 | Edición manual | Duplicado rechazado; sin auto-sufijo |
 | A-09 | Contadores | Límite recomendado 70/160; guardado permitido |
 | A-10 | Cambio de slug | Genera historial y resolución permanente (Marketplace ejecutará HTTP 301) |
@@ -418,7 +419,7 @@ Mostrar los slugs históricos con su resolución permanente hacia el slug actual
 | Listado con datos | Sí | Tabla/tarjetas | Configurar, editar, historial | N/A |
 | Formulario inicial | Sí | Campos con o sin valores | Completar/guardar/cancelar | N/A |
 | Slug manual duplicado | Sí | Error en campo | Corregir | Corregir |
-| Slug automático duplicado | Sí | Sufijo silencioso + aviso discreto | Aceptar | Guardar |
+| Slug automático duplicado | Sí | Sufijo visible antes de confirmar | Revisar | Guardar |
 | Meta-título > 70 | Sí | Advertencia visible | Guardar o acortar | Guardado permitido |
 | Meta-descripción > 160 | Sí | Advertencia visible | Guardar o acortar | Guardado permitido |
 | Guardando | Sí | Acción deshabilitada | Evitar duplicado | Esperar |
@@ -522,7 +523,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 ## 16. Criterios de aceptación del wireframe
 
 - [ ] Genera slug normalizado desde el nombre en la configuración inicial.
-- [ ] Aplica sufijo incremental silencioso ante duplicado automático.
+- [ ] Aplica sufijo incremental visible antes de confirmar ante duplicado automático.
 - [ ] Rechaza el duplicado manual con “El slug indicado ya está en uso”.
 - [ ] Advierte longitudes superiores a 70 y 160 caracteres permitiendo guardar.
 - [ ] Registra el historial y la redirección 301 al cambiar el slug.

@@ -1,6 +1,6 @@
 # WF-007 — Reglas de venta cruzada y upselling
 
-> **Fuentes normativas de esta revisión:** `specs/SPEC-007-reglas-venta-cruzada-upselling.md` y `hu/HU-007-reglas-venta-cruzada-upselling.md`. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-007-reglas-venta-cruzada-upselling.md`), HU individual de esta funcionalidad (`../../hu/HU-007-reglas-venta-cruzada-upselling.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -12,7 +12,8 @@ Antes de diseñar:
 1. Consulta `../../specs/SPEC-007-reglas-venta-cruzada-upselling.md`.
 2. Consulta `../../hu/HU-007-reglas-venta-cruzada-upselling.md`.
 3. Consulta `../DESIGN.md`.
-4. Usa este documento para composición, interacción y estados.
+4. Consulta `../INDEX.md`.
+5. Usa este documento para composición, interacción y estados.
 
 Prioridad: especificación, historia de usuario, este flujo y `DESIGN.md`.
 No inventes una resolución cuando las fuentes no definan una regla.

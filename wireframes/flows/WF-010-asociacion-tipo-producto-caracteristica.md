@@ -354,7 +354,7 @@ Advertir sobre el impacto de desasociar una característica y ejecutar la baja l
 | Detalle tipo cargando | Sí | Skeleton en tabla | Esperar | Reintento |
 | Detalle con características | Sí | Tabla completa con toggles | Asociar, reordenar, desasociar | N/A |
 | Tipo sin características | Sí | Mensaje: "Este tipo de producto aún no tiene características asignadas." | Pulsar "Asociar característica" | Asociar primera |
-| Límite 20 alcanzado | Sí | Badge "20/20" + Botón asociar deshabilitado | Tooltip explicativo | Desasociar alguna |
+| Límite alcanzado | Sí | Badge "{MAX}/{MAX}" + Botón asociar deshabilitado | Tooltip explicativo | Desasociar alguna |
 | Guardando cambios | Sí | Botones deshabilitados + spinner | Evitar envíos dobles | Esperar respuesta |
 | Error de guardado | Sí | Mensaje visible sin perder datos | Reintentar guardado | Repetir acción |
 | Sin permisos | Sí | Explicación de acceso restringido | Volver | Solicitar permisos |
@@ -403,7 +403,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 | Contexto | Texto propuesto | Observación |
 |---|---|---|
-| Límite alcanzado | "Has alcanzado el límite de 20 características para este tipo de producto." | Límite operativo MVP |
+| Límite alcanzado | "Has alcanzado el límite configurado de {MAX_PRODUCT_TYPE_ATTRIBUTES} características para este tipo de producto." | Límite operativo configurable (valor inicial MVP: 20) |
 | Cambio de obligatoriedad | "La obligatoriedad se aplicará en la próxima edición de los productos existentes." | No invalida legados |
 | Éxito asociación | "Característica asociada exitosamente." | Confirmación |
 | Desasociación bloqueada | "No se puede desasociar: existen variantes activas que utilizan esta característica." | Regla de consistencia |
@@ -504,8 +504,8 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [x] Las fuentes funcionales están identificadas.
 - [x] El alcance y fuera de alcance están claros.
 - [x] Las pantallas y variantes están inventariadas (S-01 a S-04).
-- [x] Los criterios CA-01 a CA-09 están cubiertos.
-- [x] El límite de 20 atributos y el desacople de categorías están documentados.
+- [x] Los criterios CA-01 a CA-12 están cubiertos.
+- [x] El límite operativo {MAX_PRODUCT_TYPE_ATTRIBUTES} y el desacople de categorías están documentados.
 - [x] Los supuestos y preguntas están registrados.
 - [x] El formato HTML está definido.
 - [ ] Confirmar el ID WF-010 contra INDEX.md.

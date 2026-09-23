@@ -1,6 +1,6 @@
 # WF-013 — Gestión de precios individuales y masivos
 
-> **Fuentes normativas de esta revisión:** `specs/SPEC-013-gestion-precios-individuales-masivos.md` y `hu/HU-013-gestion-precios-individuales-masivos.md`. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-013-gestion-precios-individuales-masivos.md`), HU individual de esta funcionalidad (`../../hu/HU-013-gestion-precios-individuales-masivos.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los nombres/eventos de Ventas y Postventa son contratos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -12,7 +12,8 @@ Antes de diseñar:
 1. Consulta ../../specs/SPEC-013-gestion-precios-individuales-masivos.md.
 2. Consulta ../../hu/HU-013-gestion-precios-individuales-masivos.md.
 3. Consulta ../DESIGN.md.
-4. Usa este documento como definición específica de interacción.
+4. Consulta ../INDEX.md.
+5. Usa este documento como definición específica de interacción.
 
 Prioridad de fuentes:
 

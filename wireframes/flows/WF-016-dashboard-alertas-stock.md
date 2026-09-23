@@ -1,6 +1,6 @@
 # WF-016 — Dashboard analítico y alertas de stock
 
-> **Fuentes normativas de esta revisión:** `specs/SPEC-016-dashboard-alertas-stock.md` y `hu/HU-016-dashboard-alertas-stock.md`. Los reportes y rankings de ventas por producto/canal pertenecen exclusivamente a Ventas/Postventa. Este dashboard se enfoca en el monitoreo del inventario, alertas de stock bajo/agotado y distribución operativa por ubicación. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-016-dashboard-alertas-stock.md`), HU individual de esta funcionalidad (`../../hu/HU-016-dashboard-alertas-stock.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los reportes y rankings de ventas por producto/canal pertenecen exclusivamente a Ventas/Postventa. Este dashboard se enfoca en el monitoreo del inventario, alertas de stock bajo/agotado y distribución operativa por ubicación. Las anotaciones, supuestos, preguntas y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -12,7 +12,8 @@ Antes de diseñar:
 1. Consulta ../../specs/SPEC-016-dashboard-alertas-stock.md.
 2. Consulta ../../hu/HU-016-dashboard-alertas-stock.md.
 3. Consulta ../DESIGN.md.
-4. Usa este documento para la composición, interacción y estados del flujo.
+4. Consulta ../INDEX.md.
+5. Usa este documento para la composición, interacción y estados del flujo.
 
 Prioridad de fuentes:
 

@@ -1,6 +1,6 @@
 # WF-015 — Control de stock y disponibilidad
 
-> **Fuentes normativas de esta revisión:** `specs/SPEC-015-control-stock-disponibilidad.md` y `hu/HU-015-control-stock-disponibilidad.md`. Los contratos de reservas y consumos con Ventas y Postventa son asíncronos y están desacoplados mediante eventos. Este documento define la consulta operativa de stock por ubicación, la determinación determinista de estados de disponibilidad, la administración de umbrales de stock bajo (global y override por SKU) y la simulación de recepción de eventos de inventario. Las anotaciones, supuestos y referencias técnicas no se muestran como elementos de la interfaz simulada.
+> **Fuentes normativas:** SPEC individual de esta funcionalidad (`../../specs/SPEC-015-control-stock-disponibilidad.md`), HU individual de esta funcionalidad (`../../hu/HU-015-control-stock-disponibilidad.md`), `../DESIGN.md` y `../INDEX.md`. Ante contradicción, prevalece SPEC → HU → WF. Los contratos de reservas y consumos con Ventas y Postventa son contratos asíncronos desacoplados mediante eventos **provisionales no homologados**; el prototipo no debe simular pagos realizados ni confirmaciones externas como si estuvieran implementadas. Las anotaciones, supuestos y referencias técnicas permanecen en este documento y no se muestran como elementos de la interfaz simulada.
 
 ## 0. Instrucciones para el agente
 
@@ -12,7 +12,8 @@ Antes de diseñar:
 1. Consulta ../../specs/SPEC-015-control-stock-disponibilidad.md.
 2. Consulta ../../hu/HU-015-control-stock-disponibilidad.md.
 3. Consulta ../DESIGN.md.
-4. Usa este documento para la composición, interacción y estados del flujo.
+4. Consulta ../INDEX.md.
+5. Usa este documento para la composición, interacción y estados del flujo.
 
 Prioridad de fuentes:
 
@@ -31,8 +32,8 @@ Reglas de producción:
 - Se controlan tres magnitudes: stock físico (`on_hand`), unidades reservadas (`reserved`) y unidades disponibles para venta (`available = max(on_hand - reserved, 0)`).
 - El stock **nunca puede quedar negativo** (`available >= 0`).
 - Determinación de estados: `available = 0 → AGOTADO`; `0 < available <= umbral_resuelto → STOCK_BAJO`; `available > umbral_resuelto → DISPONIBLE`.
-- Modelo de umbrales: existe un **umbral global por defecto** configurable a nivel sistema (`umbral_stock_bajo_default`, valor inicial 5) y un **override opcional por SKU**. El umbral resuelto aplica `override SKU ?? umbral_global`. No se definen umbrales por ubicación.
-- Las operaciones de movimiento de inventario se gestionan mediante contratos idempotentes (`reserve`, `release`, `consume`); el consumo por venta o reserva es iniciado por eventos externos (`order.confirmed`, `order.cancelled`, `order.returned`); el componente de administración no procesa transacciones de pago ni cobros.
+- Modelo de umbrales: existe un **umbral global por defecto** configurable a nivel de sistema (`umbral_stock_bajo_default`) y un **override opcional por SKU**. El umbral resuelto aplica `override SKU ?? umbral_global` (en ejemplos ilustrativos se usa 5 unidades, pero el valor contractual del sistema es configurable). No se definen umbrales por ubicación.
+- Inventario provee capacidades internas idempotentes de movimiento: `reserve`, `release` y `consume` sobre `(sku, location_id)`. Los movimientos por venta se coordinan mediante eventos externos provisionales (`order.confirmed`, `order.cancelled`, `order.returned`); `order.created` por sí solo no reserva ni descuenta en el MVP salvo futura homologación de un contrato de reservas. Despacho no genera consumos adicionales ni modifica directamente el stock.
 - Tras cada mutación persistida por eventos o carga masiva se emite el evento de dominio `inventory.stock.changed`.
 - No elijas una librería de UI ni una estrategia CSS.
 - Usa datos ficticios y no consumas APIs reales.
@@ -323,16 +324,14 @@ Aplicar DESIGN.md como única fuente de representación visual monocromática.
 
 ### Dependencias o contratos
 
-| ID | Módulo / Servicio | Tipo de dependencia | Impacto en Stock | Contrato / Evento | Estado del contrato |
-|---|---|---|---|---|---|
-| DEP-01 | Catálogo (WF-003, WF-004) | Datos de entrada (SKU, variante) | Si el SKU no existe o está inactivo, no se puede operar stock | `catalog.sku.created`, `catalog.sku.status_changed` | Homologado |
-| DEP-02 | Pricing (WF-013) | Contextual / no bloqueante | Stock no depende de precios para operar; precios no dependen de stock | N/A | N/A |
-| DEP-03 | Promociones / Cupones (WF-005, WF-006) | Consulta de disponibilidad | Promociones consultan `disponible_para_venta > 0` antes de aplicar ciertas ofertas | API interna / evento `stock.level.changed` | Homologado |
-| DEP-04 | Ventas / Checkout | Reserva temporal y confirmación | `reserve` al iniciar checkout (TTL configurable); `consume` al confirmar pago; `release` al expirar TTL o cancelar | `order.created`, `order.confirmed`, `order.cancelled` | **Provisional no homologado** |
-| DEP-05 | Envíos / Fulfillment | Despacho y entrega | `consume` físico al despachar si no se consumió en confirmación; `return_restock` al procesar devolución | `fulfillment.dispatched`, `fulfillment.returned` | **Provisional no homologado** |
-| DEP-06 | Dashboard Alertas (WF-016) | Consumidor de eventos | WF-016 consume `stock.threshold.reached` y `stock.out_of_stock` generados por WF-015 | `stock.threshold.reached`, `stock.out_of_stock` | Homologado |
-| DEP-07 | Auditoría de Stock (módulo propio) | Registro de mutaciones | Toda mutación en stock físico o reservado genera entrada de auditoría con `user_id`, `reason_code`, `delta`, timestamp | API interna de auditoría / evento `stock.movement.recorded` | Homologado |
-| DEP-08 | Canales de Venta (B2B, B2C, POS) | Segmentación de disponible | Si se implementa stock por canal, cada canal consume su cuota asignada; en MVP el disponible es global por `location_id` | API de consulta de disponibilidad por canal | **Provisional no homologado** |
+| Componente / Servicio | Tipo de integración | Contrato / Evento | Estado del contrato | Descripción e impacto en Stock |
+|---|---|---|---|---|
+| Catálogo de productos y variantes (WF-003, WF-004) | Interna (dependencia) | API interna / datos de variantes | Homologado | Provee SKUs vendibles válidos (`sku_base` en producto simple o SKU de variante). Sin SKU válido no opera inventario. |
+| Ventas / Checkout | Externa (entrada asíncrona) | `order.confirmed` | **Provisional no homologado** | Solicita confirmación definitiva de consumo tras venta confirmada. Aplica débito ACID y registra Kardex. `order.created` no afecta stock en MVP mientras no exista homologación de reserva. |
+| Ventas / Cancelaciones | Externa (entrada asíncrona) | `order.cancelled` | **Provisional no homologado** | Si la venta confirmada se cancela antes del despacho, compensa únicamente consumos previos exitosos no compensados. |
+| Postventa / Devoluciones | Externa (entrada asíncrona) | `order.returned` | **Provisional no homologado** | Reintegra stock únicamente para unidades devueltas aceptadas y físicamente reintegrables en la ubicación de destino. |
+| Despacho / Fulfillment | Externa (delimitación) | N/A | Homologado | No genera consumo adicional ni altera stock; únicamente entrega unidades de ventas previamente confirmadas. |
+| Canales (Marketplace, Retail, Chatbot) y Dashboard (WF-016) | Externa / Interna (salida) | `inventory.stock.changed` | Homologado | Notificación asíncrona de cambio persistido de stock (consumo o ajuste) para actualizar proyecciones de disponibilidad y alertas. |
 
 ---
 
