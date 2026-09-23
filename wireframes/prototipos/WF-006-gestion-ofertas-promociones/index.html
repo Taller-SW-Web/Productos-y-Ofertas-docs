@@ -18,13 +18,17 @@
     .btn{min-height:44px;border:1px solid var(--n90);border-radius:var(--r);background:#fff;color:var(--n90);padding:10px 16px;font-weight:650;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn:hover{background:var(--n10)}.btn-primary,.primary{background:var(--n90);color:#fff}.btn-primary:hover,.primary:hover{background:#000}.link{border-color:transparent;padding-inline:8px}.btn:disabled{color:var(--n50);border-color:var(--n30);background:var(--n10)}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .toolbar{border:1px solid var(--n30);padding:16px;display:grid;grid-template-columns:minmax(220px,1fr) 180px 180px;gap:12px;margin-bottom:16px}.field{display:grid;gap:6px}.field label,.label{font-size:13px;font-weight:700}.input,.select{width:100%;min-height:44px;border:1px solid var(--n30);border-radius:var(--r);background:#fff;color:var(--n90);padding:9px 12px}.input[aria-invalid=true],.select[aria-invalid=true]{border:2px solid var(--n90)}.hint,.error{font-size:13px}.hint{color:var(--n50)}.error{font-weight:650}.panel{border:1px solid var(--n30);padding:24px;background:#fff}.panel+.panel{margin-top:16px}.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--n30);width:100%}table{width:100%;min-width:600px;border-collapse:collapse}th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--n30);vertical-align:middle}th{background:var(--n10);font-size:12px;text-transform:uppercase;letter-spacing:.05em}tbody tr:last-child td{border-bottom:0}.status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700}.dot{width:9px;height:9px;border:1px solid var(--n90);border-radius:50%}.status.on .dot{background:var(--n90)}.actions{white-space:nowrap}
     .tabs{display:flex;border-bottom:1px solid var(--n30);margin-bottom:24px;overflow:auto}.tab{min-height:44px;border:0;border-bottom:3px solid transparent;background:#fff;padding:8px 18px;cursor:pointer;color:var(--n50);white-space:nowrap}.tab[aria-selected=true]{border-color:var(--n90);color:var(--n90);font-weight:700}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.span2{grid-column:span 2}.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}.choice{border:1px solid var(--n30);padding:14px;cursor:pointer}.choice.selected{border:2px solid var(--n90);padding:13px}.product-picker{border:1px solid var(--n30);padding:16px}.product{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--n30)}.product:first-of-type{margin-top:12px}.product input{width:20px;height:20px}.form-actions{display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--n30)}
-    .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--n30);border:1px solid var(--n30)}.metric{background:#fff;padding:18px}.metric strong{display:block;font-size:24px}.notice{border:1px solid var(--n90);padding:14px 16px;display:flex;gap:12px}.empty{text-align:center;padding:56px 20px;border:1px solid var(--n30)}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--n30);border:1px solid var(--n30)}.metric{background:#fff;padding:18px}.metric strong{display:block;font-size:22px}.notice{border:1px solid var(--n90);padding:14px 16px;display:flex;gap:12px}.empty{text-align:center;padding:56px 20px;border:1px solid var(--n30)}
     .overlay{position:fixed;inset:0;background:rgba(17,24,39,.55);display:grid;place-items:center;padding:24px;z-index:20}.dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow-y:auto;background:#fff;border:1px solid var(--n90);padding:24px}.dialog h2{margin-bottom:8px}.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}.toast{position:fixed;right:24px;bottom:24px;max-width:380px;background:#fff;border:1px solid var(--n90);padding:14px 16px;z-index:30}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600}
     .badge-exclusive{background:var(--n90);color:#fff}
     .badge-combinable{border:1px solid var(--n90);background:var(--n10);color:var(--n90)}
-    @media (max-width: 900px){.nav{display:none}.page-head{align-items:flex-start;flex-direction:column}.toolbar{grid-template-columns:1fr 1fr}.toolbar .field:first-child{grid-column:span 2}.form-grid{grid-template-columns:1fr}.span2{grid-column:auto}.metrics{grid-template-columns:1fr}.panel{padding:18px}}
-    @media (max-width: 600px){:root{--g:16px}.toolbar{grid-template-columns:1fr}.toolbar .field:first-child{grid-column:auto}.page-head .btn{width:100%}.choices{grid-template-columns:1fr}.form-actions,.dialog-actions{flex-direction:column-reverse}.form-actions .btn,.dialog-actions .btn{width:100%}.toast{left:16px;right:16px}.topbar-in{padding-inline:16px}}
+    .scope-tree{border:1px solid var(--n30);border-radius:var(--r);background:#fff;overflow:hidden}
+    .scope-product{border-bottom:1px solid var(--n30);padding:12px 16px}
+    .scope-product:last-child{border-bottom:0}
+    .scope-skus{margin-left:28px;margin-top:8px;padding-left:12px;border-left:2px solid var(--n20);display:grid;gap:6px}
+    @media (max-width: 900px){.nav{display:none}.page-head{align-items:flex-start;flex-direction:column}.toolbar{grid-template-columns:1fr 1fr}.toolbar .field:first-child{grid-column:span 2}.form-grid{grid-template-columns:1fr}.span2{grid-column:auto}.metrics{grid-template-columns:1fr 1fr}.panel{padding:18px}}
+    @media (max-width: 600px){:root{--g:16px}.toolbar{grid-template-columns:1fr}.toolbar .field:first-child{grid-column:auto}.page-head .btn{width:100%}.choices{grid-template-columns:1fr}.form-actions,.dialog-actions{flex-direction:column-reverse}.form-actions .btn,.dialog-actions .btn{width:100%}.toast{left:16px;right:16px}.topbar-in{padding-inline:16px}.metrics{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -32,6 +36,39 @@
   <main id="app" tabindex="-1"></main><div id="overlay"></div><div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <script>
   (()=>{
+    // Catálogo elegible con productos y SKUs vendibles (SPEC-006)
+    const eligibleCatalog = [
+      {
+        productName: 'Zapatillas Run Pro',
+        skus: [
+          { sku: 'ZAP-RUN-39', label: 'Talla 39 - Negro' },
+          { sku: 'ZAP-RUN-40', label: 'Talla 40 - Negro' },
+          { sku: 'ZAP-RUN-41', label: 'Talla 41 - Azul' }
+        ]
+      },
+      {
+        productName: 'Polo Dry Fit',
+        skus: [
+          { sku: 'POL-DRY-S', label: 'Talla S - Gris' },
+          { sku: 'POL-DRY-M', label: 'Talla M - Gris' },
+          { sku: 'POL-DRY-L', label: 'Talla L - Azul' }
+        ]
+      },
+      {
+        productName: 'Casaca térmica',
+        skus: [
+          { sku: 'CAS-TER-M', label: 'Talla M - Negro' },
+          { sku: 'CAS-TER-L', label: 'Talla L - Negro' }
+        ]
+      },
+      {
+        productName: 'Medias deportivas',
+        skus: [
+          { sku: 'MED-DEP-U', label: 'Talla Única - Blanco' }
+        ]
+      }
+    ];
+
     const promotions=[
       {
         name:'Semana Running',
@@ -40,7 +77,8 @@
         state:'ACTIVA',
         start:'2026-09-15T00:00',
         end:'2026-09-30T23:59',
-        products:['Zapatillas Run Pro','Polo Dry Fit'],
+        // Alcance: productos completos o SKUs individuales
+        selectedSkus: ['ZAP-RUN-39','ZAP-RUN-40','ZAP-RUN-41','POL-DRY-S','POL-DRY-M','POL-DRY-L'],
         modalidad:'AUTOMATICA',
         prioridad:1,
         canales:['Marketplace','Chatbot','Retail'],
@@ -49,16 +87,16 @@
         acumulable_cupones:false
       },
       {
-        name:'S/ 25 en running',
+        name:'S/ 25 en running (SKU 40)',
         type:'Monto fijo',
         value:25,
         state:'ACTIVA',
         start:'2026-09-10T00:00',
         end:'2026-10-10T23:59',
-        products:['Zapatillas Run Pro'],
+        selectedSkus: ['ZAP-RUN-40'],
         modalidad:'AUTOMATICA',
         prioridad:2,
-        canales:['Marketplace','Retail'],
+        canales:[], // Lista vacía = todos los canales soportados conforme a SPEC-006
         acumulable_oferta_directa:true,
         acumulable_promociones:false,
         acumulable_cupones:true
@@ -70,7 +108,7 @@
         state:'INACTIVA',
         start:'2026-08-01T00:00',
         end:'2026-08-31T23:59',
-        products:['Casaca térmica'],
+        selectedSkus: ['CAS-TER-M','CAS-TER-L'],
         modalidad:'AUTOMATICA',
         prioridad:3,
         canales:['Marketplace'],
@@ -79,6 +117,7 @@
         acumulable_cupones:false
       }
     ];
+
     const app=document.getElementById('app'),overlay=document.getElementById('overlay'),toastEl=document.getElementById('toast');let timer;
     const esc=s=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
     function toast(t){clearTimeout(timer);toastEl.textContent=t;toastEl.hidden=false;timer=setTimeout(()=>toastEl.hidden=true,3000)}
@@ -94,10 +133,35 @@
       return `<span class="badge badge-combinable" title="Combinable con: ${parts.join(', ')}">Combina (${parts.join(', ')})</span>`;
     }
 
+    function formatChannels(canales){
+      if(!canales || canales.length === 0){
+        return 'Todos (Marketplace, Chatbot, Retail)';
+      }
+      return canales.join(', ');
+    }
+
+    function formatScopeSummary(selectedSkus){
+      if(!selectedSkus || selectedSkus.length === 0) return '0 ítems';
+      const totalSkus = eligibleCatalog.reduce((sum, p) => sum + p.skus.length, 0);
+      if(selectedSkus.length === totalSkus) return 'Catálogo completo';
+
+      // Agrupar por producto
+      const parts = [];
+      eligibleCatalog.forEach(p => {
+        const matching = p.skus.filter(s => selectedSkus.includes(s.sku));
+        if(matching.length === p.skus.length){
+          parts.push(`${p.productName} (completo)`);
+        } else if(matching.length > 0){
+          parts.push(`${p.productName} (${matching.length} SKU)`);
+        }
+      });
+      return parts.length ? parts.join(', ') : `${selectedSkus.length} SKU(s)`;
+    }
+
     function list(){
       location.hash='#lista';
       app.innerHTML=head('Ofertas y promociones','Administra beneficios promocionales y su matriz de combinabilidad granular.','<div class="row"><button class="btn primary" data-action="new">Crear promoción</button></div>')+`
-      <section class="toolbar" aria-label="Filtros"><div class="field"><label for="q">Buscar promoción o producto</label><input class="input" id="q" placeholder="Ej. Semana Running"></div><div class="field"><label for="state">Estado</label><select class="select" id="state"><option>Todos</option><option>Activas</option><option>Inactivas</option></select></div><div class="field"><label for="type">Tipo</label><select class="select" id="type"><option>Todos</option><option>Porcentaje</option><option>Monto fijo</option></select></div></section>
+      <section class="toolbar" aria-label="Filtros"><div class="field"><label for="q">Buscar promoción</label><input class="input" id="q" placeholder="Ej. Semana Running"></div><div class="field"><label for="state">Estado</label><select class="select" id="state"><option>Todos</option><option>Activas</option><option>Inactivas</option></select></div><div class="field"><label for="type">Tipo</label><select class="select" id="type"><option>Todos</option><option>Porcentaje</option><option>Monto fijo</option></select></div></section>
       <section class="panel" aria-labelledby="title-list"><div class="panel-head"><div><h2 id="title-list">Promociones</h2><p class="small muted" id="count"></p></div></div><div id="rows"></div></section>`;
       ['q','state','type'].forEach(id=>document.getElementById(id).addEventListener(id==='q'?'input':'change',rows));
       rows();
@@ -105,17 +169,46 @@
 
     function rows(){
       const q=document.getElementById('q').value.toLowerCase(),s=document.getElementById('state').value,t=document.getElementById('type').value;
-      const data=promotions.filter(p=>(p.name+' '+p.products.join(' ')).toLowerCase().includes(q)&&(s==='Todos'||(s==='Activas'&&p.state==='ACTIVA')||(s==='Inactivas'&&p.state==='INACTIVA'))&&(t==='Todos'||t===p.type));
+      const data=promotions.filter(p=>p.name.toLowerCase().includes(q)&&(s==='Todos'||(s==='Activas'&&p.state==='ACTIVA')||(s==='Inactivas'&&p.state==='INACTIVA'))&&(t==='Todos'||t===p.type));
       document.getElementById('count').textContent=`${data.length} resultado${data.length===1?'':'s'}`;
-      document.getElementById('rows').innerHTML=data.length?`<div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Descuento</th><th>Combinabilidad</th><th>Productos</th><th>Vigencia</th><th>Estado</th><th><span class="sr">Acciones</span></th></tr></thead><tbody>${data.map(p=>{const i=promotions.indexOf(p);return `<tr><td><strong>${esc(p.name)}</strong></td><td>${p.type==='Porcentaje'?p.value+' %':'S/ '+p.value.toFixed(2)}</td><td>${getCombinationBadge(p)}</td><td>${p.products.length} producto${p.products.length===1?'':'s'}</td><td>${date(p.start)} — ${date(p.end)}</td><td><span class="status ${p.state==='ACTIVA'?'on':''}"><span class="dot"></span>${p.state}</span></td><td class="actions"><button class="btn link" data-action="detail" data-index="${i}">Ver detalle</button></td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty"><h3>No hay coincidencias</h3><p class="muted">Ajusta los filtros de búsqueda.</p></div>';
+      document.getElementById('rows').innerHTML=data.length?`<div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Descuento</th><th>Combinabilidad</th><th>Canales</th><th>Alcance (Productos / SKUs)</th><th>Vigencia</th><th>Estado</th><th><span class="sr">Acciones</span></th></tr></thead><tbody>${data.map(p=>{const i=promotions.indexOf(p);return `<tr><td><strong>${esc(p.name)}</strong></td><td>${p.type==='Porcentaje'?p.value+' %':'S/ '+p.value.toFixed(2)}</td><td>${getCombinationBadge(p)}</td><td class="small">${esc(formatChannels(p.canales))}</td><td class="small">${esc(formatScopeSummary(p.selectedSkus))}</td><td>${date(p.start)} — ${date(p.end)}</td><td><span class="status ${p.state==='ACTIVA'?'on':''}"><span class="dot"></span>${p.state}</span></td><td class="actions"><button class="btn link" data-action="detail" data-index="${i}">Ver detalle</button></td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty"><h3>No hay coincidencias</h3><p class="muted">Ajusta los filtros de búsqueda.</p></div>';
     }
 
     function date(v){return new Intl.DateTimeFormat('es-PE',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(v))}
 
     function form(i=null){
-      const p=i===null?{name:'',type:'Porcentaje',value:'',state:'ACTIVA',start:'',end:'',products:[],modalidad:'AUTOMATICA',prioridad:1,canales:['Marketplace','Chatbot','Retail'],acumulable_oferta_directa:false,acumulable_promociones:false,acumulable_cupones:false}:promotions[i];
+      const p=i===null?{name:'',type:'Porcentaje',value:'',state:'ACTIVA',start:'',end:'',selectedSkus:[],modalidad:'AUTOMATICA',prioridad:1,canales:['Marketplace','Chatbot','Retail'],acumulable_oferta_directa:false,acumulable_promociones:false,acumulable_cupones:false}:promotions[i];
       location.hash=i===null?'#nueva':'#editar';
-      app.innerHTML=head(i===null?'Crear promoción':'Editar promoción','Define el descuento, modalidad, vigencia y política de combinación granular (3 vías).')+`
+      
+      const currentSkus = p.selectedSkus || [];
+
+      // Construcción del árbol producto -> SKUs individuales
+      const scopeTreeHtml = eligibleCatalog.map((prod, pIdx) => {
+        const prodSkus = prod.skus.map(s => s.sku);
+        const allChecked = prodSkus.every(sku => currentSkus.includes(sku));
+        const someChecked = prodSkus.some(sku => currentSkus.includes(sku));
+
+        const skusHtml = prod.skus.map(s => `
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+            <input type="checkbox" class="sku-cb" data-product-idx="${pIdx}" value="${s.sku}" ${currentSkus.includes(s.sku)?'checked':''}>
+            <span class="mono"><strong>${s.sku}</strong> — ${esc(s.label)}</span>
+          </label>
+        `).join('');
+
+        return `
+          <div class="scope-product">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer">
+              <input type="checkbox" class="product-parent-cb" data-product-idx="${pIdx}" ${allChecked ? 'checked' : ''}>
+              <span>${esc(prod.productName)}</span> <span class="small muted">(${prod.skus.length} SKUs vendibles)</span>
+            </label>
+            <div class="scope-skus">
+              ${skusHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      app.innerHTML=head(i===null?'Crear promoción':'Editar promoción','Define el descuento, modalidad, vigencia, canales y alcance granular por producto o SKU.')+`
       <form class="panel" id="form" novalidate>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
           <div>
@@ -134,10 +227,13 @@
         <div style="margin-bottom:16px;">
           <label><strong>Canales habilitados:</strong></label>
           <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
-            <label><input type="checkbox" id="ch-mkt" ${p.canales.includes('Marketplace')?'checked':''} /> Marketplace</label>
-            <label><input type="checkbox" id="ch-chat" ${p.canales.includes('Chatbot')?'checked':''} /> Chatbot</label>
-            <label><input type="checkbox" id="ch-ret" ${p.canales.includes('Retail')?'checked':''} /> Retail</label>
+            <label><input type="checkbox" id="ch-mkt" ${(!p.canales || p.canales.includes('Marketplace'))?'checked':''} /> Marketplace</label>
+            <label><input type="checkbox" id="ch-chat" ${(!p.canales || p.canales.includes('Chatbot'))?'checked':''} /> Chatbot</label>
+            <label><input type="checkbox" id="ch-ret" ${(!p.canales || p.canales.includes('Retail'))?'checked':''} /> Retail</label>
           </div>
+          <p class="field-help" style="margin:6px 0 0;font-size:12px;color:var(--n50)">
+            <strong>Regla SPEC-006:</strong> Si dejas todos los canales desmarcados (lista vacía), la promoción se interpreta y aplica automáticamente a <em>todos los canales soportados</em>.
+          </p>
         </div>
 
         <!-- Política de combinación granular 3 vías según WF-006 -->
@@ -170,7 +266,21 @@
           <div class="field"><label for="value">Valor del descuento *</label><input id="value" class="input" type="number" min="0.01" step="0.01" value="${p.value}" placeholder="0.00"><span class="hint" id="value-hint">${p.type==='Porcentaje'?'Mayor que 0 y hasta 100 %.':'Mayor que 0; se aplica al subtotal elegible.'}</span><span class="error" id="e-value" hidden></span></div>
           <div class="field"><label for="status">Estado inicial *</label><select id="status" class="select"><option ${p.state==='ACTIVA'?'selected':''}>ACTIVA</option><option ${p.state==='INACTIVA'?'selected':''}>INACTIVA</option></select></div>
           <div class="field"><label for="start">Inicio vigencia *</label><input id="start" class="input" type="datetime-local" value="${p.start}"><span class="error" id="e-start" hidden></span></div><div class="field"><label for="end">Fin vigencia *</label><input id="end" class="input" type="datetime-local" value="${p.end}"><span class="error" id="e-end" hidden></span></div>
-          <div class="span2 product-picker"><h3>Productos participantes *</h3><p class="small muted">Solo se muestran productos activos.</p>${['Zapatillas Run Pro','Polo Dry Fit','Casaca térmica','Medias deportivas'].map((x,n)=>`<label class="product"><input type="checkbox" name="product" value="${x}" ${p.products.includes(x)?'checked':''}><span><strong>${x}</strong><span class="small muted" style="display:block">SKU-${110+n}</span></span><span>Activo</span></label>`).join('')}<span class="error" id="e-products" hidden></span></div>
+          
+          <!-- Alcance granular producto / SKU (SPEC-006) -->
+          <div class="span2 product-picker">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div>
+                <h3 style="margin:0">Alcance de la promoción (Productos y/o SKUs vendibles) *</h3>
+                <p class="small muted" style="margin:4px 0 0">Selecciona el producto completo para incluir todas sus variantes o marca SKUs específicos (SPEC-006).</p>
+              </div>
+              <span id="scope-count" class="small muted mono"></span>
+            </div>
+            <div class="scope-tree">
+              ${scopeTreeHtml}
+            </div>
+            <span class="error" id="e-products" hidden></span>
+          </div>
         </div>
         <div class="form-actions"><button type="button" class="btn" data-action="back">Cancelar</button><button class="btn primary" type="submit">Guardar promoción</button></div>
       </form>`;
@@ -191,10 +301,37 @@
         }
       }
 
+      function updateScopeCount(){
+        const selected = document.querySelectorAll('.sku-cb:checked').length;
+        document.getElementById('scope-count').textContent = `${selected} SKU(s) seleccionado(s)`;
+      }
+
+      // Sincronización entre checkbox de producto y checkboxes de SKUs
+      document.querySelectorAll('.product-parent-cb').forEach(parentCb => {
+        parentCb.addEventListener('change', e => {
+          const idx = e.target.dataset.productIdx;
+          const skuCbs = document.querySelectorAll(`.sku-cb[data-product-idx="${idx}"]`);
+          skuCbs.forEach(cb => { cb.checked = e.target.checked; });
+          updateScopeCount();
+        });
+      });
+
+      document.querySelectorAll('.sku-cb').forEach(skuCb => {
+        skuCb.addEventListener('change', e => {
+          const idx = e.target.dataset.productIdx;
+          const allForProd = document.querySelectorAll(`.sku-cb[data-product-idx="${idx}"]`);
+          const parentCb = document.querySelector(`.product-parent-cb[data-product-idx="${idx}"]`);
+          const allChecked = Array.from(allForProd).every(cb => cb.checked);
+          if(parentCb) parentCb.checked = allChecked;
+          updateScopeCount();
+        });
+      });
+
       ['comb-pricing','comb-promos','comb-cupones'].forEach(id=>{
         document.getElementById(id).addEventListener('change', updateCombBadge);
       });
       updateCombBadge();
+      updateScopeCount();
 
       document.querySelectorAll('[name=discount]').forEach(r=>r.addEventListener('change',discountChange));
       document.getElementById('form').addEventListener('submit',e=>save(e,i));
@@ -211,19 +348,22 @@
       e.preventDefault();
       document.querySelectorAll('.error').forEach(x=>x.hidden=true);
       document.querySelectorAll('[aria-invalid]').forEach(x=>x.removeAttribute('aria-invalid'));
-      const name=document.getElementById('name'),value=document.getElementById('value'),start=document.getElementById('start'),end=document.getElementById('end'),type=document.querySelector('[name=discount]:checked').value,products=[...document.querySelectorAll('[name=product]:checked')];
+      const name=document.getElementById('name'),value=document.getElementById('value'),start=document.getElementById('start'),end=document.getElementById('end'),type=document.querySelector('[name=discount]:checked').value;
+      const selectedSkus = Array.from(document.querySelectorAll('.sku-cb:checked')).map(cb => cb.value);
+
       let bad=false;
       if(!name.value.trim()){err(name,'e-name','Ingresa un nombre.');bad=true}
       if(!value.value||Number(value.value)<=0||(type==='Porcentaje'&&Number(value.value)>100)){err(value,'e-value',type==='Porcentaje'?'Ingresa un porcentaje mayor que 0 y hasta 100.':'Ingresa un monto mayor que 0.');bad=true}
       if(!start.value){err(start,'e-start','Indica el inicio.');bad=true}
       if(!end.value||end.value<=start.value){err(end,'e-end','El fin debe ser posterior al inicio.');bad=true}
-      if(!products.length){const x=document.getElementById('e-products');x.textContent='Selecciona al menos un producto.';x.hidden=false;bad=true}
+      if(!selectedSkus.length){const x=document.getElementById('e-products');x.textContent='Selecciona al menos un producto o SKU vendible.';x.hidden=false;bad=true}
       if(bad)return;
 
       const canales = [];
       if(document.getElementById('ch-mkt').checked) canales.push('Marketplace');
       if(document.getElementById('ch-chat').checked) canales.push('Chatbot');
       if(document.getElementById('ch-ret').checked) canales.push('Retail');
+      // Conforme a SPEC-006: Si la lista de canales está vacía, se conserva [] (se interpreta como todos los canales soportados)
 
       const saved={
         name:name.value.trim(),
@@ -232,10 +372,10 @@
         state:document.getElementById('status').value,
         start:start.value,
         end:end.value,
-        products:products.map(x=>x.value),
+        selectedSkus:selectedSkus,
         modalidad:document.getElementById('p-modalidad').value,
         prioridad:Number(document.getElementById('p-prioridad').value)||1,
-        canales:canales.length?canales:['Marketplace'],
+        canales:canales, // Se conserva lista vacía o seleccionados, sin forzar Marketplace
         acumulable_oferta_directa:document.getElementById('comb-pricing').checked,
         acumulable_promociones:document.getElementById('comb-promos').checked,
         acumulable_cupones:document.getElementById('comb-cupones').checked
@@ -251,7 +391,23 @@
       location.hash='#detalle';
       const isExcl = !p.acumulable_oferta_directa && !p.acumulable_promociones && !p.acumulable_cupones;
 
-      app.innerHTML=head(p.name,'Detalle de la promoción y política de combinación evaluable.',`<button class="btn" data-action="edit" data-index="${i}">Editar</button>`)+`
+      // Resumen del alcance en detalle
+      const scopeDetailHtml = eligibleCatalog.map(prod => {
+        const matching = prod.skus.filter(s => (p.selectedSkus || []).includes(s.sku));
+        if(!matching.length) return '';
+        const isComplete = matching.length === prod.skus.length;
+        return `
+          <div style="border-bottom:1px solid var(--n20);padding:8px 0">
+            <strong>${esc(prod.productName)}</strong>: 
+            <span class="badge ${isComplete ? 'badge-exclusive' : 'badge-combinable'}">${isComplete ? 'Producto completo' : `${matching.length} SKU(s) específico(s)`}</span>
+            <ul style="margin:6px 0 0 16px;padding:0;font-size:13px" class="mono">
+              ${matching.map(s => `<li>${esc(s.sku)} (${esc(s.label)})</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }).filter(Boolean).join('');
+
+      app.innerHTML=head(p.name,'Detalle de la promoción, alcance por producto/SKU y política de combinación.',`<button class="btn" data-action="edit" data-index="${i}">Editar</button>`)+`
       <section class="panel">
         <div class="panel-head">
           <div>
@@ -263,7 +419,8 @@
         <div class="metrics">
           <div class="metric"><span class="small muted">Descuento</span><strong>${p.type==='Porcentaje'?p.value+' %':'S/ '+p.value.toFixed(2)}</strong><span class="small">${p.type}</span></div>
           <div class="metric"><span class="small muted">Vigencia</span><strong class="small">${date(p.start)} — ${date(p.end)}</strong></div>
-          <div class="metric"><span class="small muted">Productos</span><strong>${p.products.length}</strong></div>
+          <div class="metric"><span class="small muted">Canales</span><strong class="small">${esc(formatChannels(p.canales))}</strong></div>
+          <div class="metric"><span class="small muted">SKUs alcanzados</span><strong>${(p.selectedSkus||[]).length}</strong></div>
         </div>
 
         <div style="margin-top:24px;border:1px solid var(--n30);padding:18px;border-radius:var(--r);background:var(--n10)">
@@ -290,8 +447,10 @@
         </div>
 
         <div style="margin-top:24px">
-          <h3>Productos participantes</h3>
-          <ul>${p.products.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+          <h3>Alcance participante (Productos y/o SKUs vendibles)</h3>
+          <div style="margin-top:12px">
+            ${scopeDetailHtml || '<p class="muted">No hay ítems seleccionados.</p>'}
+          </div>
         </div>
         <div class="form-actions"><button class="btn" data-action="back">Volver al listado</button><button class="btn" data-action="confirm" data-index="${i}">${p.state==='ACTIVA'?'Desactivar':'Activar'} promoción</button></div>
       </section>`;

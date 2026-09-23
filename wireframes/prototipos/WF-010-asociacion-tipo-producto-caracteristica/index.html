@@ -138,7 +138,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
             <div>
               <h2 id="selected-type-title" style="margin:0 0 4px 0;">Calzado Deportivo</h2>
-              <span class="small muted" id="selected-type-desc">Esquema para zapatillas, botas y calzado técnico.</span>
+              <span class="small muted mono" id="selected-type-id">tipo_producto_id: TP-01</span>
             </div>
             <div class="status active" id="type-status">Activo</div>
           </div>
@@ -232,7 +232,7 @@
       <div class="dialog-header">
         <div>
           <h2>Nuevo Tipo de Producto (Ligero)</h2>
-          <p class="small muted">Crea una entidad ligera para definir un esquema técnico de atributos independiente de la navegación.</p>
+          <p class="small muted">El sistema asigna automáticamente el identificador (tipo_producto_id) y crea la entidad en estado ACTIVO.</p>
         </div>
         <button class="btn btn-quiet" id="btn-close-create-type">✕</button>
       </div>
@@ -241,23 +241,14 @@
         <div class="notice-icon" aria-hidden="true">i</div>
         <div>
           <h3>Entidad normativa de características</h3>
-          <p>El tipo de producto agrupa las características técnicas requeridas y opcionales. No requiere que existan categorías previas.</p>
+          <p>Define el esquema técnico aplicable a productos de este tipo. Conforme a SPEC-010, solo se introduce el nombre y el sistema genera su ID.</p>
         </div>
       </div>
 
       <div class="field">
-        <label for="input-type-code">Código identificador (ID):</label>
-        <input type="text" id="input-type-code" placeholder="Ej: TP-04 o TEC-OUTDOOR" class="mono" />
-      </div>
-
-      <div class="field">
         <label for="input-type-name">Nombre del tipo de producto: *</label>
-        <input type="text" id="input-type-name" placeholder="Ej: Equipamiento Outdoor" required />
-      </div>
-
-      <div class="field">
-        <label for="input-type-desc">Descripción técnica:</label>
-        <input type="text" id="input-type-desc" placeholder="Ej: Esquema para mochilas, carpas y accesorios de montaña" />
+        <input type="text" id="input-type-name" placeholder="Ej: Equipamiento Outdoor" required autofocus />
+        <p class="small muted" style="margin-top:6px">El identificador (ej. TP-04) será generado y asignado por el sistema.</p>
       </div>
 
       <div class="button-row end" style="margin-top:24px;">
@@ -277,7 +268,7 @@
         {
           id: 'TP-01',
           name: 'Calzado Deportivo',
-          desc: 'Esquema para zapatillas, tacos y calzado técnico.',
+          status: 'active',
           attrs: [
             { id: 'C-01', name: 'Talla', type: 'LISTA', mandatory: true },
             { id: 'C-02', name: 'Color', type: 'LISTA', mandatory: true },
@@ -287,7 +278,7 @@
         {
           id: 'TP-02',
           name: 'Ropa de Entrenamiento',
-          desc: 'Esquema para camisetas, shorts, mallas y buzos.',
+          status: 'active',
           attrs: [
             { id: 'C-01', name: 'Talla', type: 'LISTA', mandatory: true },
             { id: 'C-02', name: 'Color', type: 'LISTA', mandatory: true },
@@ -298,7 +289,7 @@
         {
           id: 'TP-03',
           name: 'Balones y Accesorios',
-          desc: 'Esquema para balones, guantes, canilleras y bolsos.',
+          status: 'active',
           attrs: [
             { id: 'C-06', name: 'Tamaño / Número', type: 'LISTA', mandatory: true },
             { id: 'C-07', name: 'Material de Cubierta', type: 'TEXTO', mandatory: false }
@@ -322,7 +313,7 @@
       state.types.forEach(t => {
         const item = document.createElement('div');
         item.className = 'type-item' + (t.id === state.selectedTypeId ? ' selected' : '');
-        item.innerHTML = `<div><strong>${t.name}</strong><br><span class="small muted mono">${t.attrs.length} características</span></div>`;
+        item.innerHTML = `<div><strong>${t.name}</strong> <span class="mono muted small" style="margin-left:4px">(${t.id})</span><br><span class="small muted mono">${t.attrs.length} características · ${t.status === 'active' ? 'Activo' : 'Inactivo'}</span></div>`;
         item.onclick = () => {
           state.selectedTypeId = t.id;
           renderTypes();
@@ -336,7 +327,12 @@
       const cur = state.types.find(t => t.id === state.selectedTypeId);
       if(!cur) return;
       document.getElementById('selected-type-title').textContent = cur.name;
-      document.getElementById('selected-type-desc').textContent = cur.desc;
+      document.getElementById('selected-type-id').textContent = `tipo_producto_id: ${cur.id}`;
+      const statusEl = document.getElementById('type-status');
+      if (statusEl) {
+        statusEl.className = 'status ' + (cur.status === 'active' ? 'active' : 'inactive');
+        statusEl.textContent = cur.status === 'active' ? 'Activo' : 'Inactivo';
+      }
       document.getElementById('attr-count-label').innerHTML = `<strong>${cur.attrs.length} / ${MAX_PRODUCT_TYPE_ATTRIBUTES}</strong> características activas asignadas`;
 
       const tbody = document.getElementById('attr-table-body');
@@ -440,9 +436,7 @@
     // Crear Tipo de Producto Ligero
     const modalCreateType = document.getElementById('modal-create-type');
     function openCreateTypeModal(){
-      document.getElementById('input-type-code').value = 'TP-0' + (state.types.length + 1);
       document.getElementById('input-type-name').value = '';
-      document.getElementById('input-type-desc').value = '';
       modalCreateType.classList.add('open');
       setTimeout(() => document.getElementById('input-type-name').focus(), 50);
     }
@@ -461,14 +455,12 @@
         document.getElementById('input-type-name').focus();
         return;
       }
-      let code = document.getElementById('input-type-code').value.trim();
-      if(!code) code = 'TP-0' + (state.types.length + 1);
-      const desc = document.getElementById('input-type-desc').value.trim() || 'Sin descripción técnica.';
-
+      // Conforme a SPEC-010 y WF-010: el sistema crea y asigna tipo_producto_id
+      const code = 'TP-0' + (state.types.length + 1);
       const newType = {
         id: code,
         name: name,
-        desc: desc,
+        status: 'active',
         attrs: []
       };
       state.types.push(newType);
@@ -476,7 +468,7 @@
       closeCreateTypeModal();
       renderTypes();
       renderDetail();
-      showToast(`Tipo de producto "${name}" creado exitosamente.`);
+      showToast(`Tipo de producto "${name}" creado exitosamente (tipo_producto_id: ${code}).`);
     };
 
     renderTypes();

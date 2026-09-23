@@ -316,7 +316,7 @@
 
   function renderTree(){
     const forced=state.queryState;
-    const header=`<div class="page-header"><div><h1>Gestión de categorías</h1><p>Crea, organiza y mantiene la jerarquía de categorías y subcategorías (máximo dos niveles).</p></div><div class="button-row"><button class="btn btn-primary" data-action="create">Crear categoría</button></div></div>`;
+    const header=`<div class="page-header"><div><h1>Gestión de categorías</h1><p>Crea, organiza y mantiene la jerarquía de categorías y subcategorías (máximo {MAX_CATEGORY_DEPTH} niveles — valor configurado MVP: 2).</p></div><div class="button-row"><button class="btn btn-primary" data-action="create">Crear categoría</button></div></div>`;
     if(state.listLoading && !forced){
       app.innerHTML=header+`<div class="skeleton" aria-label="Cargando categorías"><div class="sk-line w30"></div><div class="sk-line w80"></div><div class="sk-line w50"></div></div>`;
       setTimeout(()=>{state.listLoading=false;render();},450);
@@ -332,7 +332,7 @@
     }
     const rows=categories.map(treeRow).join('');
     const cards=categories.map(treeCard).join('');
-    app.innerHTML=header+`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Jerarquía de máximo dos niveles.</h3><p>Solo se puede crear una subcategoría sobre una categoría raíz. La desactivación requiere que la categoría no cuente con productos activos asociados.</p></div></div>
+    app.innerHTML=header+`<div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><h3>Jerarquía configurable ({MAX_CATEGORY_DEPTH} niveles, valor configurado MVP: 2).</h3><p>Solo se puede crear una subcategoría sobre una categoría raíz. La desactivación requiere que la categoría no cuente con productos activos asociados.</p></div></div>
       <div class="desktop-tree tree"><div class="tree-head"><span>Categoría</span><span>Código</span><span>Subcategorías</span><span>Productos</span><span>Estado y acciones</span></div>${rows}</div>
       <div class="mobile-tree">${cards}</div>`;
   }
@@ -370,7 +370,7 @@
       const p=catById(f.parentId);
       if(!p) errors.push({key:'parent',msg:'Selecciona una categoría raíz válida.'});
       else if(p.status!=='active') errors.push({key:'parent',msg:'El padre debe estar activo para asignarlo.'});
-      else if(state.formMode==='create' && p.parentId!==null) errors.push({key:'parent',msg:'La jerarquía tiene máximo dos niveles.'});
+      else if(state.formMode==='create' && p.parentId!==null) errors.push({key:'parent',msg:'La jerarquía admite máximo {MAX_CATEGORY_DEPTH} niveles (valor configurado MVP: 2).'});
     }
     return {errors,valid:errors.length===0};
   }
@@ -425,11 +425,11 @@
             <div class="field"><label for="catOrder">Orden</label><input id="catOrder" type="number" value="${escapeHtml(state.form.order)}" placeholder="Opcional"></div>
           </section>
           <section class="section"><h2>Jerarquía</h2>
-            <div class="field"><label for="catParent">Categoría padre</label>${parentOptions(state.currentId)}<div class="help">Se listan solo las categorías raíz activas. Una subcategoría no genera tercer nivel.</div><div class="field-error ${pen?'show':''}">${escapeHtml(pen)}</div></div>
+            <div class="field"><label for="catParent">Categoría padre</label>${parentOptions(state.currentId)}<div class="help">Se listan solo las categorías raíz activas. La jerarquía admite máximo {MAX_CATEGORY_DEPTH} niveles (valor configurado MVP: 2).</div><div class="field-error ${pen?'show':''}">${escapeHtml(pen)}</div></div>
           </section>
         </div>
         <aside class="section summary" aria-live="polite"><h2>Resultado</h2>
-          <div class="metric"><span class="metric-label">Nivel</span><span class="metric-value">${state.form.parentId?'Subcategoría':'Raíz'}</span><span class="metric-detail">Máximo dos niveles de jerarquía.</span></div>
+          <div class="metric"><span class="metric-label">Nivel</span><span class="metric-value">${state.form.parentId?'Subcategoría':'Raíz'}</span><span class="metric-detail">Máximo {MAX_CATEGORY_DEPTH} niveles (valor configurado MVP: 2).</span></div>
           <div class="metric"><span class="metric-label">Slug asignado</span><span class="metric-value mono" style="font-size:13px">${uniqueSlug?`/${escapeHtml(uniqueSlug)}`:'—'}</span><span class="metric-detail">Resuelto antes de persistir.</span></div>
           <div class="metric"><span class="metric-label">Productos afectados</span><span class="metric-value">—</span><span class="metric-detail">Cambiar el padre no afecta productos ya asociados.</span></div>
         </aside>
