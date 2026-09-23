@@ -674,7 +674,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 
 ### Alineación definitiva de Características
 
-- Este wireframe administra exclusivamente características y valores `TEXTO` (límite operativo configurable `MAX_TEXT_ATTRIBUTE_LENGTH`, inicial 100 caracteres), `NUMERO` (unidad obligatoria) y `LISTA` (límite operativo configurable `MAX_ACTIVE_LIST_VALUES`, inicial 50 valores activos). La asociación por Tipo de Producto y el límite de 20 efectivos corresponden al **WF-010**, y el CRUD de marcas al **WF-011**; no incluir pantallas CRUD redundantes.
+- Este wireframe administra exclusivamente características y valores `TEXTO` (límite operativo configurable `MAX_TEXT_ATTRIBUTE_LENGTH`, inicial 100 caracteres), `NUMERO` (unidad obligatoria) y `LISTA` (límite operativo configurable `MAX_ACTIVE_LIST_VALUES`, inicial 50 valores activos). La asociación por Tipo de Producto y el límite configurable `MAX_PRODUCT_TYPE_ATTRIBUTES` —cuyo valor inicial del MVP es 20— corresponden al **WF-010**, y el CRUD de marcas al **WF-011**; no incluir pantallas CRUD redundantes.
 - Renombrar un valor conserva su ID y no altera SKU. La baja de valores LISTA usados por SKU ACTIVO o producto ACTIVO requerido se rechaza con verificación asíncrona segura; el tipo es inmutable.
 
 ### Estados de verificación asíncrona al desactivar valor LISTA

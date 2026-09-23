@@ -326,12 +326,12 @@ Aplicar DESIGN.md como única fuente de representación visual monocromática.
 
 | Componente / Servicio | Tipo de integración | Contrato / Evento | Estado del contrato | Descripción e impacto en Stock |
 |---|---|---|---|---|
-| Catálogo de productos y variantes (WF-003, WF-004) | Interna (dependencia) | API interna / datos de variantes | Homologado | Provee SKUs vendibles válidos (`sku_base` en producto simple o SKU de variante). Sin SKU válido no opera inventario. |
+| Catálogo de productos y variantes (WF-003, WF-004) | Interna (dependencia) | API interna / datos de variantes | Interno / definido por SPEC | Provee SKUs vendibles válidos (`sku_base` en producto simple o SKU de variante). Sin SKU válido no opera inventario. |
 | Ventas / Checkout | Externa (entrada asíncrona) | `order.confirmed` | **Provisional no homologado** | Solicita confirmación definitiva de consumo tras venta confirmada. Aplica débito ACID y registra Kardex. `order.created` no afecta stock en MVP mientras no exista homologación de reserva. |
 | Ventas / Cancelaciones | Externa (entrada asíncrona) | `order.cancelled` | **Provisional no homologado** | Si la venta confirmada se cancela antes del despacho, compensa únicamente consumos previos exitosos no compensados. |
 | Postventa / Devoluciones | Externa (entrada asíncrona) | `order.returned` | **Provisional no homologado** | Reintegra stock únicamente para unidades devueltas aceptadas y físicamente reintegrables en la ubicación de destino. |
-| Despacho / Fulfillment | Externa (delimitación) | N/A | Homologado | No genera consumo adicional ni altera stock; únicamente entrega unidades de ventas previamente confirmadas. |
-| Canales (Marketplace, Retail, Chatbot) y Dashboard (WF-016) | Externa / Interna (salida) | `inventory.stock.changed` | Homologado | Notificación asíncrona de cambio persistido de stock (consumo o ajuste) para actualizar proyecciones de disponibilidad y alertas. |
+| Despacho / Fulfillment | Externa (delimitación) | N/A | Regla de delimitación | No genera consumo adicional ni altera stock; únicamente entrega unidades de ventas previamente confirmadas. |
+| Canales (Marketplace, Retail, Chatbot) y Dashboard (WF-016) | Externa / Interna (salida) | `inventory.stock.changed` | Contrato interno definido | Notificación asíncrona de cambio persistido de stock (consumo o ajuste) para actualizar proyecciones de disponibilidad y alertas. |
 
 ---
 

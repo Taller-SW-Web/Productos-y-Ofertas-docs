@@ -109,9 +109,8 @@ Genera un prototipo navegable con HTML, CSS y JavaScript estáticos:
 
 - Gráfico del rendimiento SEO, sugerencias u otras herramientas de buscador.
 - Cambios en URLs canónicas del frontend.
-- Ejecución de la redirección HTTP 301 en la capa pública: corresponde a Marketplace.
-- Gestión del slug dentro de la creación de categorías de WF-008: aquí solo se
-  administra el SEO una vez recibe la categoría.
+- Ejecución de la redirección HTTP 301 en la capa pública: corresponde a Marketplace (este módulo solo expone la resolución permanente `old_slug -> new_slug`).
+- Delimitación y handoff con WF-008: WF-012 es propietario de las reglas de generación, colisión, edición e historial del slug. Durante la creación de una categoría, WF-008 consume la generación automática y muestra el slug final antes de confirmar. La edición posterior del slug y metadatos se realiza en WF-012.
 - Traducción de metadatos a varios idiomas.
 
 ## 3. Usuario objetivo
@@ -516,7 +515,7 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - Autorizar acciones de escritura en servidor.
 - Validar duplicados en servidor, no solo en cliente.
 - Sanear slug, título y descripción.
-- Registrar historial y reescrituras 301 al cambiar slug.
+- Registrar historial y resoluciones permanentes `old_slug -> new_slug` al cambiar slug.
 - El endpoint público expone solamente título y descripción.
 - El documento no exige reautenticación.
 
@@ -526,8 +525,8 @@ Aplicar DESIGN.md como única fuente de representación visual.
 - [ ] Aplica sufijo incremental visible antes de confirmar ante duplicado automático.
 - [ ] Rechaza el duplicado manual con “El slug indicado ya está en uso”.
 - [ ] Advierte longitudes superiores a 70 y 160 caracteres permitiendo guardar.
-- [ ] Registra el historial y la redirección 301 al cambiar el slug.
-- [ ] Simula el endpoint público por slug activo con 200/301/404.
+- [ ] Registra el historial y la resolución permanente `old_slug -> new_slug` al cambiar el slug.
+- [ ] Simula consulta de slug activo (200), resolución `old_slug -> new_slug` para un slug histórico y ausencia/inactividad (404); Marketplace transforma la resolución histórica en HTTP 301.
 - [ ] Incluye carga, vacío, error, permisos y sesión.
 - [ ] Funciona con teclado y no depende del color.
 - [ ] Funciona con HTML/CSS/JS estáticos.
