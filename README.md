@@ -103,7 +103,7 @@ El flujo operativo se ejecuta de la siguiente manera:
 - Modificar la UX transversal sin aprobación oficial en `master`.
 - Abrir Pull Request desde `lab/lopez`.
 - Fusionar (`git merge`) `lab/lopez` hacia cualquier rama oficial (`lopez`, `master`).
-- Crear carpetas innecesarias o estructuras paralelas (`raw/`, `candidatos/`, etc.).
+- Trabajar únicamente dentro de la estructura oficial de artefactos y código de prototipado definida para el módulo.
 
 ## Promoción Selectiva hacia la Rama Oficial
 
