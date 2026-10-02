@@ -117,7 +117,7 @@ flowchart TD
 - Modificar la UX transversal sin aprobación oficial en `master`.
 - Abrir Pull Request desde `lab/vera`.
 - Fusionar (`git merge`) `lab/vera` hacia cualquier rama oficial (`vera`, `master`).
-- Crear carpetas innecesarias o estructuras paralelas (`raw/`, `candidatos/`, etc.).
+- Trabajar únicamente dentro de la estructura oficial de artefactos y código de prototipado definida para el módulo.
 
 ## Promoción Selectiva hacia la Rama Oficial
 
