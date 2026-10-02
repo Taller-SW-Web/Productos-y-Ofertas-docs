@@ -100,7 +100,7 @@ El flujo operativo se ejecuta de la siguiente manera:
 - Modificar la UX transversal sin aprobación oficial en `master`.
 - Abrir Pull Request desde `lab/castilla`.
 - Fusionar (`git merge`) `lab/castilla` hacia cualquier rama oficial (`castilla`, `master`).
-- Crear carpetas innecesarias o estructuras paralelas (`raw/`, `candidatos/`, etc.).
+- Trabajar únicamente dentro de la estructura oficial de artefactos y código de prototipado definida para el módulo.
 
 ## Promoción Selectiva hacia la Rama Oficial
 
