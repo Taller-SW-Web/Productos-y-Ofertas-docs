@@ -6,9 +6,9 @@
 
 ## Finalidad
 
-Iterar y experimentar mockups con Stitch MCP y asistentes en un entorno aislado.
+Espacio de trabajo experimental para el ejercicio de las responsabilidades técnicas y metodológicas asignadas a Leonardo Vera Rodríguez durante la etapa de mockups.
 
-La UX no se define aquí. Stitch **no está autorizado a redefinir la UX del módulo**. Esta rama debe aplicar obligatoriamente:
+La UX no se define aquí. Esta rama debe aplicar obligatoriamente la UX transversal del módulo:
 
 ```text
 mockups/ux/propuesta-ux.md
@@ -22,6 +22,7 @@ Cada funcionalidad se guía por:
 mockups/MK-XXX/component-spec.md
 mockups/MK-XXX/plan.md
 mockups/MK-XXX/tasks.md
+mockups/MK-XXX/validation-report.md
 ```
 
 ## Regla Conceptual
@@ -40,58 +41,87 @@ mockups/MK-XXX/tasks.md
                                N pantallas por MK
 ```
 
-Stitch puede generar candidatos de implementación para perfeccionar una pantalla, pero esos candidatos **nunca son propuestas UX**.
+## Triple Rol y Responsabilidades
+
+Leonardo Vera Rodríguez desempeña tres responsabilidades claramente delimitadas:
+
+### A. Coordinación Inicial (Generación Centralizada)
+- Preparar de forma centralizada y homogénea las bases iniciales en código de prototipado para las 16 funcionalidades (`MK-001` a `MK-016`).
+- Utilizar estrictamente como fuentes: `propuesta-ux.md`, `ux-decisions.md`, `ux-guidelines.md`, Design System, especificaciones `SPEC`, `HU`, `WF`, flujos y la documentación inicial (`component-spec.md`, `plan.md`, `tasks.md`).
+- Entregar oportunamente cada base inicial a su responsable respectivo según el mapeo canónico para que continúe directamente con el refinamiento mediante código.
+- No se requiere documentar prompts, sesiones, IDs ni evidencia del mecanismo utilizado para preparar las bases iniciales.
+
+### B. Revisión Transversal de Mockups (Gate de Visto Bueno)
+- Actuar como **Revisor UX transversal de mockups** del módulo para todos los mockups (`MK-001` a `MK-016`).
+- Auditar cada funcionalidad una vez que su responsable haya completado la autovalidación local.
+- Inspeccionar el estricto cumplimiento de la UX transversal, UX Decisions, UX Guidelines, Design System, accesibilidad y PC Desktop.
+- Registrar observaciones y hallazgos formales en la tabla `RV-XX` de `validation-report.md`.
+- Exigir correcciones cuando existan observaciones bloqueantes o importantes requeridas, y realizar nuevas revisiones hasta su conformidad.
+- Otorgar formalmente el **Visto bueno** completando el checklist mandatorio en `validation-report.md`.
+- **Regla estricta:** Ningún mockup puede marcarse como `APROBADO` ni pasar a Figma sin este visto bueno.
+
+### C. Responsabilidad Funcional Propia (MK-013 y MK-014)
+- Responsable funcional directo exclusivo de:
+  - **MK-013:** Gestión de precios individuales y masivos
+  - **MK-014:** Historial y auditoría de precios
+- Para MK-013 y MK-014, Leonardo Vera conserva simultáneamente la responsabilidad de refinamiento del código y la función de revisión transversal propia para su dictamen final y pase a Figma.
 
 ## Solo Web Desktop
 
 - Entorno: Web Desktop exclusivamente.
-- `deviceType = DESKTOP` en Stitch MCP.
-- Viewport canónico de generación y revisión: 1440 px (sin considerarlo un ancho rígido).
-- No diseñar ni generar variantes mobile o tablet.
+- Viewport canónico de revisión: 1440 px (sin considerarlo un ancho rígido).
+- No diseñar variantes mobile o tablet.
+
+## Flujo Operativo de Trabajo
+
+```mermaid
+flowchart TD
+    subgraph Coordinacion["A. Coordinación Inicial"]
+        A1["Analizar UX Transversal + Fuentes"] --> A2["Preparar bases iniciales MK-001..MK-016"]
+        A2 --> A3["Entregar base inicial a cada responsable"]
+    end
+
+    subgraph DesarrolloPropio["C. Desarrollo Funcional Propio (MK-013 / MK-014)"]
+        C1["Refinar código de MK-013 y MK-014"] --> C2["Normalizar componentes y tokens DS"]
+        C2 --> C3["Implementar estados y accesibilidad"]
+        C3 --> C4["Autovalidación funcional y técnica"]
+    end
+
+    subgraph RevisionTransversal["B. Revisión Transversal (MK-001..MK-016)"]
+        B1["Recibir solicitud de revisión con autovalidación completa"]
+        B2["Auditar coherencia UX, DS, accesibilidad y Desktop 1440px"]
+        B3["Registrar hallazgos RV-XX en validation-report.md"]
+        B4{"¿Requiere correcciones?"}
+        B5["Exigir correcciones al responsable"]
+        B6["Otorgar Visto Bueno y dictamen APROBADO"]
+        B7["Autorizar pase a Figma"]
+
+        B1 --> B2 --> B3 --> B4
+        B4 -- "Sí" --> B5 --> B1
+        B4 -- "No" --> B6 --> B7
+    end
+
+    A3 -.-> B1
+    C4 --> B1
+```
 
 ## Trabajo Permitido en `lab/vera`
 
-- Pantallas y componentes temporales de prototipado.
-- Variantes y candidatos de implementación.
-- Versionado de artefactos experimentales livianos en `.stitch/` (prompts, IDs de pantalla generados, notas de sesión, HTML/código de prueba).
-- Commits y pruebas iterativas rápidas.
+- Preparación centralizada de las bases iniciales en código para MK-001 a MK-016.
+- Refinamiento y normalización de MK-013 y MK-014.
+- Pruebas y auditoría transversal de consistencia sobre los prototipos del módulo.
+- Commits iterativos de trabajo en progreso.
 
 ## Trabajo Prohibido en `lab/vera`
 
 - Modificar la UX transversal sin aprobación oficial en `master`.
 - Abrir Pull Request desde `lab/vera`.
 - Fusionar (`git merge`) `lab/vera` hacia cualquier rama oficial (`vera`, `master`).
-- Promover carpetas `.stitch/`, cachés o prompts temporales a la rama oficial.
-
-## Política de `.stitch/`
-
-- **Versionar en `lab/vera` (livianos):** prompts enviados (`.stitch/prompts/`), notas de sesión (`.stitch/sesiones/`), metadata ligera, IDs de pantalla y código HTML preliminar generado para conservar la trazabilidad de iteraciones.
-- **Ignorar (pesados/regenerables):** cachés de herramientas, dependencias locales (`node_modules`), screenshots redundantes/pesados, outputs regenerables grandes y payloads temporales.
-- **En ramas oficiales:** Ningún archivo de `.stitch/` puede promoverse.
-
-## Flujo de Experimentación con Stitch MCP
-
-```mermaid
-flowchart TD
-    A["Leer UX global + fuentes del MK"]
-    B["Elegir pantalla ancla"]
-    C["Generar candidato con Stitch DESKTOP"]
-    D["Revisar cumplimiento"]
-    E["Editar de forma focalizada edit_screens"]
-    F{"¿Cumple criterios?"}
-    G["Seguir refinando"]
-    H["Normalizar código en prototipo/src/pantallas/"]
-    I["Completar validation-report.md"]
-    J["Promover selectivamente a vera"]
-
-    A --> B --> C --> D --> E --> F
-    F -- "No" --> G --> E
-    F -- "Sí" --> H --> I --> J
-```
+- Crear carpetas innecesarias o estructuras paralelas (`raw/`, `candidatos/`, etc.).
 
 ## Promoción Selectiva hacia la Rama Oficial
 
-Cuando una funcionalidad (`MK-XXX`) esté finalizada y cuente con `validation-report.md` con dictamen **APROBADO**:
+Cuando MK-013 o MK-014 estén finalizados y cuenten con `validation-report.md` con dictamen **APROBADO**:
 
 ```bash
 # 1. Posicionarse en la rama oficial limpia y actualizada
@@ -110,7 +140,7 @@ git diff
 # 4. Agregar explícitamente únicamente las rutas aprobadas
 git add mockups/MK-XXX/validation-report.md mockups/prototipo/src/pantallas/MKXXX
 
-# 5. Auditar minuciosamente el staging (sin .stitch/, prompts ni residuos experimentales)
+# 5. Auditar minuciosamente el staging
 git diff --cached
 
 # 6. Commit y push a la rama oficial
